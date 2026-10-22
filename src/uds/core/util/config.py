@@ -27,6 +27,7 @@
 
 """
 Author: Adolfo Gómez, dkmaster at dkmon dot com
+Author: Andres Schumann, aschumann at virtualcable dot es
 """
 
 import collections.abc
@@ -55,6 +56,10 @@ class Config:
 
     # For custom params (for choices mainly)
     _config_params: typing.ClassVar[dict[str, typing.Any]] = {}
+
+    # Group of each value, only kept in memory. Filled when the declaring module is imported and keyed
+    # by section.key, so values rebuilt from database (enumerate) resolve their group too
+    _config_groups: typing.ClassVar[dict[str, "Config.GroupType"]] = {}
 
     # If we are migrating, we do not want to access database
     _is_migrating: typing.ClassVar[bool] = False
@@ -103,6 +108,26 @@ class Config:
         def values() -> collections.abc.Iterable["Config.SectionType"]:
             return Config.SectionType
 
+    # Closed list shared by every section, so a setting about logs lands in "Logs and audit" wherever it lives.
+    # The value is the stable key; the admin only receives the translated label.
+    class GroupType(enum.StrEnum):
+        GENERAL = "general"
+        ACCESS = "access"
+        SESSIONS = "sessions"
+        HARDENING = "hardening"
+        NETWORK = "network"
+        USER_SERVICES = "user_services"
+        PUBLICATIONS = "publications"
+        TASKS = "tasks"
+        LOGS = "logs"
+        STATISTICS = "statistics"
+        LIMITS = "limits"
+        APPEARANCE = "appearance"
+        PRIVACY = "privacy"
+
+        def label(self) -> str:
+            return gettext(_GROUP_LABELS[self])
+
     class Section:
         _section_name: "Config.SectionType"
 
@@ -115,9 +140,10 @@ class Config:
             default: str | None = None,
             type: "Config.FieldType | None" = None,
             help: str = "",
+            group: "Config.GroupType | None" = None,
         ) -> "Config.Value":
             type = type or Config.FieldType.UNKNOWN
-            return Config.value(type=type, section=self, key=key, default=default, help=help)
+            return Config.value(type=type, section=self, key=key, default=default, help=help, group=group)
 
         def name(self) -> str:
             return self._section_name
@@ -140,12 +166,15 @@ class Config:
             key: str,
             default: str | None,
             help: str = "",
+            group: "Config.GroupType | None" = None,
         ) -> None:
             self._type = type
             self._section = section
             self._key = key
             self._default = default or ""
             self._help = help
+            if group is not None:
+                Config._config_groups[f"{section.name()}.{key}"] = group
 
             logger.debug(self)
 
@@ -232,6 +261,10 @@ class Config:
         def get_help(self) -> str:
             return gettext(self._help)
 
+        def get_group(self) -> str:
+            group = Config._config_groups.get(f"{self._section.name()}.{self._key}")
+            return group.label() if group is not None else ""
+
         def set(self, value: str | bool | int) -> None:
             if GlobalConfig.is_initialized() is False or Config._is_migrating is True:
                 Config._for_saving_later.append((self, value))
@@ -281,8 +314,9 @@ class Config:
         key: str,
         default: str | None = None,
         help: str = "",
+        group: "Config.GroupType | None" = None,
     ) -> "Config.Value":
-        return Config.Value(type=type, section=section, key=key, default=default, help=help)
+        return Config.Value(type=type, section=section, key=key, default=default, help=help, group=group)
 
     @staticmethod
     def enumerate(include_hidden: bool = False) -> collections.abc.Iterable["Config.Value"]:
@@ -374,9 +408,27 @@ class Config:
                 "type": cfg.get_type(),
                 "params": cfg.get_params(),
                 "help": cfg.get_help(),
+                "group": cfg.get_group(),
             }
         logger.debug("Configuration: %s", res)
         return res
+
+
+_GROUP_LABELS: typing.Final[dict[Config.GroupType, str]] = {
+    Config.GroupType.GENERAL: _("General"),
+    Config.GroupType.ACCESS: _("Login and access"),
+    Config.GroupType.SESSIONS: _("Sessions"),
+    Config.GroupType.HARDENING: _("Hardening"),
+    Config.GroupType.NETWORK: _("Network and proxies"),
+    Config.GroupType.USER_SERVICES: _("User services"),
+    Config.GroupType.PUBLICATIONS: _("Publications and cache"),
+    Config.GroupType.TASKS: _("Background tasks"),
+    Config.GroupType.LOGS: _("Logs and audit"),
+    Config.GroupType.STATISTICS: _("Statistics"),
+    Config.GroupType.LIMITS: _("Limits and retention"),
+    Config.GroupType.APPEARANCE: _("Appearance"),
+    Config.GroupType.PRIVACY: _("Privacy"),
+}
 
 
 class GlobalConfig:
@@ -389,6 +441,7 @@ class GlobalConfig:
         "24",
         type=Config.FieldType.NUMERIC,
         help=_("Session expire time in hours after publishing"),
+        group=Config.GroupType.USER_SERVICES,
     )  # Max session duration (in use) after a new publishment has been made
     # Delay between cache checks. reducing this number will increase cache generation speed but also will load service providers
     CACHE_CHECK_DELAY: Config.Value = Config.section(Config.SectionType.GLOBAL).value(
@@ -398,6 +451,7 @@ class GlobalConfig:
         help=_(
             "Delay between cache checks. Reducing this number will increase cache generation speed but also will load service providers"
         ),
+        group=Config.GroupType.PUBLICATIONS,
     )
     # Delayed task number of threads PER SERVER, with higher number of threads, deplayed task will complete sooner, but it will give more load to overall system
     DELAYED_TASKS_THREADS: Config.Value = Config.section(Config.SectionType.GLOBAL).value(
@@ -407,6 +461,7 @@ class GlobalConfig:
         help=_(
             "Delayed task number of threads PER SERVER, with higher number of threads, deployed task will complete sooner, but it will give more load to overall system"
         ),
+        group=Config.GroupType.TASKS,
     )
     # Number of scheduler threads running PER SERVER, with higher number of threads, deplayed task will complete sooner, but it will give more load to overall system
     SCHEDULER_THREADS: Config.Value = Config.section(Config.SectionType.GLOBAL).value(
@@ -416,6 +471,7 @@ class GlobalConfig:
         help=_(
             "Number of scheduler threads running PER SERVER, with higher number of threads, deployed task will complete sooner, but it will give more load to overall system"
         ),
+        group=Config.GroupType.TASKS,
     )
     # Waiting time before removing "errored" and "removed" publications, cache, and user assigned machines. Time is in seconds
     CLEANUP_CHECK: Config.Value = Config.section(Config.SectionType.GLOBAL).value(
@@ -425,6 +481,7 @@ class GlobalConfig:
         help=_(
             'Waiting time before removing "errored" and "removed" publications, cache, and user assigned machines. Time is in seconds'
         ),
+        group=Config.GroupType.TASKS,
     )
     # Time to maintaing "info state" items before removing it, in seconds
     KEEP_INFO_TIME: Config.Value = Config.section(Config.SectionType.GLOBAL).value(
@@ -432,6 +489,7 @@ class GlobalConfig:
         "14401",
         type=Config.FieldType.NUMERIC,
         help=_('Time to maintaing "info state" items before removing it, in seconds'),
+        group=Config.GroupType.TASKS,
     )  # Defaults to 2 days 172800?? better 4 hours xd
     # Number of services to initiate removal per run of CacheCleaner
     USER_SERVICE_CLEAN_NUMBER: Config.Value = Config.section(Config.SectionType.GLOBAL).value(
@@ -439,6 +497,7 @@ class GlobalConfig:
         "24",
         type=Config.FieldType.NUMERIC,
         help=_("Number of services to initiate removal per run of service cleaner"),
+        group=Config.GroupType.USER_SERVICES,
     )  # Defaults to 3 per wun
     # Removal Check time for cache, publications and deployed services
     REMOVAL_CHECK: Config.Value = Config.section(Config.SectionType.GLOBAL).value(
@@ -446,9 +505,14 @@ class GlobalConfig:
         "31",
         type=Config.FieldType.NUMERIC,
         help=_("Removal Check time for cache, publications and deployed services, in seconds"),
+        group=Config.GroupType.USER_SERVICES,
     )  # Defaults to 30 seconds
     SUPER_USER_LOGIN: Config.Value = Config.section(Config.SectionType.SECURITY).value(
-        "superUser", "root", type=Config.FieldType.TEXT, help=_("Superuser username")
+        "superUser",
+        "root",
+        type=Config.FieldType.TEXT,
+        help=_("Superuser username"),
+        group=Config.GroupType.ACCESS,
     )
     # Superuser password (do not need to be at database!!!)
     SUPER_USER_PASS: Config.Value = Config.section(Config.SectionType.SECURITY).value(
@@ -456,6 +520,7 @@ class GlobalConfig:
         consts.security.DEFAULT_SUPERUSER_PASSWORD,
         type=Config.FieldType.PASSWORD,
         help=_("Superuser password"),
+        group=Config.GroupType.ACCESS,
     )
     SUPER_USER_ALLOW_WEBACCESS: Config.Value = Config.section(Config.SectionType.SECURITY).value(
         "allowRootWebAccess",
@@ -464,6 +529,7 @@ class GlobalConfig:
         help=_(
             "Allow root user to access using web interface.\n Once configured one authenticator,\nit's recommended to disable this option"
         ),
+        group=Config.GroupType.ACCESS,
     )
     # Enhaced security
     ENHANCED_SECURITY: Config.Value = Config.section(Config.SectionType.SECURITY).value(
@@ -471,6 +537,7 @@ class GlobalConfig:
         "1",
         type=Config.FieldType.BOOLEAN,
         help=_("Enable enhanced security modules"),
+        group=Config.GroupType.HARDENING,
     )
     # Password complexity enforcement. Applies when an
     # administrator sets the password of a user that lives in the internal
@@ -480,12 +547,14 @@ class GlobalConfig:
         "1",
         type=Config.FieldType.BOOLEAN,
         help=_("Enforce a minimum complexity policy when assigning passwords to internal database users"),
+        group=Config.GroupType.ACCESS,
     )
     PASSWORD_MIN_LENGTH: Config.Value = Config.section(Config.SectionType.SECURITY).value(
         "Password minimum length",
         str(consts.security.PASSWORD_MIN_LENGTH),
         type=Config.FieldType.NUMERIC,
         help=_("Minimum length of the password for internal database users"),
+        group=Config.GroupType.ACCESS,
     )
     # Paranoid security
     ENFORCE_ZERO_TRUST: Config.Value = Config.section(Config.SectionType.SECURITY).value(
@@ -495,6 +564,7 @@ class GlobalConfig:
         help=_(
             "Enforced maximum security mode (Zero-Trust Mode). No password redirection will be allowed if this mode is set."
         ),
+        group=Config.GroupType.HARDENING,
     )
     # MCP (Model Context Protocol) integration. All MCP related settings
     # live in their own "MCP" section (moved there from Security on 5.0).
@@ -507,6 +577,7 @@ class GlobalConfig:
         help=_(
             "Enable the MCP (Model Context Protocol) endpoint (/uds/rest/mcp) and its skill bundle download"
         ),
+        group=Config.GroupType.GENERAL,
     )
     # Supervised mutability: the AI proposes changes, administrators approve
     # them from the administration interface. Off by default; the proposal
@@ -516,6 +587,7 @@ class GlobalConfig:
         "0",
         type=Config.FieldType.BOOLEAN,
         help=_("Enable the supervised mutability MCP tools (proposals awaiting administrator approval)"),
+        group=Config.GroupType.GENERAL,
     )
     MCP_RATE_LIMIT: Config.Value = Config.section(Config.SectionType.MCP).value(
         "MCP Rate Limit",
@@ -528,6 +600,7 @@ class GlobalConfig:
         help=_(
             "Maximum MCP requests per user in any 60-second window. Further requests are rejected until older ones leave the window. 0 means unlimited"
         ),
+        group=Config.GroupType.LIMITS,
     )
     # Caps of the supervised mutability proposal queue. The flows cap only
     # counts open flows (drafts being composed and pending ones awaiting
@@ -539,12 +612,14 @@ class GlobalConfig:
         help=_(
             "Maximum open proposal flows (draft or pending, not yet decided) a single user can have. Opening another is refused until one is decided or discarded"
         ),
+        group=Config.GroupType.LIMITS,
     )
     MCP_MAX_ACTIONS_PER_FLOW: Config.Value = Config.section(Config.SectionType.MCP).value(
         "Max Actions per Flow",
         str(consts.mcp.MAX_ACTIONS_PER_FLOW),
         type=Config.FieldType.NUMERIC,
         help=_("Maximum actions inside a single proposal flow. Adding more to that flow is refused"),
+        group=Config.GroupType.LIMITS,
     )
     # Days a decided (executed/rejected/cancelled) flow stays visible on the
     # approval surface before it moves to the archive. Expired flows move
@@ -556,6 +631,7 @@ class GlobalConfig:
         help=_(
             "Days a decided flow remains visible on the approval surface before moving to the archive. 0 archives immediately"
         ),
+        group=Config.GroupType.LIMITS,
     )
     # Days of decided-flow history a non-admin staff user sees on /flows/own
     # (housekeeping of the proposal surface). Administrators always see their
@@ -565,6 +641,7 @@ class GlobalConfig:
         str(consts.mcp.OWN_HISTORY_DAYS),
         type=Config.FieldType.NUMERIC,
         help=_("Days of decided flows a staff (non-admin) user sees in its own history. 0 means unlimited"),
+        group=Config.GroupType.LIMITS,
     )
     # Saturation thresholds for the managed server forecasts. "Load" is the
     # weighted composite of cpu/memory/users that the server group weights
@@ -575,12 +652,14 @@ class GlobalConfig:
         str(consts.forecasts.SATURATION_LOAD_DEFAULT),
         type=Config.FieldType.NUMERIC,
         help=_("Weighted cpu/memory/users load (0-100) at which a managed server is considered saturated"),
+        group=Config.GroupType.STATISTICS,
     )
     STATS_SATURATION_DISK: Config.Value = Config.section(Config.SectionType.STATS).value(
         "Saturation Disk Percent",
         str(consts.forecasts.SATURATION_DISK_DEFAULT),
         type=Config.FieldType.NUMERIC,
         help=_("Disk usage (0-100) at which a managed server is considered saturated"),
+        group=Config.GroupType.STATISTICS,
     )
     # 0 falls back to the server group's "max expected users" weight
     STATS_SATURATION_USERS: Config.Value = Config.section(Config.SectionType.STATS).value(
@@ -590,6 +669,7 @@ class GlobalConfig:
         help=_(
             "Current users at which a managed server is considered saturated. 0 uses the group max expected users"
         ),
+        group=Config.GroupType.STATISTICS,
     )
     # 0 disables the connections projection entirely
     STATS_SATURATION_CONNECTIONS: Config.Value = Config.section(Config.SectionType.STATS).value(
@@ -597,6 +677,7 @@ class GlobalConfig:
         str(consts.forecasts.SATURATION_CONNECTIONS_DEFAULT),
         type=Config.FieldType.NUMERIC,
         help=_("Connections at which a managed server is considered saturated. 0 disables this metric"),
+        group=Config.GroupType.STATISTICS,
     )
     # Time an admi session can be idle before being "logged out"
     # ADMIN_IDLE_TIME: Config.Value = Config.section(Config.SectionType.SECURITY).value('adminIdleTime', '14400', type=Config.FieldType.NUMERIC_FIELD)  # Defaults to 4 hous
@@ -608,6 +689,7 @@ class GlobalConfig:
         "631",
         type=Config.FieldType.NUMERIC,
         help=_("How long should the user service be unused before os manager considers it for removal"),
+        group=Config.GroupType.USER_SERVICES,
     )  # Defaults to 10 minutes
 
     # Default CSS Used: REMOVED! (keep the for for naw, for reference, but will be cleaned on future...)
@@ -618,6 +700,7 @@ class GlobalConfig:
         "5",
         type=Config.FieldType.NUMERIC,
         help=_("Max logins before blocking an account for a while"),
+        group=Config.GroupType.ACCESS,
     )
     # Block time in second for an user that makes too many mistakes, 5 minutes default
     LOGIN_BLOCK: Config.Value = Config.section(Config.SectionType.SECURITY).value(
@@ -625,12 +708,14 @@ class GlobalConfig:
         "300",
         type=Config.FieldType.NUMERIC,
         help=_("Block time in second for an user that has too many login failures"),
+        group=Config.GroupType.ACCESS,
     )
     LOGIN_BLOCK_IP: Config.Value = Config.section(Config.SectionType.SECURITY).value(
         "Block ip on login failure",
         "0",
         type=Config.FieldType.BOOLEAN,
         help=_("Block ip on login failure"),
+        group=Config.GroupType.ACCESS,
     )
     # Do autorun of service if just one service.
     # 0 = No autorun, 1 = Autorun at login
@@ -640,12 +725,14 @@ class GlobalConfig:
         "0",
         type=Config.FieldType.BOOLEAN,
         help=_("Do autorun of service if just one service"),
+        group=Config.GroupType.USER_SERVICES,
     )
     REDIRECT_TO_TAG_ON_LOGOUT: Config.Value = Config.section(Config.SectionType.GLOBAL).value(
         "Redirect to tag on logout",
         "0",
         type=Config.FieldType.BOOLEAN,
         help=_("Redirects login page to the tag used when logged in if active."),
+        group=Config.GroupType.ACCESS,
     )
 
     # Max time needed to get a service "fully functional" before it's considered "failed" and removed
@@ -657,12 +744,14 @@ class GlobalConfig:
         help=_(
             'Max time needed to get a service "fully functional" before it\'s considered "failed" and removed'
         ),
+        group=Config.GroupType.USER_SERVICES,
     )
     MAX_REMOVAL_TIME: Config.Value = Config.section(Config.SectionType.GLOBAL).value(
         "maxRemovalTime",
         "14400",
         type=Config.FieldType.NUMERIC,
         help=_('Max time needed to get a service "fully removed" before it\'s considered "failed" and purged'),
+        group=Config.GroupType.USER_SERVICES,
     )
     # Max time an element may remain in the deferred deletion queues (to_stop,
     # stopping, to_delete, deleting) before the self-assessment check flags it
@@ -674,6 +763,7 @@ class GlobalConfig:
         help=_(
             "Max time (seconds) an element may remain in deferred deletion queues before being flagged as stuck"
         ),
+        group=Config.GroupType.USER_SERVICES,
     )
     # Max time a service pool publication may remain in a transitional state
     # (preparing, removing, canceling) before the self-assessment check flags
@@ -686,6 +776,7 @@ class GlobalConfig:
             "Max time (seconds) a publication may remain in a transitional state (preparing, removing, canceling)"
             " before being flagged as stuck"
         ),
+        group=Config.GroupType.PUBLICATIONS,
     )
     # Max offset (seconds) between a cluster node local clock and the database
     # clock before the self-assessment check flags the node. Scheduling always
@@ -696,6 +787,7 @@ class GlobalConfig:
         "60",
         type=Config.FieldType.NUMERIC,
         help=_("Max offset (seconds) between a node local clock and the database clock before being flagged"),
+        group=Config.GroupType.TASKS,
     )
     # Max spread (seconds) between raw database clock samples taken through
     # consecutive connections. With a load balanced SQL cluster, a big spread
@@ -705,6 +797,7 @@ class GlobalConfig:
         "5",
         type=Config.FieldType.NUMERIC,
         help=_("Max spread (seconds) between database clock samples before flagging the database cluster"),
+        group=Config.GroupType.TASKS,
     )
     # Maximum logs per every log-capable administration element
     INDIVIDIAL_LOG_MAX_ELEMENTS: Config.Value = Config.section(Config.SectionType.GLOBAL).value(
@@ -712,6 +805,7 @@ class GlobalConfig:
         "100",
         type=Config.FieldType.NUMERIC,
         help=_("Maximum logs per every log-capable administration element"),
+        group=Config.GroupType.LOGS,
     )
     # Maximum logs per every log-capable administration element
     GENERAL_LOG_MAX_ELEMENTS: Config.Value = Config.section(Config.SectionType.GLOBAL).value(
@@ -719,6 +813,7 @@ class GlobalConfig:
         "32000",
         type=Config.FieldType.NUMERIC,
         help=_("Maximum logs entries for general UDS logs (0 = unlimited, use with care)"),
+        group=Config.GroupType.LOGS,
     )
 
     # Time to restrain a user service in case it gives some errors at some point
@@ -727,6 +822,7 @@ class GlobalConfig:
         "600",
         type=Config.FieldType.NUMERIC,
         help=_("Time to restrain a user service in case it gives some errors at some point"),
+        group=Config.GroupType.TASKS,
     )
     # Number of errors that must occurr in RESTRAIN_TIME to restrain an user service
     RESTRAINT_COUNT: Config.Value = Config.section(Config.SectionType.GLOBAL).value(
@@ -734,6 +830,7 @@ class GlobalConfig:
         "3",
         type=Config.FieldType.NUMERIC,
         help=_('Number of errors that must occurr in "restrainTime" to restrain an user service'),
+        group=Config.GroupType.TASKS,
     )
 
     # Statistics duration, in days
@@ -742,6 +839,7 @@ class GlobalConfig:
         "365",
         type=Config.FieldType.NUMERIC,
         help=_("Statistics duration, in days"),
+        group=Config.GroupType.STATISTICS,
     )
     # Statisctis accumulation frequency, in seconds
     STATS_ACCUM_FREQUENCY: Config.Value = Config.section(Config.SectionType.GLOBAL).value(
@@ -749,6 +847,7 @@ class GlobalConfig:
         "3600",
         type=Config.FieldType.NUMERIC,
         help=_("Frequency of stats collection in seconds. Default is 1 hours (3600 seconds)"),
+        group=Config.GroupType.STATISTICS,
     )
     # Statisctis accumulation chunk size, in days
     STATS_ACCUM_MAX_CHUNK_TIME = Config.section(Config.SectionType.GLOBAL).value(
@@ -756,6 +855,7 @@ class GlobalConfig:
         "7",
         type=Config.FieldType.NUMERIC,
         help=_("Maximum number of time to accumulate on one run. Default is 7 (1 week)"),
+        group=Config.GroupType.STATISTICS,
     )
 
     # If disallow login showing authenticatiors
@@ -764,6 +864,7 @@ class GlobalConfig:
         "0",
         type=Config.FieldType.BOOLEAN,
         help=_("If disallow login showing authenticatiors"),
+        group=Config.GroupType.ACCESS,
     )
 
     # Allos preferences access to users
@@ -772,6 +873,7 @@ class GlobalConfig:
         "0",
         type=Config.FieldType.BOOLEAN,
         help=_("Notify user of existence of a new version of a service on new publication"),
+        group=Config.GroupType.PUBLICATIONS,
     )
 
     # Webhook notifications dispatcher job frequency (seconds)
@@ -780,6 +882,7 @@ class GlobalConfig:
         "5",
         type=Config.FieldType.NUMERIC,
         help=_("Frequency (in seconds) at which queued webhook notifications are dispatched"),
+        group=Config.GroupType.TASKS,
     )
 
     # Allowed "trusted sources" for request
@@ -788,6 +891,7 @@ class GlobalConfig:
         "*",
         type=Config.FieldType.TEXT,
         help=_('Networks or hosts considered "trusted" for UDS (Tunnels, etc...)'),
+        group=Config.GroupType.NETWORK,
     )
 
     ALLOWED_IP_FORWARDERS: Config.Value = Config.section(Config.SectionType.SECURITY).value(
@@ -795,6 +899,7 @@ class GlobalConfig:
         "*",
         type=Config.FieldType.TEXT,
         help=_("IPs or networks allowed to forward requests (like proxies)"),
+        group=Config.GroupType.NETWORK,
     )
 
     # Allow clients to notify their own ip (if set), or use always the request extracted IP
@@ -803,6 +908,7 @@ class GlobalConfig:
         "0",
         type=Config.FieldType.BOOLEAN,
         help=_("Allow clients to notify their own ip (if set), or use always the request extracted IP"),
+        group=Config.GroupType.NETWORK,
     )
 
     # If there is a proxy in front of us
@@ -811,6 +917,7 @@ class GlobalConfig:
         "0",
         type=Config.FieldType.BOOLEAN,
         help=_("If there is a proxy in front of us (i.e. HAProxy, or any NLB)"),
+        group=Config.GroupType.NETWORK,
     )
 
     # If we use new logout mechanics
@@ -821,6 +928,7 @@ class GlobalConfig:
         help=_(
             'If we use new logout mechanics for osmanagers, where only when the logged in users reaches 0, it is considered "logged out"'
         ),
+        group=Config.GroupType.SESSIONS,
     )
 
     # Enable/Disable Actor attack detection ip blocking
@@ -829,6 +937,7 @@ class GlobalConfig:
         "1",
         type=Config.FieldType.BOOLEAN,
         help=_("Enable/Disable Actor attack detection ip blocking"),
+        group=Config.GroupType.ACCESS,
     )
 
     # Max session length configuration values
@@ -837,12 +946,14 @@ class GlobalConfig:
         "14400",
         type=Config.FieldType.NUMERIC,
         help=_("Max session length for Admin"),
+        group=Config.GroupType.SESSIONS,
     )
     SESSION_DURATION_USER: Config.Value = Config.section(Config.SectionType.SECURITY).value(
         "Session timeout for User",
         "14400",
         type=Config.FieldType.NUMERIC,
         help=_("Max session length for User"),
+        group=Config.GroupType.SESSIONS,
     )
 
     RELOAD_TIME: Config.Value = Config.section(Config.SectionType.GLOBAL).value(
@@ -850,6 +961,7 @@ class GlobalConfig:
         "300",
         type=Config.FieldType.NUMERIC,
         help=_("Page reload Time (legacy)"),
+        group=Config.GroupType.APPEARANCE,
     )
 
     # Custom message for error when limiting by calendar
@@ -858,6 +970,7 @@ class GlobalConfig:
         "",
         type=Config.FieldType.TEXT,
         help=_("Custom message for error when limiting by calendar"),
+        group=Config.GroupType.APPEARANCE,
     )  # Defaults to Nothing
 
     # If convert username to lowercase
@@ -866,6 +979,7 @@ class GlobalConfig:
         "1",
         type=Config.FieldType.BOOLEAN,
         help=_("If convert username to lowercase on logins"),
+        group=Config.GroupType.ACCESS,
     )
 
     # Global UDS ID (common for all servers on the same cluster)
@@ -874,6 +988,7 @@ class GlobalConfig:
         CryptoManager.manager().uuid(),
         type=Config.FieldType.READ,
         help=_("Global UDS ID (common for all servers on the same cluster)"),
+        group=Config.GroupType.GENERAL,
     )
 
     # Site display name & copyright info
@@ -882,51 +997,63 @@ class GlobalConfig:
         "UDS",
         type=Config.FieldType.TEXT,
         help=_("Site display name"),
+        group=Config.GroupType.APPEARANCE,
     )
     SITE_COPYRIGHT: Config.Value = Config.section(Config.SectionType.CUSTOM).value(
         "Site copyright info",
         "© Virtual Cable S.L.",
         type=Config.FieldType.TEXT,
         help=_("Site copyright info"),
+        group=Config.GroupType.APPEARANCE,
     )
     SITE_COPYRIGHT_LINK: Config.Value = Config.section(Config.SectionType.CUSTOM).value(
         "Site copyright link",
         "https://www.udsenterprise.com",
         type=Config.FieldType.TEXT,
         help=_("Site copyright link"),
+        group=Config.GroupType.APPEARANCE,
     )
     SITE_LOGO_NAME: Config.Value = Config.section(Config.SectionType.CUSTOM).value(
-        "Logo name", "UDS", type=Config.FieldType.TEXT, help=_("Top navbar logo name")
+        "Logo name",
+        "UDS",
+        type=Config.FieldType.TEXT,
+        help=_("Top navbar logo name"),
+        group=Config.GroupType.APPEARANCE,
     )
     SITE_CSS: Config.Value = Config.section(Config.SectionType.CUSTOM).value(
         "CSS",
         "",
         type=Config.FieldType.LONGTEXT,
         help=_("Custom CSS styles applied to the user accesible site"),
+        group=Config.GroupType.APPEARANCE,
     )
     SITE_INFO: Config.Value = Config.section(Config.SectionType.CUSTOM).value(
         "Site information",
         "",
         type=Config.FieldType.LONGTEXT,
         help=_("Site information"),
+        group=Config.GroupType.APPEARANCE,
     )
     SITE_FILTER_ONTOP: Config.Value = Config.section(Config.SectionType.CUSTOM).value(
         "Show Filter on Top",
         "0",
         type=Config.FieldType.BOOLEAN,
         help=_("Show Filter box for user services on Top or bottom of the page"),
+        group=Config.GroupType.APPEARANCE,
     )
     SITE_FILTER_MIN: Config.Value = Config.section(Config.SectionType.CUSTOM).value(
         "Min. Services to show filter",
         "8",
         type=Config.FieldType.NUMERIC,
         help=_("Minimal User Services needed to show filter"),
+        group=Config.GroupType.APPEARANCE,
     )
     EXPERIMENTAL_FEATURES: Config.Value = Config.section(Config.SectionType.GLOBAL).value(
         "Experimental Features",
         "0",
         type=Config.FieldType.BOOLEAN,
         help=_("Enable experimental features. USE WITH CAUTION!!"),
+        group=Config.GroupType.GENERAL,
     )
 
     # Admin config variables
@@ -935,30 +1062,35 @@ class GlobalConfig:
         "0",
         type=Config.FieldType.NUMERIC,
         help=_("Time in seconds of inactivity before auto reloading admin pages"),
+        group=Config.GroupType.APPEARANCE,
     )
     ADMIN_AUTO_RELOAD_INTERVAL: Config.Value = Config.section(Config.SectionType.ADMIN).value(
         "Auto reload interval",
         "0",
         type=Config.FieldType.NUMERIC,
         help=_("Time in seconds between auto reloads of admin pages"),
+        group=Config.GroupType.APPEARANCE,
     )
     ADMIN_PAGESIZE: Config.Value = Config.section(Config.SectionType.ADMIN).value(
         "List page size",
         "10",
         type=Config.FieldType.NUMERIC,
         help=_("Number of items per page in admin tables"),
+        group=Config.GroupType.APPEARANCE,
     )
     ADMIN_TRUSTED_SOURCES: Config.Value = Config.section(Config.SectionType.ADMIN).value(
         "Trusted Hosts for Admin",
         "*",
         type=Config.FieldType.TEXT,
         help=_("List of trusted hosts/networks allowed to access the admin interface"),
+        group=Config.GroupType.NETWORK,
     )
     ADMIN_ENABLE_USERSERVICES_VNC: Config.Value = Config.section(Config.SectionType.ADMIN).value(
         "Enable VNC for user services",
         "0",
         type=Config.FieldType.BOOLEAN,
         help=_("Enable VNC menu for user services"),
+        group=Config.GroupType.GENERAL,
     )
     NOTIFY_CALLBACK_URL: Config.Value = Config.section(Config.SectionType.GLOBAL).value(
         "notifyCallbackURL", "", type=Config.FieldType.HIDDEN, help=""
@@ -970,42 +1102,49 @@ class GlobalConfig:
         "",
         type=Config.FieldType.LONGTEXT,
         help=_("Cookies consent text. If empty, a default multi language text will be used"),
+        group=Config.GroupType.PRIVACY,
     )
     COOKIES_CONSENT_ENABLED: Config.Value = Config.section(Config.SectionType.CUSTOM).value(
         "Cookies consent enabled",
         "1",
         type=Config.FieldType.BOOLEAN,
         help=_("Enable cookies consent"),
+        group=Config.GroupType.PRIVACY,
     )
     COOKIES_CONSENT_MORE_URL: Config.Value = Config.section(Config.SectionType.CUSTOM).value(
         "Cookies consent more info url",
         "",
         type=Config.FieldType.TEXT,
         help=_("URL for more info about cookies"),
+        group=Config.GroupType.PRIVACY,
     )
     COOKIES_CONSENT_LEAVE_URL: Config.Value = Config.section(Config.SectionType.CUSTOM).value(
         "Cookies consent leave url",
         "",
         type=Config.FieldType.TEXT,
         help=_("URL to leave cookies consent"),
+        group=Config.GroupType.PRIVACY,
     )
     ENABLE_FAVORITE_SERVICES: Config.Value = Config.section(Config.SectionType.CUSTOM).value(
         "Enable favorite services",
         "0",
         type=Config.FieldType.BOOLEAN,
         help=_("Enable or disable add favorite services feature"),
+        group=Config.GroupType.APPEARANCE,
     )
     ALLOW_ANIMATED_BACKGROUNDS: Config.Value = Config.section(Config.SectionType.CUSTOM).value(
         "Animated backgrounds",
         "1",
         type=Config.FieldType.BOOLEAN,
         help=_("Allow animated backgrounds"),
+        group=Config.GroupType.APPEARANCE,
     )
     ALLOW_BIOMETRIC_AUTH: Config.Value = Config.section(Config.SectionType.SECURITY).value(
         "Allow biometric authentication",
         "0",
         type=Config.FieldType.BOOLEAN,
         help=_("Allow biometric authentication"),
+        group=Config.GroupType.ACCESS,
     )
 
     # Immutable audit log configs
@@ -1014,36 +1153,42 @@ class GlobalConfig:
         "https://freetsa.org/tsr",
         type=Config.FieldType.TEXT,
         help=_("TSA Provider URL for timestamping signatures"),
+        group=Config.GroupType.LOGS,
     )
     TSA_PROVIDER_TIMEOUT: Config.Value = Config.section(Config.SectionType.SECURITY).value(
         "TSA Provider Timeout",
         "10",
         type=Config.FieldType.NUMERIC,
         help=_("TSA Provider Timeout in seconds"),
+        group=Config.GroupType.LOGS,
     )
     TSA_PROVIDER_VERIFY_SSL: Config.Value = Config.section(Config.SectionType.SECURITY).value(
         "TSA Provider SSL Verify",
         "1",
         type=Config.FieldType.BOOLEAN,
         help=_("TSA Provider SSL Verify"),
+        group=Config.GroupType.LOGS,
     )
     IMMUTABLE_LOG_ENABLED: Config.Value = Config.section(Config.SectionType.SECURITY).value(
         "Enable immutable log",
         "0",
         type=Config.FieldType.BOOLEAN,
         help=_("Enable immutable audit log for critical data (admin events, logins, etc.)"),
+        group=Config.GroupType.LOGS,
     )
     IMMUTABLE_LOG_REANCHOR: Config.Value = Config.section(Config.SectionType.SECURITY).value(
         "Immutable log reanchor interval",
         "14400",
         type=Config.FieldType.NUMERIC,
         help=_("Minimum interval in seconds between re-anchor points (min 120, 0 = disabled)"),
+        group=Config.GroupType.LOGS,
     )
     ALT_LOCKED_PUBLISH_METHOD: Config.Value = Config.section(Config.SectionType.GLOBAL).value(
         "Alternate locked publish method",
         "0",
         type=Config.FieldType.BOOLEAN,
         help=_("Enable alternate publish method for LOCKED service pools."),
+        group=Config.GroupType.PUBLICATIONS,
     )
 
     @staticmethod
