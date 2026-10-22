@@ -51,6 +51,9 @@ logger: logging.Logger = logging.getLogger(__name__)
 
 
 def _get_uuid_and_owner_from_tunnel_ticket(ticket: str) -> tuple[str, str]:
+    if len(ticket) != 48:
+        raise Exception(f"Invalid ticket format: {ticket!r}")
+
     return ticket[:-8], ticket[-8:]
 
 
@@ -292,9 +295,6 @@ class TicketStore(UUIDModel):
           (User, UserService, Host (nullable), Port, Extra Dict)
         """
         try:
-            if len(ticket) != 48:
-                raise Exception(f"Invalid ticket format: {ticket!r}")
-
             uuid, owner = _get_uuid_and_owner_from_tunnel_ticket(ticket)
             return types.tickets.TunnelTicket.from_dict(
                 TicketStore.get(uuid, invalidate=False, owner=owner, secure=True)
@@ -305,8 +305,6 @@ class TicketStore(UUIDModel):
     @staticmethod
     def invalidate_for_tunnel(ticket: str) -> None:
         """Invalidates a tunnel ticket"""
-        if len(ticket) != 48:
-            raise Exception(f"Invalid ticket format: {ticket!r}")
         uuid, owner = _get_uuid_and_owner_from_tunnel_ticket(ticket)
         TicketStore.invalidate(uuid, owner=owner)
 
