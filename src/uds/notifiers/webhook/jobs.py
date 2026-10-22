@@ -29,6 +29,7 @@
 Author: Adolfo Gómez, dkmaster at dkmon dot com
 """
 
+import contextlib
 import logging
 import time
 import typing
@@ -104,11 +105,18 @@ class WebhookDispatcherJob(jobs.Job):
         if not due:
             return
 
-        for notifier_uuid, elements in due.items():
-            elements.sort(key=lambda item: item[1].created)  # FIFO
-            self._drain(notifier_uuid, elements[:MAX_PER_NOTIFIER])
+        # The session adapter enforces its own verify value, so one session per verify setting
+        with contextlib.ExitStack() as stack:
+            sessions = {
+                verify: stack.enter_context(security.secure_requests_session(verify=verify)) for verify in (True, False)
+            }
+            for notifier_uuid, elements in due.items():
+                elements.sort(key=lambda item: item[1].created)  # FIFO
+                self._drain(sessions, notifier_uuid, elements[:MAX_PER_NOTIFIER])
 
-    def _drain(self, notifier_uuid: str, elements: list[tuple[str, QueuedRequest]]) -> None:
+    def _drain(
+        self, sessions: dict[bool, requests.Session], notifier_uuid: str, elements: list[tuple[str, QueuedRequest]]
+    ) -> None:
         if not elements:
             return
         first = elements[0][1]
@@ -123,17 +131,14 @@ class WebhookDispatcherJob(jobs.Job):
 
         for key, element in elements:
             try:
-                # The session adapter applies its own verify value over the per-request one,
-                # so it must be created with the element's setting.
-                with security.secure_requests_session(verify=element.verify_ssl) as session:
-                    response = session.request(
-                        element.method,
-                        element.url,
-                        headers=element.headers,
-                        data=element.body.encode("utf-8"),
-                        timeout=element.timeout,
-                        verify=element.verify_ssl,
-                    )
+                response = sessions[element.verify_ssl].request(
+                    element.method,
+                    element.url,
+                    headers=element.headers,
+                    data=element.body.encode("utf-8"),
+                    timeout=element.timeout,
+                    verify=element.verify_ssl,
+                )
                 if response.status_code >= 400:
                     # Strict FIFO: any HTTP error blocks the stream until next run
                     self._mark_failure(backoff, notifier_uuid, key, element, f"HTTP {response.status_code}")
