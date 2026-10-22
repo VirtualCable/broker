@@ -270,7 +270,7 @@ class ServerStats:
             disks=disks,
             connections=dct.get("connections", 0),
             current_users=dct.get("current_users", 0),
-            stamp=sql_stamp(),
+            stamp=dct.get("stamp", sql_stamp()),
         )
 
     def as_dict(self) -> dict[str, typing.Any]:

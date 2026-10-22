@@ -33,7 +33,8 @@ import typing
 from django.utils import timezone
 
 from uds import models
-from uds.core import types
+from uds.core import consts, types
+from uds.core.util.model import sql_stamp
 
 from ..utils import helpers
 
@@ -68,6 +69,16 @@ def create_server(
 def raw_token(server: "models.Server") -> str:
     """Return the raw token retained by the test fixture, not by the model."""
     return typing.cast(str, typing.cast(typing.Any, server).raw_token)
+
+
+def outdated_stats_stamp() -> float:
+    return sql_stamp() - consts.cache.DEFAULT_CACHE_TIMEOUT - 60
+
+
+def store_stats(server: "models.Server", stamp: float) -> None:
+    """Store stats received at `stamp`, bypassing the setter that stamps them with the current time."""
+    stats = types.servers.ServerStats(memtotal=1024, memused=512, current_users=1, stamp=stamp)
+    server.properties["stats"] = stats.as_dict()
 
 
 def create_server_group(
