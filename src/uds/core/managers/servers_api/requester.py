@@ -209,7 +209,7 @@ class ServerApiRequester:
         """
         src = userservice.get_connection_source()
 
-        logger.debug("Notifying preconnect of service %s to server %s: %s", userservice.uuid, self.server.host, info)
+        logger.debug("Notifying preconnect of service %s to server %s", userservice.uuid, self.server.host)
 
         # Fix username to contain the domain if needed
         username = info.username
