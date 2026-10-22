@@ -386,6 +386,7 @@ class HTML5RDPTransport(transports.Transport):
         request: "ExtendedHttpRequestWithUser",  # pylint: disable=unused-argument
     ) -> str:
         creds_info = self.get_connection_info(userservice, user, password)
+        validity = self.ticket_validity.as_int()
 
         # Build extra params dict for rdphtml5 gateway (matches Rust ConnectionData)
         extra: dict[str, typing.Any] = {
@@ -407,6 +408,7 @@ class HTML5RDPTransport(transports.Transport):
             "session_quality": self.session_quality.as_int(),
             "allow_quality_switch": self.allow_quality_switch.as_bool(),
             "title": f"RDP {ip}",
+            "once": validity < 10,
         }
 
         # Webcam redirection (matches Rust WebcamSettings). Only sent when enabled,
@@ -427,7 +429,7 @@ class HTML5RDPTransport(transports.Transport):
             userservice=userservice,
             port=self.rdp_port.as_int(),
             extra=extra,
-            validity=self.ticket_validity.as_int(),
+            validity=validity if validity > 10 else 30,
         )
 
         onw = f"&{consts.transports.ON_NEW_WINDOW_VAR}={transport.uuid}"

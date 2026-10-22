@@ -125,6 +125,13 @@ class TunnelTicket(Handler):
                 case "start":
                     if net.ip_to_long(req.ip).version == 0:
                         raise Exception("Invalid from IP")
+                    if ticket.remotes is None or len(ticket.remotes) == 0:
+                        raise Exception("Ticket has no remotes")
+
+                    if ticket.remotes[0].extra.get("once"):
+                        # Ticket is one-time use, delete it now
+                        models.TicketStore.invalidate_for_tunnel(req.ticket)
+
                     events.add_event(
                         ticket.userservice.service_pool,
                         events.types.stats.EventType.TUNNEL_OPEN,
