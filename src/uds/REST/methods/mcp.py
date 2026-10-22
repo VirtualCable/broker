@@ -313,9 +313,9 @@ class MCP(Handler):
         operation and outcome. Tool arguments are part of ``operation``,
         redacted by the caller like any MCP response, since the proposal
         tools carry the proposed values (secrets included); the whole line
-        is truncated to the log entry limit. The
-        client-controlled fragments are JSON-escaped so embedded control
-        characters cannot forge or split log lines.
+        is truncated to the log entry limit. The client-controlled fragments
+        are JSON-escaped so embedded control characters cannot forge or
+        split log lines.
         """
         username = self._user.pretty_name
         level = LogLevel.ERROR if outcome.startswith("error") else LogLevel.INFO
