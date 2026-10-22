@@ -262,6 +262,15 @@ class EntityDescriptor(abc.ABC):
         """
         return target
 
+    def check_read_access(self, user: "User", target: db_models.Model) -> None:
+        """Authorization to *read* ``target`` (current values included).
+
+        READ over the same model that grants MANAGEMENT to propose, as the
+        REST handlers check it before returning an item. Raises AccessDenied.
+        """
+        if not permissions.has_access(user, self.permission_target(target), types.permissions.PermissionType.READ):
+            raise rest_exceptions.AccessDenied()
+
     def secret_names(self, for_type: str, target: db_models.Model | None = None) -> set[str]:
         """Names of the secret fields of one subtype."""
         return {d["name"] for d in self.field_definitions(for_type, target) if d.get("secret")}
