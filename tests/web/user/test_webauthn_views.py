@@ -41,6 +41,7 @@ from cryptography.hazmat.primitives.asymmetric import ec
 from django.urls import reverse
 
 from uds import models
+from uds.core import consts
 from uds.core import types
 from uds.core.managers.crypto.webauthn import b64url_decode, b64url_encode
 from uds.core.util.config import GlobalConfig
@@ -174,6 +175,24 @@ class WebAuthnViewsTest(test.WEBTestCase):
         # Failed login: pending registration is discarded
         self.do_login(self.user.name, "wrong password", self.auth.uuid)
         self.assertFalse(self._reloaded_user().webauthn_credentials)
+
+    def test_unfinished_registration_ignored_on_login(self) -> None:
+        # save_start without save_finish (prompt cancelled or timed out)
+        self.post_json(
+            reverse("webapi.webauthn.save_start"),
+            {"username": self.user.name, "auth_id": self.auth.uuid},
+        )
+        response = self.client.post(
+            reverse("page.login"),
+            {
+                "user": self.user.name,
+                "password": self.user.name,
+                "authenticator": self.auth.uuid,
+            },
+        )
+        self.assertEqual(response.status_code, 302)
+        self.assertFalse(self._reloaded_user().webauthn_credentials)
+        self.assertNotIn(consts.webauthn.SESSION_SAVE_DATA, self.client.session)
 
     def test_unlock_flow(self) -> None:
         self._register_and_login()
