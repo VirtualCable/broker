@@ -322,6 +322,39 @@ class MutabilityToolsRpcTest(rest.test.RESTTestCase):
         result = self._result_json(self._call("get_servicepool_group", {"target_uuid": pool.uuid}))
         self.assertEqual(result["target_uuid"], pool.uuid)
 
+    def test_service_discovery_requires_read_on_parent_provider(self) -> None:
+        staff = create_db_users(create_db_authenticator(), is_staff=True)[0]
+        service = create_db_service(self.provider)
+        arguments = {"action_type": "service.update", "target_uuid": service.uuid}
+        self.login_with_api_token(user=staff, as_admin=False)
+
+        body = self._call("get_mutable_fields", arguments)
+        self.assertIn("error", body)
+        self.assertNotIn("result", body)
+
+        permissions.add_user_permission(staff, self.provider, types.permissions.PermissionType.READ)
+        self.login_with_api_token(user=staff, as_admin=False)
+        result = self._result_json(self._call("get_mutable_fields", arguments))
+        self.assertEqual(result["target_uuid"], service.uuid)
+
+    def test_management_permission_grants_discovery(self) -> None:
+        staff = create_db_users(create_db_authenticator(), is_staff=True)[0]
+        permissions.add_user_permission(staff, self.provider, types.permissions.PermissionType.MANAGEMENT)
+        self.login_with_api_token(user=staff, as_admin=False)
+
+        result = self._result_json(self._call("get_mutable_fields", {"target_uuid": self.provider.uuid}))
+        self.assertEqual(result["target_uuid"], self.provider.uuid)
+
+    def test_read_on_provider_does_not_open_pool_descriptor(self) -> None:
+        staff = create_db_users(create_db_authenticator(), is_staff=True)[0]
+        pool = create_db_servicepool(create_db_service(self.provider), create_db_osmanager())
+        permissions.add_user_permission(staff, self.provider, types.permissions.PermissionType.READ)
+        self.login_with_api_token(user=staff, as_admin=False)
+
+        body = self._call("get_servicepool_group", {"target_uuid": pool.uuid})
+        self.assertIn("error", body)
+        self.assertNotIn("result", body)
+
     def test_create_flow_enforces_open_cap(self) -> None:
         limit = mock.patch.object(
             GlobalConfig, "MCP_MAX_FLOWS_PER_USER", mock.Mock(as_int=mock.Mock(return_value=2))
