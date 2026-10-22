@@ -31,6 +31,7 @@ Author: Andres Schumann, aschumann at virtualcable dot es
 
 from django.utils import translation
 
+from uds.core.messaging import config as messaging_config
 from uds.core.util.config import Config, GlobalConfig
 
 from ...utils.test import UDSTestCase
@@ -38,6 +39,8 @@ from ...utils.test import UDSTestCase
 
 class ConfigGroupsTest(UDSTestCase):
     def test_declared_group_reaches_overview(self) -> None:
+        for value in (GlobalConfig.MAX_LOGIN_TRIES, GlobalConfig.CACHE_CHECK_DELAY):
+            value.get(force=True)
         with translation.override("en"):
             values = Config.get_config_values()
         self.assertEqual(values["Security"]["maxLoginTries"]["group"], "Login and access")
@@ -72,18 +75,15 @@ class ConfigGroupsTest(UDSTestCase):
         self.assertEqual(len(labels), len(set(labels)))
 
     def test_every_visible_core_value_has_a_group(self) -> None:
-        core_sections = {
-            Config.SectionType.GLOBAL,
-            Config.SectionType.SECURITY,
-            Config.SectionType.CUSTOM,
-            Config.SectionType.MCP,
-            Config.SectionType.ADMIN,
-            Config.SectionType.STATS,
-        }
-        GlobalConfig.initialize()
+        declared = [
+            value
+            for value in (*vars(GlobalConfig).values(), *vars(messaging_config).values())
+            if isinstance(value, Config.Value)
+        ]
+        self.assertTrue(declared)
         ungrouped = [
-            f"{cfg.section()}.{cfg.key()}"
-            for cfg in Config.enumerate()
-            if cfg.section() in core_sections and not cfg.get_group()
+            f"{value.section()}.{value.key()}"
+            for value in declared
+            if value.get_type() != Config.FieldType.HIDDEN and not value.get_group()
         ]
         self.assertEqual(ungrouped, [])
