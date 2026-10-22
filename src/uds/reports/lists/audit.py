@@ -178,7 +178,7 @@ class ListReportAuditCSV(ListReport):
             ]
         )
 
-        for line in self.gen_data():
-            writer.writerow(line)
+        for created, *rest in self.gen_data():
+            writer.writerow([dateutils.as_utc_iso(created), *rest])
 
         return output.getvalue().encode()

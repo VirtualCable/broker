@@ -35,6 +35,7 @@ from django.utils.translation import gettext
 from django.utils.translation import gettext_lazy as _
 
 from uds.core.ui import gui
+from uds.core.util import dateutils
 from uds.models import ServerGroup
 
 from .base import ListReport
@@ -98,6 +99,7 @@ class ServersListReport(ListReport):
                         "maintenance": gettext("Yes") if server.maintenance_mode else gettext("No"),
                         "locked_until": server.locked_until or "",
                         "last_stats": _stamp_as_str(stats.stamp) if stats else gettext("Never"),
+                        "last_stats_at": _stamp_as_datetime(stats.stamp) if stats else None,
                         "users": stats.current_users if stats else "",
                         "cpu": f"{stats.cpuused * 100:.1f}" if stats else "",
                         "memory": (f"{stats.memused * 100 / stats.memtotal:.1f}" if stats and stats.memtotal else ""),
@@ -157,8 +159,8 @@ class ServersListReportCSV(ServersListReport):
                     r["os"],
                     r["version"],
                     r["maintenance"],
-                    r["locked_until"],
-                    r["last_stats"],
+                    dateutils.as_utc_iso(r["locked_until"]) if r["locked_until"] else "",
+                    dateutils.as_utc_iso(r["last_stats_at"]) if r["last_stats_at"] else gettext("Never"),
                     r["users"],
                     r["cpu"],
                     r["memory"],
@@ -171,3 +173,9 @@ def _stamp_as_str(stamp: float) -> str:
     if not stamp:
         return gettext("Never")
     return str(timezone.make_aware(datetime.datetime.fromtimestamp(stamp)))
+
+
+def _stamp_as_datetime(stamp: float) -> datetime.datetime | None:
+    if not stamp:
+        return None
+    return datetime.datetime.fromtimestamp(stamp, tz=datetime.timezone.utc)

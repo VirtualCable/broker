@@ -29,6 +29,8 @@
 Author: Adolfo Gómez, dkmaster at dkmon dot com
 """
 
+from django.utils import timezone
+
 from uds.core.util.model import sql_now
 
 import calendar
@@ -78,3 +80,12 @@ def yesterday() -> datetime.date:
 
 def tomorrow() -> datetime.date:
     return today() + datetime.timedelta(days=1)
+
+
+def as_utc_iso(dt: datetime.datetime | None) -> str:
+    """ISO 8601 in UTC with ``Z`` suffix. Naive datetimes are taken as broker local time."""
+    if dt is None:
+        return ""
+    if timezone.is_naive(dt):
+        dt = timezone.make_aware(dt)
+    return dt.astimezone(datetime.timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")

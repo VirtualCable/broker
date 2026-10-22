@@ -199,7 +199,7 @@ class AdminActivityReportCSV(AdminActivityReport):
                     v["requests"],
                     v["errors"],
                     v["error_pct"],
-                    v["last_seen"],
+                    dateutils.as_utc_iso(v["last_seen"]),
                     v["top_paths"],
                 ]
             )

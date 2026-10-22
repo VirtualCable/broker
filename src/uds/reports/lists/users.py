@@ -41,6 +41,7 @@ from django.utils.translation import gettext_lazy as _
 
 from uds.core import types
 from uds.core.ui import gui
+from uds.core.util import dateutils
 from uds.models import Authenticator
 
 from .base import ListReport
@@ -116,7 +117,7 @@ class ListReportsUsersCSV(ListReportUsers):
         writer.writerow([gettext("User ID"), gettext("Real Name"), gettext("Last access")])
 
         for v in users:
-            writer.writerow([v.name, v.real_name, v.last_access])
+            writer.writerow([v.name, v.real_name, dateutils.as_utc_iso(v.last_access)])
 
         return output.getvalue().encode()
 

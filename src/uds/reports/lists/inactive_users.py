@@ -37,6 +37,7 @@ from django.utils.translation import gettext_lazy as _
 from uds.core import types
 from uds.core.consts import NEVER
 from uds.core.ui import gui
+from uds.core.util import dateutils
 from uds.models import Authenticator
 
 from .base import ListReport
@@ -190,5 +191,8 @@ class InactiveUsersReportCSV(InactiveUsersReport):
         )
         rows, _auth_label = self.get_data()
         for v in rows:
-            writer.writerow([v["auth"], v["name"], v["real_name"], v["last_access"], v["inactive_days"]])
+            last_access = v["last_access"]
+            if isinstance(last_access, datetime.datetime):
+                last_access = dateutils.as_utc_iso(last_access)
+            writer.writerow([v["auth"], v["name"], v["real_name"], last_access, v["inactive_days"]])
         return output.getvalue().encode()

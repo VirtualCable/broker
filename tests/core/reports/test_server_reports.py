@@ -30,13 +30,16 @@ minimal valid form payload and `generate()` is invoked, over seeded accumulated
 counters, so query/template/chart errors are caught.
 """
 
+import csv
 import datetime
+import io
 import logging
 import random
 import typing
 
 import pytest
 
+from django.test import override_settings
 from django.utils import timezone
 
 from uds import models
@@ -246,3 +249,30 @@ class ServersListTest(_ServerReportsBase):
         self.assertIn(reporting.hostname, _listed(False))
         self.assertNotIn(reporting.hostname, _listed(True))
         self.assertEqual(len(_listed(True)), self.group.servers.count() - 1)
+
+    def test_only_stale_lists_servers_with_outdated_stats(self) -> None:
+        outdated = self.group.servers.all()[0]
+        fixtures_servers.store_stats(outdated, fixtures_servers.outdated_stats_stamp())
+
+        r = ServersListReport()
+        r.server_group.value = "0-0-0-0"  # type: ignore[assignment]
+        r.only_stale.value = True
+
+        self.assertIn(outdated.hostname, [row["server"] for row in r.get_data()])
+
+    @override_settings(TIME_ZONE="Europe/Madrid")
+    def test_csv_timestamps_in_utc_iso(self) -> None:
+        server = self.group.servers.order_by("hostname", "ip")[0]
+        stats_stamp = datetime.datetime(2024, 1, 15, 12, 0, 0, tzinfo=datetime.timezone.utc).timestamp()
+        fixtures_servers.store_stats(server, stats_stamp)
+        server.locked_until = datetime.datetime(2024, 1, 15, 13, 30, 0, tzinfo=datetime.timezone.utc)
+        server.save(update_fields=["locked_until"])
+
+        r = ServersListReportCSV()
+        r.server_group.value = self.group.uuid  # type: ignore[assignment]
+        r.only_stale.value = False
+        rows = list(csv.reader(io.StringIO(r.generate().decode())))
+        row = next(row for row in rows[1:] if row[1] == server.hostname)
+
+        self.assertEqual(row[8], "2024-01-15T13:30:00Z")
+        self.assertEqual(row[9], "2024-01-15T12:00:00Z")
