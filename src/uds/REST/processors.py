@@ -58,7 +58,11 @@ def _sanitize_params(params: typing.Any) -> dict[str, typing.Any]:
     if not isinstance(params, collections.abc.Mapping):
         return {}
     typed_params = typing.cast("collections.abc.Mapping[str, typing.Any]", params)
-    return {k: v for k, v in typed_params.items() if k not in ("password", "passwd", "token", "secret", "scrambler")}
+    return {
+        k: v
+        for k, v in typed_params.items()
+        if k not in ("password", "passwd", "token", "secret", "scrambler", "rdp")
+    }
 
 
 if typing.TYPE_CHECKING:
@@ -213,7 +217,7 @@ class MarshallerProcessor(ContentProcessor):
 
             return typing.cast(dict[str, typing.Any], res)
         except Exception as e:
-            logger.exception("parsing %s: %s", self.mime_type, self._request.body.decode("utf8"))
+            logger.exception("parsing %s request body of %s bytes", self.mime_type, len(self._request.body))
             raise ParametersException(str(e))
 
     @typing.override

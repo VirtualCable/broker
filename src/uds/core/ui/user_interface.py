@@ -1726,7 +1726,6 @@ class UserInterface(metaclass=UserInterfaceType):
                 fields[fld] = ensure.as_list(fld_gui.value)
             else:
                 fields[fld] = fld_gui.value
-        logger.debug("Values Dict: %s", fields)
         return fields
 
     def serialize_fields(

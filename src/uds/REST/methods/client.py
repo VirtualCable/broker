@@ -99,7 +99,8 @@ class Client(Handler):
                 "percent": percent,
             }
 
-        logger.debug("Client Result: %s", res)
+        if error:
+            logger.debug("Client error: %s", res["error"])
 
         return res
 
@@ -139,9 +140,8 @@ class Client(Handler):
             src_ip = self._params.get("ip", src_ip)
 
         logger.debug(
-            "Got Ticket: %s, scrambled: %s, Hostname: %s, Ip: %s",
+            "Got Ticket: %s, Hostname: %s, Ip: %s",
             ticket,
-            scrambler,
             hostname,
             src_ip,
         )
@@ -157,7 +157,6 @@ class Client(Handler):
         try:
             self._request.user = User.objects.get(uuid=data["user"])
             self._request.principal = types.auth.AuthenticatedPrincipal.user_client_ticket(self._request.user)
-            logger.debug(data)
             info = UserServiceManager.manager().get_user_service_info(
                 self._request.user,
                 self._request.os,
@@ -182,8 +181,6 @@ class Client(Handler):
                 password,
                 self._request,
             )
-
-            logger.debug("Script: %s", transport_script)
 
             # Log is enabled if user has log_enabled property set to
             try:
@@ -306,7 +303,7 @@ class Client(Handler):
         """
         Processes get requests
         """
-        logger.debug("Client args for GET: %s", self._args)
+        logger.debug("Client args for GET: %s", self._args[:1])
 
         def _error() -> None:
             raise exceptions.rest.RequestError("Invalid request")
