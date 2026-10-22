@@ -1,5 +1,14 @@
 'use strict';
-import { Tasks, RDP } from 'runtime';
+import { Dialog, Tasks, RDP } from 'runtime';
+
+if (!data.user || !data.password) {
+    const credentials = await Dialog.credentials({ user: data.user });
+    if (credentials === null) {
+        throw new Error('Connection cancelled by user');
+    }
+    data.user = credentials.user;
+    data.password = credentials.password;
+}
 
 const tunnel = await Tasks.startTunnel({
     addr: data.tunnel.host,
