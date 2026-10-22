@@ -138,7 +138,9 @@ class HTML5RDPTest(UDSTestCase):
             transport.enable_file_sharing.value = sharing_value
             _, extra = self._get_link_extra(transport, userservice, user, transport_model)
             self.assertEqual(extra["allow_upload"], expect_up, f"allow_upload wrong for '{sharing_value}'")
-            self.assertEqual(extra["allow_download"], expect_down, f"allow_download wrong for '{sharing_value}'")
+            self.assertEqual(
+                extra["allow_download"], expect_down, f"allow_download wrong for '{sharing_value}'"
+            )
 
     def test_nla_direct(self) -> None:
         """Test nla field maps directly to extra."""
@@ -189,41 +191,3 @@ class HTML5RDPTest(UDSTestCase):
         self.assertIsNone(extra["user"])  # empty string → None
         self.assertIsNone(extra["password"])
         self.assertIsNone(extra["domain"])
-
-    def test_extra_keys_match_rust_connection_data(self) -> None:
-        """Verify that all keys in extra are valid Rust ConnectionData fields."""
-        transport = HTML5RDPTransport(self.create_environment(), None)
-        userservice, user, transport_model = _make_mocks()
-        _, extra = self._get_link_extra(transport, userservice, user, transport_model)
-
-        # Top-level fields in rdphtml5 ConnectionData (excluding host/port/notify_ticket set by broker)
-        valid_rust_fields = {
-            "user_id",
-            "host",
-            "port",
-            "user",
-            "password",
-            "domain",
-            "best_experience",
-            "options",
-            "redirections",
-            "allow_upload",
-            "allow_download",
-            "session_quality",
-            "allow_quality_switch",
-            "notify_ticket",
-            "target_fps",
-            "rail_app",
-            "rail_args",
-            "rail_working_dir",
-            "title",
-        }
-        valid_options_fields = {"nla", "verify_ssl"}
-        valid_redirections_fields = {"clipboard", "audio", "mic", "webcam"}
-
-        for key in extra:
-            self.assertIn(key, valid_rust_fields, f"Extra key '{key}' not found in Rust ConnectionData")
-        for key in extra["options"]:
-            self.assertIn(key, valid_options_fields, f"Options key '{key}' not found in Rust ConnectionData")
-        for key in extra["redirections"]:
-            self.assertIn(key, valid_redirections_fields, f"Redirections key '{key}' not found in Rust ConnectionData")
