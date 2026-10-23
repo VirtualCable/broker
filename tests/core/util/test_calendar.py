@@ -45,6 +45,12 @@ class CalendarTest(UDSTestCase):
     @typing.override
     def setUp(self) -> None:
         createCalendars()
+        # The fixture times are UTC and the tests build them with make_aware.
+        timezone.activate(datetime.timezone.utc)
+
+    @typing.override
+    def tearDown(self) -> None:
+        timezone.deactivate()
 
     def test_calendar_dayly(self) -> None:
         cal = Calendar.objects.get(uuid="2cf6846b-d889-57ce-bb35-e647040a95b6")
@@ -226,23 +232,15 @@ class CalendarTest(UDSTestCase):
         self.assertFalse(chk.check(timezone.make_aware(datetime.datetime(2015, 4, 15, 8, 0, 0))))  # ruff: ignore[DTZ001]
 
     def test_check_uses_user_tz_for_day_key_when_db_is_utc(self) -> None:
-        """The cache key is the user's wall-clock day, not the database day.
+        """The checker gives the same answer whatever zone Django runs in.
 
-        Setup: Django is configured for ``Europe/Madrid`` (UTC+1 in
-        February).  The fixture's "Test Hours" rule lives on
-        ``2015-02-01T00:00:00+00:00..02:00:00+00:00`` — so it is active
-        only on 2015-02-01 UTC.  In Madrid local time that maps to
-        ``2015-02-01T01:00:00..03:00:00`` (still the same day).
+        Rules are UTC instants evaluated in UTC, so the cache key (which day)
+        and the minute index both use the UTC day. Django is pinned to
+        ``Europe/Madrid`` (UTC+1 in February) to check that the local zone
+        does not leak into either of them.
 
-        A check at 00:30 UTC on 2015-02-01 is 01:30 Madrid on the same
-        local day: must be inside the rule window (True).
-
-        A check at 23:30 UTC on 2015-01-31 is 00:30 Madrid on 2015-02-01:
-        must also be inside the rule window (True).
-
-        Before the ``astimezone`` fix, the bitarray key was the UTC day,
-        so the 23:30 UTC lookup would key on 2015-01-31 (no rule there)
-        and incorrectly return False.
+        The fixture's "Test Hours" rule lives on
+        ``2015-02-01T00:00:00+00:00..02:00:00+00:00``.
         """
         madrid = zoneinfo.ZoneInfo("Europe/Madrid")
         # Pin the operator's tz to Madrid for the duration of the test.
@@ -260,10 +258,10 @@ class CalendarTest(UDSTestCase):
             # 00:30 UTC on 2015-02-01 is 01:30 Madrid on 2015-02-01.
             # Inside the rule window (00:00..02:00 UTC): True.
             self.assertTrue(chk.check(datetime.datetime(2015, 2, 1, 0, 30, 0, tzinfo=datetime.timezone.utc)))
-            # 23:30 UTC on 2015-01-31 is 00:30 Madrid on 2015-02-01.
-            # Before the fix this keyed on 2015-01-31 and returned False;
-            # after the fix it keys on 2015-02-01 and returns True.
-            self.assertTrue(chk.check(datetime.datetime(2015, 1, 31, 23, 30, 0, tzinfo=datetime.timezone.utc)))
+            # 23:30 UTC on 2015-01-31 is 00:30 Madrid on 2015-02-01, but it is
+            # 30 minutes before the rule in UTC, where rules are evaluated:
+            # the Madrid zone of Django must not move it into the window.
+            self.assertFalse(chk.check(datetime.datetime(2015, 1, 31, 23, 30, 0, tzinfo=datetime.timezone.utc)))
             # 03:00 UTC on 2015-02-01 is 04:00 Madrid on 2015-02-01.
             # Past the 2h rule window: False.
             self.assertFalse(chk.check(datetime.datetime(2015, 2, 1, 3, 0, 0, tzinfo=datetime.timezone.utc)))

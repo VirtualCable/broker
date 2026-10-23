@@ -53,15 +53,20 @@ class CalendarUpdateTest(FlowTestCase):
         action_type = CalendarUpdate()
 
         names = [d["name"] for d in action_type.field_definitions("calendar")]
-        self.assertEqual(sorted(names), ["comments", "name", "tags"])
+        self.assertEqual(sorted(names), ["comments", "name", "tags", "tz"])
 
-        snapshot = action_type.snapshot_values(calendar, ["name", "tags"])
-        self.assertEqual(snapshot, {"name": "work days", "tags": []})
+        snapshot = action_type.snapshot_values(calendar, ["name", "tags", "tz"])
+        self.assertEqual(snapshot, {"name": "work days", "tags": [], "tz": "UTC"})
 
         base = action_type.fingerprint(calendar)
         calendar.name = "work days changed"
         calendar.save(update_fields=["name"])
         self.assertNotEqual(base, action_type.fingerprint(calendar))
+
+        changed_name = action_type.fingerprint(calendar)
+        calendar.tz = "Europe/Madrid"
+        calendar.save(update_fields=["tz"])
+        self.assertNotEqual(changed_name, action_type.fingerprint(calendar))
 
     def test_resolve_unknown_target_is_not_found(self) -> None:
         with self.assertRaises(rest_exceptions.NotFound):
@@ -99,7 +104,7 @@ class CalendarCreateDeleteTest(FlowTestCase):
                 (target.handler, target.path, target.method.value, target.args),
                 (Calendars, "calendars", "POST", ()),
             )
-        self.assertEqual(params, {"name": "new calendar", "comments": "", "tags": []})
+        self.assertEqual(params, {"name": "new calendar", "comments": "", "tags": [], "tz": "UTC"})
         self.assertIn("created", summary)
         self.assertIn("cal-uuid", summary)
 

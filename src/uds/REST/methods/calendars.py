@@ -33,11 +33,14 @@ import dataclasses
 import datetime
 import logging
 import typing
+import zoneinfo
 
 from django.db import models
 from django.utils.translation import gettext_lazy as _
 
+from uds.core import exceptions
 from uds.core import types
+from uds.core import ui
 from uds.core.util import ensure
 from uds.core.util import permissions
 from uds.core.util import ui as ui_utils
@@ -57,6 +60,7 @@ class CalendarItem(types.rest.BaseRestItem):
     tags: list[str]
     comments: str
     modified: datetime.datetime
+    tz: str
     number_rules: int
     number_access: int
     number_actions: int
@@ -71,7 +75,7 @@ class Calendars(ModelHandler[CalendarItem]):
     MODEL = Calendar
     DETAIL: typing.ClassVar[dict[str, type["DetailHandler[typing.Any]"]] | None] = {"rules": CalendarRules}
 
-    FIELDS_TO_SAVE: typing.ClassVar[list[str]] = ["name", "comments", "tags"]
+    FIELDS_TO_SAVE: typing.ClassVar[list[str]] = ["name", "comments", "tags", "tz:_"]
 
     TABLE = (
         ui_utils.TableBuilder(_("Calendars"))
@@ -92,6 +96,15 @@ class Calendars(ModelHandler[CalendarItem]):
     )
 
     @typing.override
+    def pre_save(self, fields: dict[str, typing.Any]) -> None:
+        if "tz" not in fields:
+            return
+        try:
+            zoneinfo.ZoneInfo(fields["tz"])
+        except (zoneinfo.ZoneInfoNotFoundError, ValueError) as e:
+            raise exceptions.rest.RequestError(_("Invalid time zone: {}").format(fields["tz"])) from e
+
+    @typing.override
     def get_item(self, item: "models.Model") -> CalendarItem:
         item = ensure.is_instance(item, Calendar)
         return CalendarItem(
@@ -100,6 +113,7 @@ class Calendars(ModelHandler[CalendarItem]):
             tags=[tag.tag for tag in item.tags.all()],
             comments=item.comments,
             modified=item.modified,
+            tz=item.tz,
             number_rules=item.rules.count(),
             number_access=item.calendaraccess_set.all().values("service_pool").distinct().count(),
             number_actions=item.calendaraction_set.all().values("service_pool").distinct().count(),
@@ -113,5 +127,13 @@ class Calendars(ModelHandler[CalendarItem]):
             .add_stock_field(types.rest.stock.StockField.NAME)
             .add_stock_field(types.rest.stock.StockField.COMMENTS)
             .add_stock_field(types.rest.stock.StockField.TAGS)
+            .add_choice(
+                name="tz",
+                label=_("Time zone"),
+                choices=[ui.gui.choice_item(tz, tz) for tz in sorted(zoneinfo.available_timezones())],
+                tooltip=_("Time zone the hours of the rules of this calendar are shown and entered in"),
+                default="UTC",
+                required=True,
+            )
             .build()
         )

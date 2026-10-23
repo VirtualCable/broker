@@ -36,7 +36,6 @@ import typing
 
 from django.db import IntegrityError
 from django.db import models
-from django.utils import timezone
 from django.utils.translation import gettext as _
 
 from uds.core import exceptions
@@ -87,11 +86,7 @@ class CalendarRules(DetailHandler[CalendarRuleItem]):  # pylint: disable=too-man
             name=item.name,
             comments=item.comments,
             start=item.start,
-            end=(
-                timezone.make_aware(datetime.datetime.combine(item.end, datetime.time.max))
-                if item.end
-                else None
-            ),
+            end=item.end,
             frequency=item.frequency,
             interval=item.interval,
             duration=item.duration,
@@ -126,7 +121,7 @@ class CalendarRules(DetailHandler[CalendarRuleItem]):  # pylint: disable=too-man
             ui_utils.TableBuilder(_("Rules of {0}").format(parent.name))
             .text_column(name="name", title=_("Name"))
             .datetime_column(name="start", title=_("Start"))
-            .date(name="end", title=_("End"))
+            .datetime_column(name="end", title=_("End"))
             .dict_column(name="frequency", title=_("Frequency"), dct=FrequencyInfo.literals_dict())
             .numeric_column(name="interval", title=_("Interval"))
             .numeric_column(name="duration", title=_("Duration"))
@@ -158,10 +153,10 @@ class CalendarRules(DetailHandler[CalendarRuleItem]):  # pylint: disable=too-man
         if int(fields["interval"]) < 1:
             raise exceptions.rest.RequestError("Repeat must be greater than zero")
 
-        # Convert timestamps to datetimes
-        fields["start"] = timezone.make_aware(datetime.datetime.fromtimestamp(fields["start"]))
+        # Timestamps are UTC instants (see CalendarRule.start/end)
+        fields["start"] = datetime.datetime.fromtimestamp(fields["start"], datetime.timezone.utc)
         if fields["end"] is not None:
-            fields["end"] = timezone.make_aware(datetime.datetime.fromtimestamp(fields["end"]))
+            fields["end"] = datetime.datetime.fromtimestamp(fields["end"], datetime.timezone.utc)
 
         calendar_rule: CalendarRule
         try:

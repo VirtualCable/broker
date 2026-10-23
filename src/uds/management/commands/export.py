@@ -228,6 +228,7 @@ def calendar_exporter(calendar: models.Calendar) -> dict[str, typing.Any]:
             "name": calendar.name,
             "comments": calendar.comments,
             "modified": calendar.modified,
+            "tz": calendar.tz,
         }
     )
     return c

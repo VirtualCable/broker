@@ -81,7 +81,7 @@ CALENDAR_DATA: collections.abc.Mapping[str, list[dict[str, str | int | None]]] =
             "name": "Rule interval 1 day, no end",
         },
         {
-            "end": "2015-10-01",
+            "end": "2015-10-01T23:59:59+00:00",
             "uuid": "f20d8841-72d2-5054-b590-37dc19729b80",
             "duration_unit": "MINUTES",
             "interval": 1,
@@ -105,7 +105,7 @@ CALENDAR_DATA: collections.abc.Mapping[str, list[dict[str, str | int | None]]] =
             "name": "Rule with 1 week interval, no end",
         },
         {
-            "end": "2015-10-01",
+            "end": "2015-10-01T23:59:59+00:00",
             "uuid": "53c94b8a-6ab4-5c06-b863-083e88bd8469",
             "duration_unit": "MINUTES",
             "interval": 1,
@@ -129,7 +129,7 @@ CALENDAR_DATA: collections.abc.Mapping[str, list[dict[str, str | int | None]]] =
             "name": "Rule with 1 month interval, no end",
         },
         {
-            "end": "2015-11-01",
+            "end": "2015-11-01T23:59:59+00:00",
             "uuid": "0c4e2086-f807-5801-889c-3d568e42033f",
             "duration_unit": "MINUTES",
             "interval": 1,
@@ -153,7 +153,7 @@ CALENDAR_DATA: collections.abc.Mapping[str, list[dict[str, str | int | None]]] =
             "name": "Rule for Mon, Wed & Fri, no end",
         },
         {
-            "end": "2015-10-01",
+            "end": "2015-10-01T23:59:59+00:00",
             "uuid": "2c16056e-97b1-5a4e-ae34-ab99c73ddd8f",
             "duration_unit": "MINUTES",
             "interval": 42,
@@ -165,7 +165,7 @@ CALENDAR_DATA: collections.abc.Mapping[str, list[dict[str, str | int | None]]] =
             "name": "Rule for Mon, Wed & Fri, with end",
         },
         {
-            "end": "2015-01-01",
+            "end": "2015-01-01T23:59:59+00:00",
             "uuid": "a4dd4e82-65bd-5824-bd78-95eafb40abf5",
             "duration_unit": "MINUTES",
             "interval": 1,
@@ -177,7 +177,7 @@ CALENDAR_DATA: collections.abc.Mapping[str, list[dict[str, str | int | None]]] =
             "name": "Test Minutes",
         },
         {
-            "end": "2015-02-01",
+            "end": "2015-02-01T23:59:59+00:00",
             "uuid": "9194d314-a6b0-5d7f-a3e3-08ff475e271c",
             "duration_unit": "HOURS",
             "interval": 1,
@@ -189,7 +189,7 @@ CALENDAR_DATA: collections.abc.Mapping[str, list[dict[str, str | int | None]]] =
             "name": "Test Hours",
         },
         {
-            "end": "2015-03-01",
+            "end": "2015-03-01T23:59:59+00:00",
             "uuid": "bffb7290-16eb-5be0-adb2-6b454d6d7b49",
             "duration_unit": "DAYS",
             "interval": 1,
@@ -201,7 +201,7 @@ CALENDAR_DATA: collections.abc.Mapping[str, list[dict[str, str | int | None]]] =
             "name": "Test Days",
         },
         {
-            "end": "2015-04-01",
+            "end": "2015-04-01T23:59:59+00:00",
             "uuid": "dc8e30e9-2bf2-5008-a46b-2457376fb2e0",
             "duration_unit": "WEEKS",
             "interval": 1,

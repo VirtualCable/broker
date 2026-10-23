@@ -48,6 +48,9 @@ class Calendar(UUIDModel, TaggingMixin):
     name = models.CharField(max_length=128, default="")
     comments = models.CharField(max_length=256, default="")
     modified = models.DateTimeField(auto_now=True)
+    # IANA zone the rules were entered in. Rules are stored and evaluated in
+    # UTC; this only lets clients show and edit them in the user's local time.
+    tz = models.CharField(max_length=64, default="UTC")
 
     # "fake" declarations for type checking
     # objects: 'models.manager.Manager["Calendar"]'

@@ -22,12 +22,10 @@ machinery.
 """
 
 import collections.abc
-import datetime
 import typing
 
 from asgiref.sync import sync_to_async
 from django.db import models as db_models
-from django.utils import timezone
 
 from uds import models
 from uds.core import types
@@ -186,11 +184,7 @@ class CalendarRuleUpdate(mutability_base.MutableActionType):
                 snapshot[name] = int(rule.start.timestamp())
             elif name == "end":
                 # Same shape the REST item serialization uses for end
-                snapshot[name] = (
-                    int(timezone.make_aware(datetime.datetime.combine(rule.end, datetime.time.max)).timestamp())
-                    if rule.end
-                    else None
-                )
+                snapshot[name] = int(rule.end.timestamp()) if rule.end else None
             elif name == "interval":
                 snapshot[name] = rule.interval
             elif name == "duration":

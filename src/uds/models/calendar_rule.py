@@ -37,7 +37,6 @@ import typing
 
 from django.db import models
 from django.utils.translation import gettext_lazy as _
-from django.utils import timezone
 from dateutil import rrule as rules
 
 from .uuid_model import UUIDModel
@@ -125,8 +124,9 @@ class CalendarRule(UUIDModel):
     name = models.CharField(max_length=128)
     comments = models.CharField(max_length=256)
 
+    # Both are UTC instants; `end` is the last instant at which an occurrence may start.
     start = models.DateTimeField()
-    end = models.DateField(null=True, blank=True)
+    end = models.DateTimeField(null=True, blank=True)
     frequency = models.CharField(choices=FrequencyInfo.as_choices(), max_length=32)
     interval = models.IntegerField(
         default=1
@@ -148,15 +148,18 @@ class CalendarRule(UUIDModel):
         if self.interval == 0:  # Fix 0 duration intervals
             self.interval = 1
 
-        end = datetime.datetime.combine(
-            self.end if self.end else datetime.datetime.max.replace(tzinfo=datetime.timezone.utc).date(),
-            datetime.datetime.max.time(),
+        # dateutil repeats on the tzinfo of dtstart, so both are pinned to UTC:
+        # a rule fires at the same UTC time whatever zone the server runs in.
+        start = self.start.astimezone(datetime.timezone.utc)
+        end = (
+            self.end.astimezone(datetime.timezone.utc)
+            if self.end
+            else datetime.datetime.max.replace(tzinfo=datetime.timezone.utc)
         )
-        end = timezone.make_aware(end)
 
         # If at end of interval is requested, displace dstart to match end of interval
         dstart = (
-            self.start if not at_end_of_interval else self.start + datetime.timedelta(minutes=self.duration_as_minutes)
+            start if not at_end_of_interval else start + datetime.timedelta(minutes=self.duration_as_minutes)
         )
 
         if self.frequency == str(FrequencyInfo.WEEKDAYS):

@@ -125,6 +125,8 @@ class CalendarUpdate(mutability_base.MutableActionType):
                 snapshot[name] = calendar.comments
             elif name == "tags":
                 snapshot[name] = sorted(t.tag for t in calendar.tags.all())  # type: ignore[attr-defined]
+            elif name == "tz":
+                snapshot[name] = calendar.tz
         return snapshot
 
     @typing.override
@@ -194,6 +196,7 @@ class CalendarUpdate(mutability_base.MutableActionType):
             "name": values.get("name"),
             "comments": values.get("comments", ""),
             "tags": values.get("tags", []),
+            "tz": values.get("tz", "UTC"),
         }
         new_uuid = await mutability_verbs.execute_create(
             RestTarget(Calendars, "calendars", types.rest.CustomMethodMethod.POST),

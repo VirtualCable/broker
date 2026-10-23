@@ -74,7 +74,7 @@ class ModelCalendarTest(UDSTestCase):
                     start=timezone.make_aware(
                         datetime.datetime(2009 + i, (i % 12) + 1, (i % 28) + 1, (i % 24), (i % 60))
                     ),
-                    end=datetime.date(2010 + i, (i % 12) + 1, (i % 28) + 1),
+                    end=datetime.datetime(2010 + i, (i % 12) + 1, (i % 28) + 1, tzinfo=datetime.timezone.utc),
                     frequency=FREQ_NAMES[i % len(FREQ_NAMES)],
                     interval=1,
                     duration=i,
@@ -106,7 +106,9 @@ class ModelCalendarTest(UDSTestCase):
                     rule.start,
                     timezone.make_aware(datetime.datetime(2009 + i, (i % 12) + 1, (i % 28) + 1, (i % 24), (i % 60))),
                 )
-                self.assertEqual(rule.end, datetime.date(2010 + i, (i % 12) + 1, (i % 28) + 1))
+                self.assertEqual(
+                    rule.end, datetime.datetime(2010 + i, (i % 12) + 1, (i % 28) + 1, tzinfo=datetime.timezone.utc)
+                )
                 self.assertEqual(rule.frequency, FREQ_NAMES[i % len(FREQ_NAMES)])
                 self.assertEqual(rule.interval, 1)
                 self.assertEqual(rule.duration, i)
