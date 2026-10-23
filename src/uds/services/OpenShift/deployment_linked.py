@@ -35,11 +35,23 @@ import typing
 from uds.core import types
 
 from .deployment import OpenshiftUserService
+from .openshift import exceptions as oshift_exceptions
+from .openshift import types as oshift_types
 
 if typing.TYPE_CHECKING:
     from .service_linked import OpenshiftLinkedService
 
 logger: logging.Logger = logging.getLogger(__name__)
+
+# printableStatus values a new VM does not recover from without someone fixing the cluster
+FAILED_VM_STATES: typing.Final[frozenset[oshift_types.State]] = frozenset(
+    {
+        oshift_types.State.ERROR,
+        oshift_types.State.FAILED,
+        oshift_types.State.CRASH_LOOP_BACK_OFF,
+        oshift_types.State.DENIED,
+    }
+)
 
 
 class OpenshiftLinkedUserService(OpenshiftUserService):
@@ -76,8 +88,15 @@ class OpenshiftLinkedUserService(OpenshiftUserService):
         if self.service().is_persistent():
             return super().op_create_checker()
 
-        interfaces = self.service().api.get_vm_interfaces(self._name)
+        api = self.service().api
+        interfaces = api.get_vm_interfaces(self._name)
         if not interfaces or not interfaces[0].mac_address:
+            try:
+                status = api.get_vm_info(self._name).status
+            except oshift_exceptions.OpenshiftNotFoundError:
+                return types.states.TaskState.RUNNING  # Not visible yet right after the POST
+            if status in FAILED_VM_STATES:
+                return self.error(f"VM {self._name} failed to start: {status}")
             return types.states.TaskState.RUNNING
 
         self._vmid = self._name

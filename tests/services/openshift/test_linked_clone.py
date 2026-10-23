@@ -275,6 +275,10 @@ class TestLinkedService(UDSTransactionTestCase):
             )
             userservice._name = "lc-001"
             api.get_vm_interfaces.return_value = []
+            api.get_vm_info.side_effect = oshift_exceptions.OpenshiftNotFoundError("not yet")
+            self.assertEqual(userservice.op_create_checker(), types.states.TaskState.RUNNING)
+            api.get_vm_info.side_effect = None
+            api.get_vm_info.return_value = mock.Mock(status=oshift_types.State.STARTING)
             self.assertEqual(userservice.op_create_checker(), types.states.TaskState.RUNNING)
             api.get_vm_interfaces.return_value = [oshift_types.Interface("default", "02:00:00:00:00:02", "10.0.0.2")]
             self.assertEqual(userservice.op_create_checker(), types.states.TaskState.FINISHED)
@@ -310,3 +314,62 @@ class TestEphemeralDeletion(UDSTransactionTestCase):
         with mock.patch.object(client, "do_request", return_value=vm):
             with self.assertRaises(Exception):
                 client.get_vm_pvc_or_dv_name("lc-001")
+
+
+class TestCodexReviewFindings(UDSTransactionTestCase):
+    def test_ephemeral_vm_rejects_templates_with_more_than_one_persistent_disk(self) -> None:
+        client = _client()
+        vm = copy.deepcopy(PUB_VM)
+        vm["spec"]["template"]["spec"]["volumes"].append({"name": "data", "dataVolume": {"name": "pub-1-data"}})
+
+        def fake_do_request(method: str, path: str, **kwargs: typing.Any) -> typing.Any:
+            if method == "GET":
+                return copy.deepcopy(vm)
+            raise AssertionError("must not create the VM")
+
+        with mock.patch.object(client, "do_request", side_effect=fake_do_request):
+            with self.assertRaises(oshift_exceptions.OpenshiftError):
+                client.create_ephemeral_vm("pub-1", "lc-001", "pub-1-disk")
+
+    def test_list_vms_using_pvc_finds_ephemeral_users(self) -> None:
+        client = _client()
+        user = copy.deepcopy(PUB_VM)
+        user["metadata"]["name"] = "lc-001"
+        user["spec"]["template"]["spec"]["volumes"][0] = {
+            "name": "rootdisk",
+            "ephemeral": {"persistentVolumeClaim": {"claimName": "pub-1-disk", "readOnly": True}},
+        }
+        other = copy.deepcopy(PUB_VM)  # the publication itself, uses the PVC as its own dataVolume
+        with mock.patch.object(client, "do_request", return_value={"items": [user, other]}):
+            self.assertEqual(client.list_ephemeral_vms_using_pvc("pub-1-disk"), ["lc-001"])
+
+    def test_publication_delete_waits_while_ephemeral_vms_use_its_disk(self) -> None:
+        with fixtures.patched_provider() as prov:
+            api = typing.cast(mock.MagicMock, prov.api)
+            service = _create_linked_service(prov)
+            publication = fixtures.create_publication(service=service)
+            publication._vmid = publication._name
+            # DESTROY_VALIDATOR runs before DELETE: while it returns RUNNING the disk is not touched
+            api.list_ephemeral_vms_using_pvc.return_value = ["lc-001"]
+            self.assertEqual(publication.op_destroy_validator_checker(), types.states.TaskState.RUNNING)
+            api.delete_vm.assert_not_called()
+            api.list_ephemeral_vms_using_pvc.return_value = []
+            self.assertEqual(publication.op_destroy_validator_checker(), types.states.TaskState.FINISHED)
+            api.list_ephemeral_vms_using_pvc.assert_called_with(f"{publication._name}-disk")
+
+    def test_create_checker_fails_fast_on_failed_vm(self) -> None:
+        with fixtures.patched_provider() as prov:
+            api = typing.cast(mock.MagicMock, prov.api)
+            service = _create_linked_service(prov)
+            userservice = deployment_linked.OpenshiftLinkedUserService(
+                environment=environment.Environment.private_environment(str(uuid.uuid4())),
+                service=service,
+                publication=fixtures.create_publication(service=service),
+                uuid=str(uuid.uuid4()),
+            )
+            userservice._name = "lc-001"
+            api.get_vm_interfaces.return_value = []
+            for failed in (oshift_types.State.CRASH_LOOP_BACK_OFF, oshift_types.State.ERROR, oshift_types.State.FAILED):
+                api.get_vm_info.side_effect = None
+                api.get_vm_info.return_value = mock.Mock(status=failed)
+                self.assertEqual(userservice.op_create_checker(), types.states.TaskState.ERROR, failed)

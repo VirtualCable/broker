@@ -534,6 +534,12 @@ class OpenshiftClient:
 
         template_spec: dict[str, typing.Any] = vm_obj["spec"]["template"]["spec"]
         volumes: list[dict[str, typing.Any]] = template_spec.get("volumes", [])
+        persistent_disks = [vol["name"] for vol in volumes if "dataVolume" in vol or "persistentVolumeClaim" in vol]
+        if len(persistent_disks) > 1:
+            raise exceptions.OpenshiftError(
+                f"VM {source_vm_name} has {len(persistent_disks)} persistent disks ({', '.join(persistent_disks)}): "
+                "non persistent linked clones only support templates with one disk"
+            )
         for vol in volumes:
             data_volume: dict[str, typing.Any] = vol.get("dataVolume") or {}
             pvc: dict[str, typing.Any] = vol.get("persistentVolumeClaim") or {}
@@ -549,6 +555,20 @@ class OpenshiftClient:
 
         logger.info("Creating ephemeral VM '%s' over PVC '%s'.", new_vm_name, source_pvc_name)
         self.do_request("POST", f"/apis/kubevirt.io/v1/namespaces/{self._namespace}/virtualmachines", data=vm_obj)
+
+    def list_ephemeral_vms_using_pvc(self, pvc_name: str) -> list[str]:
+        """Names of the VMs whose ephemeral disk is backed by ``pvc_name``."""
+        response = self.do_request("GET", f"/apis/kubevirt.io/v1/namespaces/{self._namespace}/virtualmachines")
+        users: list[str] = []
+        for vm in response.get("items", []):
+            volumes: list[dict[str, typing.Any]] = vm.get("spec", {}).get("template", {}).get("spec", {}).get("volumes", [])
+            for vol in volumes:
+                ephemeral: dict[str, typing.Any] = vol.get("ephemeral") or {}
+                claim: dict[str, typing.Any] = ephemeral.get("persistentVolumeClaim") or {}
+                if claim.get("claimName") == pvc_name:
+                    users.append(vm["metadata"]["name"])
+                    break
+        return users
 
     def delete_vm(self, vm_name: str) -> bool:
         """
