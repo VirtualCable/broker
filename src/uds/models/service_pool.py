@@ -141,6 +141,10 @@ class ServicePool(UUIDModel, TaggingMixin):
     cache_l1_srvs = models.PositiveIntegerField(default=0)
     cache_l2_srvs = models.PositiveIntegerField(default=0)
     max_srvs = models.PositiveIntegerField(default=0)
+    # This is not the actual publication revision that is in use
+    # is the revision number used for next publication
+    # So THIS cannot be used to test if a userservice is using the active publication
+    # because this number wil be always GREATER at least by 1
     current_pub_revision = models.PositiveIntegerField(default=1)
 
     # "fake" declarations for type checking
