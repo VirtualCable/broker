@@ -420,11 +420,13 @@ class OpenshiftClient:
         new_vm_name: str,
         new_dv_name: str,
         source_pvc_name: str,
+        options: types.MachineOptions | None = None,
     ) -> None:
         """
         Create a new VM from a cloned PVC using DataVolumeTemplates.
         Returns True if the VM was created successfully, else False.
         """
+        options = options or types.MachineOptions()
         path = f"/apis/kubevirt.io/v1/namespaces/{self._namespace}/virtualmachines/{source_vm_name}"
         vm_obj = self.do_request("GET", path)
 
@@ -453,19 +455,24 @@ class OpenshiftClient:
         pvc_spec = {
             "accessModes": access_modes,
             "resources": {"requests": {"storage": pvc_size}},
-            "storageClassName": source_storage_class,
+            "storageClassName": options.storage_class or source_storage_class,
         }
-        if source_volume_mode:
+        # The source volumeMode may not be valid on another class. With the "storage" API
+        # (instead of "pvc") CDI fills the missing volumeMode from the class StorageProfile.
+        volume_key = "storage" if options.storage_class else "pvc"
+        if source_volume_mode and not options.storage_class:
             pvc_spec["volumeMode"] = source_volume_mode
         vm_obj["spec"]["dataVolumeTemplates"] = [
             {
                 "metadata": {"name": new_dv_name},
                 "spec": {
                     "source": {"pvc": {"name": source_pvc_name}},
-                    "pvc": pvc_spec,
+                    volume_key: pvc_spec,
                 },
             }
         ]
+
+        options.apply_to_vm(vm_obj)
 
         interfaces = (
             vm_obj.get("spec", {})
@@ -655,3 +662,54 @@ class OpenshiftClient:
         response = self.do_request("GET", f"/apis/kubevirt.io/v1/namespaces/{self._namespace}/virtualmachines")
         vms = response.get("items", [])
         return [types.VM.from_dict(vm) for vm in vms]
+
+    # Listings for the machine options of the service. All of them are optional for UDS:
+    # cluster-scoped reads need permissions a namespaced user may not have, and multus may
+    # not be installed, so any failure just leaves the list empty (the template value is kept).
+    @cached("storageclasses", consts.CACHE_INFO_DURATION, key_helper=cache_key_helper)
+    def list_storage_classes(self) -> list[types.StorageClass]:
+        try:
+            response = self.do_request("GET", "/apis/storage.k8s.io/v1/storageclasses")
+        except exceptions.OpenshiftError as e:
+            logger.debug("Could not list storage classes: %s", e)
+            return []
+        return [
+            types.StorageClass(
+                name=item["metadata"]["name"],
+                is_default=item["metadata"].get("annotations", {}).get("storageclass.kubernetes.io/is-default-class")
+                == "true",
+            )
+            for item in response.get("items", [])
+        ]
+
+    @cached("instancetypes", consts.CACHE_INFO_DURATION, key_helper=cache_key_helper)
+    def list_instance_types(self) -> list[types.InstanceType]:
+        try:
+            response = self.do_request(
+                "GET", "/apis/instancetype.kubevirt.io/v1beta1/virtualmachineclusterinstancetypes"
+            )
+        except exceptions.OpenshiftError as e:
+            logger.debug("Could not list instance types: %s", e)
+            return []
+        return [
+            types.InstanceType(
+                name=item["metadata"]["name"],
+                cpus=int(item.get("spec", {}).get("cpu", {}).get("guest", 0)),
+                memory=item.get("spec", {}).get("memory", {}).get("guest", ""),
+            )
+            for item in response.get("items", [])
+        ]
+
+    @cached("networks", consts.CACHE_INFO_DURATION, key_helper=cache_key_helper)
+    def list_networks(self) -> list[str]:
+        """NetworkAttachmentDefinitions of the namespace, as "namespace/name" (multus networkName)."""
+        try:
+            response = self.do_request(
+                "GET", f"/apis/k8s.cni.cncf.io/v1/namespaces/{self._namespace}/network-attachment-definitions"
+            )
+        except exceptions.OpenshiftError as e:
+            logger.debug("Could not list network attachment definitions: %s", e)
+            return []
+        return [
+            f"{item['metadata']['namespace']}/{item['metadata']['name']}" for item in response.get("items", [])
+        ]

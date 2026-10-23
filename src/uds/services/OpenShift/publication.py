@@ -80,6 +80,7 @@ class OpenshiftTemplatePublication(DynamicPublication, autoserializable.AutoSeri
             new_vm_name=self._name,
             new_dv_name=new_pvc_name,
             source_pvc_name=source_pvc_name,
+            options=self.service().machine_options(),
         )
 
     @typing.override
