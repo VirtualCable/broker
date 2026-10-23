@@ -663,14 +663,14 @@ class OpenshiftClient:
         vms = response.get("items", [])
         return [types.VM.from_dict(vm) for vm in vms]
 
-    # Listings for the machine options of the service. All of them are optional for UDS:
-    # cluster-scoped reads need permissions a namespaced user may not have, and multus may
-    # not be installed, so any failure just leaves the list empty (the template value is kept).
+    # Listings for the machine options of the service. Cluster-scoped reads need permissions a
+    # namespaced user may not have (403) and multus may not be installed (404): then the list is
+    # empty and the template value is kept. Other errors propagate, so they are not cached.
     @cached("storageclasses", consts.CACHE_INFO_DURATION, key_helper=cache_key_helper)
     def list_storage_classes(self) -> list[types.StorageClass]:
         try:
             response = self.do_request("GET", "/apis/storage.k8s.io/v1/storageclasses")
-        except exceptions.OpenshiftError as e:
+        except (exceptions.OpenshiftPermissionError, exceptions.OpenshiftNotFoundError) as e:
             logger.debug("Could not list storage classes: %s", e)
             return []
         return [
@@ -688,7 +688,7 @@ class OpenshiftClient:
             response = self.do_request(
                 "GET", "/apis/instancetype.kubevirt.io/v1beta1/virtualmachineclusterinstancetypes"
             )
-        except exceptions.OpenshiftError as e:
+        except (exceptions.OpenshiftPermissionError, exceptions.OpenshiftNotFoundError) as e:
             logger.debug("Could not list instance types: %s", e)
             return []
         return [
@@ -707,7 +707,7 @@ class OpenshiftClient:
             response = self.do_request(
                 "GET", f"/apis/k8s.cni.cncf.io/v1/namespaces/{self._namespace}/network-attachment-definitions"
             )
-        except exceptions.OpenshiftError as e:
+        except (exceptions.OpenshiftPermissionError, exceptions.OpenshiftNotFoundError) as e:
             logger.debug("Could not list network attachment definitions: %s", e)
             return []
         return [

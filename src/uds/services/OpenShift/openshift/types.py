@@ -305,7 +305,10 @@ class MachineOptions:
             vm_obj["spec"]["instancetype"] = {"kind": "VirtualMachineClusterInstancetype", "name": self.instance_type}
             domain.pop("cpu", None)
             domain.pop("memory", None)
-            domain.get("resources", {}).get("requests", {}).pop("memory", None)
+            resources = domain.get("resources", {})
+            for bound in ("requests", "limits"):
+                for resource in ("cpu", "memory"):
+                    resources.get(bound, {}).pop(resource, None)
         else:
             if (self.cores or self.memory_mb) and vm_obj["spec"].get("instancetype"):
                 raise exceptions.OpenshiftError(
@@ -339,7 +342,7 @@ class MachineOptions:
             interface = {"name": name, "bridge": {}}
 
         if interfaces:
-            for binding in ("masquerade", "bridge", "sriov", "passt", "binding", "macAddress"):
+            for binding in ("masquerade", "bridge", "sriov", "passt", "binding"):
                 interfaces[0].pop(binding, None)
             interfaces[0].update(interface)
         else:

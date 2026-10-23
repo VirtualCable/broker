@@ -161,6 +161,19 @@ class TestOpenshiftCreateVmWithMachineOptions(UDSTransactionTestCase):
         self.assertNotIn("memory", domain)
         self.assertNotIn("memory", domain.get("resources", {}).get("requests", {}))
 
+    def test_instance_type_removes_cpu_and_memory_requests_and_limits(self) -> None:
+        # The KubeVirt admission webhook rejects any of these together with an instance type
+        template = copy.deepcopy(TEMPLATE_VM)
+        template["spec"]["template"]["spec"]["domain"]["resources"] = {
+            "requests": {"memory": "4Gi", "cpu": "1", "ephemeral-storage": "1Gi"},
+            "limits": {"memory": "4Gi", "cpu": "2"},
+        }
+        oshift_types.MachineOptions(instance_type="u1.medium").apply_to_vm(template)
+        self.assertEqual(
+            template["spec"]["template"]["spec"]["domain"]["resources"],
+            {"requests": {"ephemeral-storage": "1Gi"}, "limits": {}},
+        )
+
     def test_cores_on_template_with_instance_type_fails_clearly(self) -> None:
         template = copy.deepcopy(TEMPLATE_VM)
         template["spec"]["instancetype"] = {"kind": "VirtualMachineClusterInstancetype", "name": "u1.small"}
@@ -217,6 +230,16 @@ class TestOpenshiftClientListings(UDSTransactionTestCase):
             client, "do_request", side_effect=oshift_exceptions.OpenshiftPermissionError("forbidden")
         ):
             self.assertEqual(client.list_storage_classes(), [])
+
+    def test_listing_connection_errors_are_not_swallowed(self) -> None:
+        # Swallowing them would cache an empty list after a transient failure
+        client = _client()
+        for listing in (client.list_storage_classes, client.list_instance_types, client.list_networks):
+            with mock.patch.object(
+                client, "do_request", side_effect=oshift_exceptions.OpenshiftConnectionError("down")
+            ):
+                with self.assertRaises(oshift_exceptions.OpenshiftConnectionError):
+                    listing()
 
     def test_list_instance_types(self) -> None:
         client = _client()
