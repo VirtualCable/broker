@@ -491,6 +491,65 @@ class OpenshiftClient:
         create_path = f"/apis/kubevirt.io/v1/namespaces/{self._namespace}/virtualmachines"
         self.do_request("POST", create_path, data=vm_obj)
 
+    def get_vm_storage_info(self, vm_name: str) -> types.StorageInfo:
+        """Storage class, provisioner and sharing of the first disk of a VM."""
+        pvc_name, _vol_type = self.get_vm_pvc_or_dv_name(vm_name)
+        pvc = self.do_request("GET", f"/api/v1/namespaces/{self._namespace}/persistentvolumeclaims/{pvc_name}")
+        storage_class = pvc.get("spec", {}).get("storageClassName") or ""
+        access_modes = pvc.get("spec", {}).get("accessModes", [])
+        provisioner = ""
+        if storage_class:
+            try:
+                provisioner = self.do_request("GET", f"/apis/storage.k8s.io/v1/storageclasses/{storage_class}").get(
+                    "provisioner", ""
+                )
+            except (exceptions.OpenshiftPermissionError, exceptions.OpenshiftNotFoundError) as e:
+                logger.debug("Could not read storage class %s: %s", storage_class, e)
+        return types.StorageInfo(
+            storage_class=storage_class,
+            provisioner=provisioner,
+            shared=any(mode in ("ReadWriteMany", "ReadOnlyMany") for mode in access_modes),
+        )
+
+    def create_ephemeral_vm(
+        self,
+        source_vm_name: str,
+        new_vm_name: str,
+        source_pvc_name: str,
+        options: types.MachineOptions | None = None,
+    ) -> None:
+        """
+        Create a VM whose disk is an ephemeral copy-on-write layer over ``source_pvc_name``.
+        KubeVirt keeps the layer in the virt-launcher pod: it survives a reboot from the guest,
+        but is discarded when the VM is stopped.
+        """
+        options = options or types.MachineOptions()
+        vm_obj = self.do_request("GET", f"/apis/kubevirt.io/v1/namespaces/{self._namespace}/virtualmachines/{source_vm_name}")
+
+        vm_obj["metadata"] = {"name": new_vm_name, "namespace": self._namespace, "labels": vm_obj["metadata"].get("labels", {})}
+        vm_obj.pop("status", None)
+        vm_obj["spec"].pop("running", None)
+        vm_obj["spec"].pop("dataVolumeTemplates", None)
+        vm_obj["spec"]["runStrategy"] = "Always"
+
+        template_spec: dict[str, typing.Any] = vm_obj["spec"]["template"]["spec"]
+        volumes: list[dict[str, typing.Any]] = template_spec.get("volumes", [])
+        for vol in volumes:
+            data_volume: dict[str, typing.Any] = vol.get("dataVolume") or {}
+            pvc: dict[str, typing.Any] = vol.get("persistentVolumeClaim") or {}
+            if source_pvc_name in (data_volume.get("name"), pvc.get("claimName")):
+                vol.pop("dataVolume", None)
+                vol.pop("persistentVolumeClaim", None)
+                vol["ephemeral"] = {"persistentVolumeClaim": {"claimName": source_pvc_name, "readOnly": True}}
+
+        for iface in template_spec.get("domain", {}).get("devices", {}).get("interfaces", []):
+            iface.pop("macAddress", None)
+
+        options.apply_to_vm(vm_obj)
+
+        logger.info("Creating ephemeral VM '%s' over PVC '%s'.", new_vm_name, source_pvc_name)
+        self.do_request("POST", f"/apis/kubevirt.io/v1/namespaces/{self._namespace}/virtualmachines", data=vm_obj)
+
     def delete_vm(self, vm_name: str) -> bool:
         """
         Delete a VM by name.

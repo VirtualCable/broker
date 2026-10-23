@@ -29,10 +29,12 @@
 Author: Andres Schumann, aschumann at virtualcable dot es
 """
 
+import logging
 import typing
 
 from django.utils.translation import gettext as _
 
+from uds import models
 from uds.core import types
 from uds.core.ui.user_interface import gui
 
@@ -40,6 +42,9 @@ from .openshift import types as oshift_types
 
 if typing.TYPE_CHECKING:
     from .openshift.client import OpenshiftClient
+    from .provider import OpenshiftProvider
+
+logger: logging.Logger = logging.getLogger(__name__)
 
 
 def _same_as_template() -> types.ui.ChoiceItem:
@@ -68,3 +73,47 @@ def machine_choices(api: "OpenshiftClient") -> types.ui.CallbackResultType:
         {"name": "instance_type", "choices": instance_types},
         {"name": "network", "choices": networks},
     ]
+
+
+def linked_mode_choices(api: "OpenshiftClient", template: str) -> types.ui.CallbackResultType:
+    """
+    Modes allowed for linked clones of ``template``, from the storage of its disk.
+    Persistent linked clones need a copy-on-write storage; otherwise every clone is a full copy.
+    """
+    storage = api.get_vm_storage_info(template)
+    non_persistent = gui.choice_item(oshift_types.LinkedCloneMode.NON_PERSISTENT, _("Non persistent (reset when stopped)"))
+    if storage.copy_on_write:
+        return [
+            {
+                "name": "mode",
+                "choices": [
+                    gui.choice_item(oshift_types.LinkedCloneMode.PERSISTENT, _("Persistent ({} shares blocks)").format(storage.storage_class)),
+                    non_persistent,
+                ],
+            }
+        ]
+    return [
+        {
+            "name": "mode",
+            "choices": [
+                gui.choice_item(
+                    oshift_types.LinkedCloneMode.NON_PERSISTENT,
+                    _("Non persistent (storage {} makes full copies, persistent not available)").format(
+                        storage.storage_class or _("unknown")
+                    ),
+                )
+            ],
+        }
+    ]
+
+
+def get_linked_mode_choices(parameters: typing.Any) -> types.ui.CallbackResultType:
+    """GUI callback of the template selector of linked clone services."""
+    if not parameters.get("template"):
+        return []
+    try:
+        prov = models.Provider.objects.get(uuid=parameters["prov_uuid"]).get_instance()
+        return linked_mode_choices(typing.cast("OpenshiftProvider", prov).api, parameters["template"])
+    except Exception:
+        logger.exception("Error getting linked clone modes for template %s", parameters.get("template"))
+        return []

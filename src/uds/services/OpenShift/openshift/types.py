@@ -355,3 +355,39 @@ class MachineOptions:
                 replaced = True
         if not replaced:
             networks.insert(0, network)
+
+
+# CSI drivers whose clones and snapshots share blocks with the source (copy-on-write).
+# Others, like AWS EBS or hostpath, make a full copy for every clone.
+COPY_ON_WRITE_PROVISIONERS: typing.Final[tuple[str, ...]] = (
+    "rbd.csi.ceph.com",  # Ceph RBD, also OpenShift Data Foundation (openshift-storage.rbd.csi.ceph.com)
+    "csi.trident.netapp.io",
+    "pxd.portworx.com",
+    "csi.vsphere.vmware.com",
+    "powerstore.dellemc.com",
+    "csi-powermax.dellemc.com",
+    "csi.hpe.com",
+    "pure-csi",
+)
+
+
+def is_copy_on_write_provisioner(provisioner: str) -> bool:
+    return bool(provisioner) and any(
+        provisioner == known or provisioner.endswith("." + known) for known in COPY_ON_WRITE_PROVISIONERS
+    )
+
+
+@dataclasses.dataclass(frozen=True)
+class StorageInfo:
+    storage_class: str
+    provisioner: str  # Empty if the storage class cannot be read
+    shared: bool  # ReadWriteMany or ReadOnlyMany, so VMs can run on any node
+
+    @property
+    def copy_on_write(self) -> bool:
+        return is_copy_on_write_provisioner(self.provisioner)
+
+
+class LinkedCloneMode(enum.StrEnum):
+    PERSISTENT = "persistent"
+    NON_PERSISTENT = "non_persistent"

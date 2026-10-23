@@ -44,6 +44,7 @@ from uds.core.util.decorators import cached
 from .openshift import client
 from .service import OpenshiftService
 from .service_fixed import OpenshiftServiceFixed
+from .service_linked import OpenshiftLinkedService
 
 # Not imported at runtime, just for type checking
 if typing.TYPE_CHECKING:
@@ -62,7 +63,7 @@ def cache_key_helper(self: "OpenshiftProvider") -> str:
 
 
 class OpenshiftProvider(ServiceProvider):
-    offers: typing.ClassVar[list[type["Service"]]] = [OpenshiftService, OpenshiftServiceFixed]
+    offers: typing.ClassVar[list[type["Service"]]] = [OpenshiftService, OpenshiftLinkedService, OpenshiftServiceFixed]
     type_name = _("Openshift")
     type_type = "OpenshiftProvider"
     type_description = _("Openshift based VMs provider")
