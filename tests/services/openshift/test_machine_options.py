@@ -135,6 +135,14 @@ class TestOpenshiftCreateVmWithMachineOptions(UDSTransactionTestCase):
         self.assertEqual(domain["memory"]["guest"], "8192Mi")
         self.assertEqual(domain["resources"]["requests"]["memory"], "8192Mi")
 
+    def test_memory_override_also_moves_the_memory_limit(self) -> None:
+        template = copy.deepcopy(TEMPLATE_VM)
+        template["spec"]["template"]["spec"]["domain"]["resources"]["limits"] = {"memory": "4Gi", "cpu": "2"}
+        oshift_types.MachineOptions(memory_mb=8192).apply_to_vm(template)
+        resources = template["spec"]["template"]["spec"]["domain"]["resources"]
+        self.assertEqual(resources["limits"], {"memory": "8192Mi", "cpu": "2"})
+        self.assertEqual(resources["requests"]["memory"], "8192Mi")
+
     def test_only_cores_keeps_template_memory(self) -> None:
         body = self._create(oshift_types.MachineOptions(cores=4))
         domain = body["spec"]["template"]["spec"]["domain"]

@@ -317,9 +317,10 @@ class MachineOptions:
             if self.memory_mb:
                 memory = f"{self.memory_mb}Mi"
                 domain.setdefault("memory", {})["guest"] = memory
-                requests = domain.get("resources", {}).get("requests", {})
-                if "memory" in requests:
-                    requests["memory"] = memory
+                resources = domain.get("resources", {})
+                for bound in ("requests", "limits"):
+                    if "memory" in resources.get(bound, {}):
+                        resources[bound]["memory"] = memory
 
         if self.network:
             self._apply_network(template_spec, domain)
