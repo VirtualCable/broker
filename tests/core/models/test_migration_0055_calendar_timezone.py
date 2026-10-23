@@ -75,6 +75,14 @@ class Migration0055Test(TransactionTestCase):
         self.assertEqual(summer.start, datetime.datetime(2026, 7, 6, 6, 0, tzinfo=UTC))  # 08:00 CEST
         self.assertIsNone(summer.end)
 
+    def test_logs_the_zone_and_the_number_of_rules_converted(self) -> None:
+        self._seed_like_4_0(self._migrate(BEFORE))
+        with self.assertLogs("uds.migrations", level="INFO") as logs:
+            self._migrate(AFTER)
+        self.assertTrue(
+            any("2 calendar rules" in line and "Europe/Madrid" in line for line in logs.output), logs.output
+        )
+
     def test_reverse_restores_the_4_0_values(self) -> None:
         self._seed_like_4_0(self._migrate(BEFORE))
         self._migrate(AFTER)

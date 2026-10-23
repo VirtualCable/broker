@@ -1,9 +1,12 @@
 import datetime
+import logging
 import typing
 import zoneinfo
 
 from django.conf import settings
 from django.db import migrations, models
+
+logger = logging.getLogger(__name__)
 
 # Calendar rules were written by 4.0 (USE_TZ=False) as naive local times of the
 # server. Since 5.0 runs with USE_TZ=True those digits are read back as UTC, so a
@@ -32,6 +35,13 @@ def _to_utc(apps: typing.Any, _schema_editor: typing.Any) -> None:
 
     Calendar.objects.update(tz=str(zone))
 
+    # The 4.0 database does not record its zone; leave a trace of the one used so
+    # a wrong choice in the setup can be spotted and undone (see _to_local).
+    logger.info(
+        "Converting %d calendar rules as local times of %s, the time zone of this server",
+        CalendarRule.objects.count(),
+        zone,
+    )
     for rule in CalendarRule.objects.all().iterator():
         rule.start = _as_server_local(rule.start, zone)
         if rule.end_date is not None:
