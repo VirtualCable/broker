@@ -45,6 +45,16 @@ class State(enum.StrEnum):
     WAITING_FOR_GUEST_AGENT = "WaitingForGuestAgent"
     DELETING = "Deleting"
     TERMINATING = "Terminating"
+    # printableStatus of KubeVirt VMs (VirtualMachinePrintableStatus in kubevirt.io/api core/v1)
+    PROVISIONING = "Provisioning"
+    ERROR_UNSCHEDULABLE = "ErrorUnschedulable"
+    ERR_IMAGE_PULL = "ErrImagePull"
+    IMAGE_PULL_BACK_OFF = "ImagePullBackOff"
+    ERROR_PVC_NOT_FOUND = "ErrorPvcNotFound"
+    DATA_VOLUME_ERROR = "DataVolumeError"
+    ERROR_VM_STATE_IN_USE = "ErrorVMStateInUse"
+    WAITING_FOR_VOLUME_BINDING = "WaitingForVolumeBinding"
+    WAITING_FOR_RECEIVER = "WaitingForReceiver"
     # Custom/legacy
     NOT_USABLE = "notUsable"
     DENIED = "Denied"

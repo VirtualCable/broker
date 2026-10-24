@@ -369,7 +369,45 @@ class TestCodexReviewFindings(UDSTransactionTestCase):
             )
             userservice._name = "lc-001"
             api.get_vm_interfaces.return_value = []
-            for failed in (oshift_types.State.CRASH_LOOP_BACK_OFF, oshift_types.State.ERROR, oshift_types.State.FAILED):
+            for failed in (
+                oshift_types.State.CRASH_LOOP_BACK_OFF,
+                oshift_types.State.ERROR,
+                oshift_types.State.FAILED,
+                oshift_types.State.ERROR_UNSCHEDULABLE,
+                oshift_types.State.ERROR_PVC_NOT_FOUND,
+                oshift_types.State.DATA_VOLUME_ERROR,
+                oshift_types.State.ERR_IMAGE_PULL,
+                oshift_types.State.IMAGE_PULL_BACK_OFF,
+                oshift_types.State.ERROR_VM_STATE_IN_USE,
+            ):
                 api.get_vm_info.side_effect = None
                 api.get_vm_info.return_value = mock.Mock(status=failed)
                 self.assertEqual(userservice.op_create_checker(), types.states.TaskState.ERROR, failed)
+
+
+class TestKubevirtPrintableStatus(UDSTransactionTestCase):
+    def test_kubevirt_error_statuses_are_known(self) -> None:
+        # An unknown status became UNKNOWN and the create checker waited forever
+        for status in ("ErrorUnschedulable", "ErrorPvcNotFound", "DataVolumeError", "ErrImagePull", "Provisioning"):
+            self.assertNotEqual(oshift_types.State.from_string(status), oshift_types.State.UNKNOWN, status)
+
+    def test_transient_statuses_keep_waiting(self) -> None:
+        with fixtures.patched_provider() as prov:
+            api = typing.cast(mock.MagicMock, prov.api)
+            service = _create_linked_service(prov)
+            userservice = deployment_linked.OpenshiftLinkedUserService(
+                environment=environment.Environment.private_environment(str(uuid.uuid4())),
+                service=service,
+                publication=fixtures.create_publication(service=service),
+                uuid=str(uuid.uuid4()),
+            )
+            userservice._name = "lc-001"
+            api.get_vm_interfaces.return_value = []
+            api.get_vm_info.side_effect = None
+            for waiting in (
+                oshift_types.State.PROVISIONING,
+                oshift_types.State.STARTING,
+                oshift_types.State.WAITING_FOR_VOLUME_BINDING,
+            ):
+                api.get_vm_info.return_value = mock.Mock(status=waiting)
+                self.assertEqual(userservice.op_create_checker(), types.states.TaskState.RUNNING, waiting)

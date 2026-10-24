@@ -50,6 +50,12 @@ FAILED_VM_STATES: typing.Final[frozenset[oshift_types.State]] = frozenset(
         oshift_types.State.FAILED,
         oshift_types.State.CRASH_LOOP_BACK_OFF,
         oshift_types.State.DENIED,
+        oshift_types.State.ERROR_UNSCHEDULABLE,
+        oshift_types.State.ERROR_PVC_NOT_FOUND,
+        oshift_types.State.DATA_VOLUME_ERROR,
+        oshift_types.State.ERR_IMAGE_PULL,
+        oshift_types.State.IMAGE_PULL_BACK_OFF,
+        oshift_types.State.ERROR_VM_STATE_IN_USE,
     }
 )
 
