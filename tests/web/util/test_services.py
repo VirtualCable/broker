@@ -359,13 +359,13 @@ class TestGetServicesData(UDSTransactionTestCase):
         return [t["id"] for t in services.get_services_info_dict(self.request)["services"][0]["transports"]]
 
     def test_transports_keep_admin_priority_without_favorite(self) -> None:
-        GlobalConfig.ENABLE_FAVORITE_SERVICES.set(True)
+        GlobalConfig.ENABLE_FAVORITE_TRANSPORTS.set(True)
         self._pool_with_transports(3)
 
         self.assertEqual(self._transport_ids(), [t.uuid for t in self.transports[:3]])
 
     def test_favorite_transport_goes_first(self) -> None:
-        GlobalConfig.ENABLE_FAVORITE_SERVICES.set(True)
+        GlobalConfig.ENABLE_FAVORITE_TRANSPORTS.set(True)
         pool = self._pool_with_transports(3)
         self.user.set_favorite_transport(pool.uuid, self.transports[2].uuid)
 
@@ -378,21 +378,29 @@ class TestGetServicesData(UDSTransactionTestCase):
         self.assertEqual([t["favorite"] for t in transports], [True, False, False])
 
     def test_favorite_transport_ignored_when_not_available(self) -> None:
-        GlobalConfig.ENABLE_FAVORITE_SERVICES.set(True)
+        GlobalConfig.ENABLE_FAVORITE_TRANSPORTS.set(True)
         pool = self._pool_with_transports(3)
         self.user.set_favorite_transport(pool.uuid, self.transports[5].uuid)
 
         self.assertEqual(self._transport_ids(), [t.uuid for t in self.transports[:3]])
 
     def test_favorite_transport_ignored_when_feature_disabled(self) -> None:
-        GlobalConfig.ENABLE_FAVORITE_SERVICES.set(False)
+        GlobalConfig.ENABLE_FAVORITE_TRANSPORTS.set(False)
+        pool = self._pool_with_transports(3)
+        self.user.set_favorite_transport(pool.uuid, self.transports[2].uuid)
+
+        self.assertEqual(self._transport_ids(), [t.uuid for t in self.transports[:3]])
+
+    def test_favorite_transport_independent_of_favorite_services(self) -> None:
+        GlobalConfig.ENABLE_FAVORITE_SERVICES.set(True)
+        GlobalConfig.ENABLE_FAVORITE_TRANSPORTS.set(False)
         pool = self._pool_with_transports(3)
         self.user.set_favorite_transport(pool.uuid, self.transports[2].uuid)
 
         self.assertEqual(self._transport_ids(), [t.uuid for t in self.transports[:3]])
 
     def test_favorite_transport_ignored_when_transports_hidden(self) -> None:
-        GlobalConfig.ENABLE_FAVORITE_SERVICES.set(True)
+        GlobalConfig.ENABLE_FAVORITE_TRANSPORTS.set(True)
         pool = self._pool_with_transports(3)
         pool.show_transports = False
         pool.save()
@@ -401,7 +409,7 @@ class TestGetServicesData(UDSTransactionTestCase):
         self.assertEqual(self._transport_ids(), [t.uuid for t in self.transports[:3]])
 
     def test_favorite_transport_goes_first_in_meta_common(self) -> None:
-        GlobalConfig.ENABLE_FAVORITE_SERVICES.set(True)
+        GlobalConfig.ENABLE_FAVORITE_TRANSPORTS.set(True)
         _pools, meta = self._generate_metapool_with_transports(
             3, types.pools.TransportSelectionPolicy.COMMON, add_random_transports=False
         )

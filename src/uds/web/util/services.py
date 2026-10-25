@@ -155,7 +155,7 @@ def get_services_info_dict(
 
     user_favorites: set[str] = request.user.get_favorites()
     favorite_transports: dict[str, str] = (
-        request.user.get_favorite_transports() if GlobalConfig.ENABLE_FAVORITE_SERVICES.as_bool() else {}
+        request.user.get_favorite_transports() if GlobalConfig.ENABLE_FAVORITE_TRANSPORTS.as_bool() else {}
     )
 
     def _is_valid_transport(t: Transport) -> bool:

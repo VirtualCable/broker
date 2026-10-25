@@ -221,6 +221,7 @@ def uds_js(request: "ExtendedHttpRequest") -> str:
         },
         "min_for_filter": GlobalConfig.SITE_FILTER_MIN.as_int(True),
         "enable_favorite_services": GlobalConfig.ENABLE_FAVORITE_SERVICES.as_bool(),
+        "enable_favorite_transports": GlobalConfig.ENABLE_FAVORITE_TRANSPORTS.as_bool(),
         "allow_animated_backgrounds": GlobalConfig.ALLOW_ANIMATED_BACKGROUNDS.as_bool(),
         # Biometric login (WebAuthn) is also forbidden under zero trust, as it
         # implies caching the authentication credentials (in an opaque,
