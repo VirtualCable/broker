@@ -26,6 +26,7 @@
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 """
 Author: Adolfo Gómez, dkmaster at dkmon dot com
+Author: Andres Schumann, aschumann at virtualcable dot es
 """
 
 import json
@@ -169,6 +170,14 @@ def user_service_status(request: "ExtendedHttpRequestWithUser", service_id: str,
 @weblogin_required()
 @never_cache
 @require_POST
+def favorite_transport(request: "ExtendedHttpRequestWithUser", service_id: str, transport_id: str) -> HttpResponse:
+    # service_id is 'F<pool_uuid>' or 'M<meta_uuid>' — strip the prefix, as favorite services do.
+    request.user.set_favorite_transport(service_id[1:], transport_id)
+    return HttpResponse(json.dumps(None), content_type="application/json")
+
+@weblogin_required()
+@never_cache
+@require_POST
 def action(request: "ExtendedHttpRequestWithUser", service_id: str, action_string: str) -> HttpResponse:
     # favorite/unfavorite do not require an existing UserService,
     # so handle them before the userservice lookup.
@@ -179,6 +188,10 @@ def action(request: "ExtendedHttpRequestWithUser", service_id: str, action_strin
             request.user.add_favorite(pool_uuid)
         else:
             request.user.remove_favorite(pool_uuid)
+        return HttpResponse(json.dumps(None), content_type="application/json")
+
+    if action_string == "unfavorite-transport":
+        request.user.remove_favorite_transport(service_id[1:])
         return HttpResponse(json.dumps(None), content_type="application/json")
 
     userservice = UserServiceManager.manager().locate_meta_service(request.user, service_id)

@@ -196,6 +196,10 @@ def uds_js(request: "ExtendedHttpRequest") -> str:
                 "webapi.action",
                 kwargs={"service_id": "param1", "action_string": "param2"},
             ),
+            "favorite_transport": reverse(
+                "webapi.favorite_transport",
+                kwargs={"service_id": "param1", "transport_id": "param2"},
+            ),
             "gallery_image": reverse("webapi.gallery_image", kwargs={"image_id": "param1"}),
             "transport_icon": reverse("webapi.transport_icon", kwargs={"transport_id": "param1"}),
             "static": static(""),
