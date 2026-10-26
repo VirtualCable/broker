@@ -155,6 +155,24 @@ class ServicePoolTest(rest.test.RESTTestCase):
         response = self.client.rest_get("servicespools/00000000-0000-0000-0000-000000000000")
         self.assertEqual(response.status_code, 404)
 
+    def test_get_logs_returns_the_pool_trail_to_admins(self) -> None:
+        pool = models.ServicePool.objects.first()
+        assert pool is not None
+
+        response = self.client.rest_get(f"servicespools/{pool.uuid}/log")
+
+        self.assertEqual(response.status_code, 200)
+        self.assertIsInstance(response.json(), list)
+
+    def test_get_logs_is_denied_without_read_permission(self) -> None:
+        pool = models.ServicePool.objects.first()
+        assert pool is not None
+        self.login(as_admin=False)
+
+        response = self.client.rest_get(f"servicespools/{pool.uuid}/log")
+
+        self.assertEqual(response.status_code, 404)
+
     def test_put_creates_new_service_pool(self) -> None:
         """PUT /servicespools (no ID) creates a new ServicePool."""
         before = self._pool_count_in_db()

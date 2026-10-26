@@ -332,6 +332,11 @@ class CuratedToolsJsonRpcTest(rest.test.RESTTestCase):
         body = self._call("get_item_logs", {"collection": "service_pool", "uuid": pool.uuid})
         self.assertIsInstance(json.loads(self._result_text(body)), list)
 
+    def test_get_item_logs_is_denied_without_read_permission(self) -> None:
+        self.login_with_api_token(as_admin=False)
+        body = self._call("get_item_logs", {"collection": "service_pool", "uuid": self._a_service_pool().uuid})
+        self.assertIn("error", body)
+
     def test_get_item_logs_for_an_authenticator(self) -> None:
         body = self._call("get_item_logs", {"collection": "authenticator", "uuid": self.auth.uuid})
         self.assertIsInstance(json.loads(self._result_text(body)), list)

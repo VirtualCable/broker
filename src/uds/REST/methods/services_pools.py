@@ -817,6 +817,7 @@ class ServicesPools(ModelHandler[ServicePoolItem]):
     @typing.override
     def get_logs(self, item: "Model") -> typing.Any:
         item = ensure.is_instance(item, ServicePool)
+        self.check_access(item, types.permissions.PermissionType.READ)
         try:
             return log.get_logs(item)
         except Exception:
