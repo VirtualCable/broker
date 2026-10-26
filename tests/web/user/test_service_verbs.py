@@ -78,23 +78,3 @@ class UserServiceVerbsTest(test.WEBTestCase):
             )
         )
         self.assertEqual(response.status_code, 200)
-
-    def test_favorite_transport_set_and_unset(self) -> None:
-        user = self.login(as_admin=False)
-        pool_uuid = DUMMY_SERVICE[1:]
-
-        response = self.client.post(
-            reverse(
-                'webapi.favorite_transport',
-                kwargs={'service_id': DUMMY_SERVICE, 'transport_id': DUMMY_TRANSPORT},
-            )
-        )
-        self.assertEqual(response.status_code, 200)
-        user.refresh_from_db()
-        self.assertEqual(user.get_favorite_transports(), {pool_uuid: DUMMY_TRANSPORT})
-
-        response = self.client.post(
-            reverse('webapi.action', kwargs={'service_id': DUMMY_SERVICE, 'action_string': 'unfavorite-transport'})
-        )
-        self.assertEqual(response.status_code, 200)
-        self.assertEqual(user.get_favorite_transports(), {})

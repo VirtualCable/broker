@@ -35,7 +35,7 @@ import typing
 import collections.abc
 
 from django.utils.translation import gettext
-from django.http import HttpResponse, JsonResponse
+from django.http import HttpResponse, HttpResponseBadRequest, JsonResponse
 from django.views.decorators.cache import never_cache
 from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_POST
@@ -48,6 +48,7 @@ from uds.core.managers.crypto import CryptoManager
 from uds.core.managers.userservice import UserServiceManager
 from uds.core.types.requests import ExtendedHttpRequest
 from uds.core.util import log
+from uds.core.util.config import GlobalConfig
 from uds.core.exceptions.services import ServiceNotReadyError, MaxServicesReachedError, ServiceAccessDeniedByCalendar
 
 from uds.web.util import services
@@ -171,9 +172,18 @@ def user_service_status(request: "ExtendedHttpRequestWithUser", service_id: str,
 @never_cache
 @require_POST
 def favorite_transport(request: "ExtendedHttpRequestWithUser", service_id: str, transport_id: str) -> HttpResponse:
-    # service_id is 'F<pool_uuid>' or 'M<meta_uuid>' — strip the prefix, as favorite services do.
-    request.user.set_favorite_transport(service_id[1:], transport_id)
-    return HttpResponse(json.dumps(None), content_type="application/json")
+    if not GlobalConfig.ENABLE_FAVORITE_TRANSPORTS.as_bool():
+        return HttpResponseBadRequest()
+
+    # Only a transport offered in the user's «Connections» menu can be the favorite
+    for v in services.get_services_info_dict(request)["services"]:
+        if v["id"] == service_id and v["show_transports"] and any(t["id"] == transport_id for t in v["transports"]):
+            # service_id is 'F<pool_uuid>' or 'M<meta_uuid>' — strip the prefix, as favorite services do.
+            request.user.set_favorite_transport(service_id[1:], transport_id)
+            return HttpResponse(json.dumps(None), content_type="application/json")
+
+    return HttpResponseBadRequest()
+
 
 @weblogin_required()
 @never_cache
