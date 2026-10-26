@@ -346,6 +346,30 @@ class CuratedToolsJsonRpcTest(rest.test.RESTTestCase):
         )
         self.assertIsInstance(json.loads(self._result_text(body)), list)
 
+    def test_get_item_logs_hides_random_passwords_of_assigned_services(self) -> None:
+        from uds.core.environment import Environment
+        from uds.osmanagers.LinuxOsManager.linux_randompass_osmanager import LinuxRandomPassManager
+        from uds.osmanagers.WindowsOsManager.windows_random import WinRandomPassManager
+
+        from tests.fixtures import services as service_fixtures
+
+        pool = self._a_service_pool()
+        publication = service_fixtures.create_db_publication(pool)
+        for manager_class in (LinuxRandomPassManager, WinRandomPassManager):
+            with self.subTest(manager=manager_class.__name__):
+                userservice = service_fixtures.create_db_userservice(pool, publication, self.plain_users[0])
+                manager = manager_class(environment=Environment.testing_environment())
+                password = manager.gen_random_password(userservice)
+
+                body = self._call(
+                    "get_item_logs",
+                    {"collection": "assigned_service", "uuid": pool.uuid, "item_id": userservice.uuid},
+                )
+
+                text = self._result_text(body)
+                self.assertNotIn(password, text)
+                self.assertIn("Password set to", text)
+
     def test_get_item_logs_requires_item_id_for_detail_collections(self) -> None:
         body = self._call("get_item_logs", {"collection": "user", "uuid": self.auth.uuid})
         self.assertEqual(body["error"]["code"], -32602)
