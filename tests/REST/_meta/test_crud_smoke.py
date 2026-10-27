@@ -45,6 +45,7 @@ Author: Adolfo Gómez, dkmaster at dkmon dot com
 """
 
 # pyright: reportUnknownMemberType=false, reportUnknownArgumentType=false, reportUnknownVariableType=false
+import datetime
 import logging
 import typing
 
@@ -259,7 +260,7 @@ class CalendarsCrudSmokeTest(rest.test.RESTTestCase):
                 "name": "smoke-rule",
                 "comments": "",
                 "frequency": "YEARLY",
-                "start": 1_777_000_000,
+                "start": "2026-10-27T10:00:00+02:00",
                 "end": None,
                 "interval": 1,
                 "duration": 0,
@@ -270,6 +271,10 @@ class CalendarsCrudSmokeTest(rest.test.RESTTestCase):
             rule_resp.status_code, 200, f"POST rule create failed: {rule_resp.content.decode(errors='replace')}"
         )
         created = rule_resp.json()
+        self.assertEqual(
+            datetime.datetime.fromisoformat(created["start"]),
+            datetime.datetime(2026, 10, 27, 8, 0, tzinfo=datetime.timezone.utc),
+        )
         # Flat full item: the create answers like GET does, not with an
         # {"result": ...} envelope, and reports the new uuid in "id"
         self.assertNotIn("result", created)
@@ -286,6 +291,53 @@ class CalendarsCrudSmokeTest(rest.test.RESTTestCase):
 
         del_resp = self.client.rest_delete(f"{self.BASE}/{cal_uuid}/rules/{rule_uuid}")
         self.assertEqual(del_resp.status_code, 200)
+
+    def test_rule_end_keeps_the_submitted_day(self) -> None:
+        """The end is a calendar day: an offset must not move it to another one."""
+        create_resp = self.client.rest_post(
+            self.BASE, {"name": "rules-end-day-calendar", "comments": "", "tags": []}
+        )
+        cal_uuid = create_resp.json().get("id")
+
+        for end in ("2026-10-27T23:59:59-07:00", "2026-10-27T00:00:00", "2026-10-27"):
+            with self.subTest(end=end):
+                rule_resp = self.client.rest_post(
+                    f"{self.BASE}/{cal_uuid}/rules",
+                    {
+                        "name": f"end-day-rule-{end}",
+                        "comments": "",
+                        "frequency": "YEARLY",
+                        "start": "2026-10-01T00:00:00+00:00",
+                        "end": end,
+                        "interval": 1,
+                        "duration": 0,
+                        "duration_unit": "MINUTES",
+                    },
+                )
+                self.assertEqual(rule_resp.status_code, 200)
+                self.assertTrue(rule_resp.json()["end"].startswith("2026-10-27"))
+
+    def test_rule_rejects_non_iso_start(self) -> None:
+        """POST /calendars/{uuid}/rules with a timestamp instead of ISO 8601 → 400."""
+        create_resp = self.client.rest_post(
+            self.BASE, {"name": "rules-bad-start-calendar", "comments": "", "tags": []}
+        )
+        cal_uuid = create_resp.json().get("id")
+
+        rule_resp = self.client.rest_post(
+            f"{self.BASE}/{cal_uuid}/rules",
+            {
+                "name": "bad-start-rule",
+                "comments": "",
+                "frequency": "YEARLY",
+                "start": 1_777_000_000,
+                "end": None,
+                "interval": 1,
+                "duration": 0,
+                "duration_unit": "MINUTES",
+            },
+        )
+        self.assertEqual(rule_resp.status_code, 400)
 
 
 class MfasCrudSmokeTest(rest.test.RESTTestCase):

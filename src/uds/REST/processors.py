@@ -159,7 +159,9 @@ class ContentProcessor:
                 ]
 
             case datetime.datetime():
-                return int(obj.timestamp())
+                if obj.tzinfo is None:
+                    obj = obj.replace(tzinfo=datetime.timezone.utc)
+                return obj.isoformat()
 
             case datetime.date():
                 return f"{obj.year}-{obj.month:02d}-{obj.day:02d}"
