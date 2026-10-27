@@ -45,6 +45,16 @@ class State(enum.StrEnum):
     WAITING_FOR_GUEST_AGENT = "WaitingForGuestAgent"
     DELETING = "Deleting"
     TERMINATING = "Terminating"
+    # printableStatus of KubeVirt VMs (VirtualMachinePrintableStatus in kubevirt.io/api core/v1)
+    PROVISIONING = "Provisioning"
+    ERROR_UNSCHEDULABLE = "ErrorUnschedulable"
+    ERR_IMAGE_PULL = "ErrImagePull"
+    IMAGE_PULL_BACK_OFF = "ImagePullBackOff"
+    ERROR_PVC_NOT_FOUND = "ErrorPvcNotFound"
+    DATA_VOLUME_ERROR = "DataVolumeError"
+    ERROR_VM_STATE_IN_USE = "ErrorVMStateInUse"
+    WAITING_FOR_VOLUME_BINDING = "WaitingForVolumeBinding"
+    WAITING_FOR_RECEIVER = "WaitingForReceiver"
     # Custom/legacy
     NOT_USABLE = "notUsable"
     DENIED = "Denied"
@@ -265,3 +275,129 @@ class VM:
         except Exception as e:
             logger.error(f"Error creating Definition from dict: {e}")
             raise exceptions.OpenshiftError("Invalid Definition data") from e
+
+
+POD_NETWORK: typing.Final[str] = "pod"
+
+
+@dataclasses.dataclass(frozen=True)
+class StorageClass:
+    name: str
+    is_default: bool
+
+
+@dataclasses.dataclass(frozen=True)
+class InstanceType:
+    name: str
+    cpus: int
+    memory: str
+
+
+@dataclasses.dataclass(frozen=True)
+class MachineOptions:
+    """
+    Per-service overrides for the VMs cloned from the template.
+    Empty or zero values keep what the source VM has.
+    """
+
+    storage_class: str = ""
+    instance_type: str = ""
+    cores: int = 0
+    memory_mb: int = 0
+    network: str = ""  # POD_NETWORK, "namespace/name" of a NetworkAttachmentDefinition, or "" to keep
+
+    def apply_to_vm(self, vm_obj: dict[str, typing.Any]) -> None:
+        template_spec = vm_obj["spec"]["template"]["spec"]
+        domain = template_spec.setdefault("domain", {})
+
+        if self.instance_type:
+            # KubeVirt rejects VMs that set guest cpu/memory together with an instance type
+            vm_obj["spec"]["instancetype"] = {"kind": "VirtualMachineClusterInstancetype", "name": self.instance_type}
+            domain.pop("cpu", None)
+            domain.pop("memory", None)
+            resources = domain.get("resources", {})
+            for bound in ("requests", "limits"):
+                for resource in ("cpu", "memory"):
+                    resources.get(bound, {}).pop(resource, None)
+        else:
+            if (self.cores or self.memory_mb) and vm_obj["spec"].get("instancetype"):
+                raise exceptions.OpenshiftError(
+                    f"VM {vm_obj['metadata'].get('name', '')} uses an instance type: "
+                    "choose an instance type in the service instead of cores or memory"
+                )
+            if self.cores:
+                domain.setdefault("cpu", {})["cores"] = self.cores
+            if self.memory_mb:
+                memory = f"{self.memory_mb}Mi"
+                domain.setdefault("memory", {})["guest"] = memory
+                resources = domain.get("resources", {})
+                for bound in ("requests", "limits"):
+                    if "memory" in resources.get(bound, {}):
+                        resources[bound]["memory"] = memory
+
+        if self.network:
+            self._apply_network(template_spec, domain)
+
+    def _apply_network(self, template_spec: dict[str, typing.Any], domain: dict[str, typing.Any]) -> None:
+        interfaces = domain.setdefault("devices", {}).setdefault("interfaces", [])
+        networks = template_spec.setdefault("networks", [])
+        name = interfaces[0]["name"] if interfaces else (networks[0]["name"] if networks else "default")
+
+        if self.network == POD_NETWORK:
+            network: dict[str, typing.Any] = {"name": name, "pod": {}}
+            interface: dict[str, typing.Any] = {"name": name, "masquerade": {}}
+        else:
+            # Secondary (multus) networks use bridge binding; masquerade only works on the pod network
+            network = {"name": name, "multus": {"networkName": self.network}}
+            interface = {"name": name, "bridge": {}}
+
+        if interfaces:
+            for binding in ("masquerade", "bridge", "sriov", "passt", "binding"):
+                interfaces[0].pop(binding, None)
+            interfaces[0].update(interface)
+        else:
+            interfaces.append(interface)
+
+        replaced = False
+        for index, current in enumerate(networks):
+            if current.get("name") == name:
+                networks[index] = network
+                replaced = True
+        if not replaced:
+            networks.insert(0, network)
+
+
+# CSI drivers whose clones and snapshots share blocks with the source (copy-on-write).
+# Others, like AWS EBS or hostpath, make a full copy for every clone.
+COPY_ON_WRITE_PROVISIONERS: typing.Final[tuple[str, ...]] = (
+    "rbd.csi.ceph.com",  # Ceph RBD, also OpenShift Data Foundation (openshift-storage.rbd.csi.ceph.com)
+    "csi.trident.netapp.io",
+    "pxd.portworx.com",
+    "csi.vsphere.vmware.com",
+    "powerstore.dellemc.com",
+    "csi-powermax.dellemc.com",
+    "csi.hpe.com",
+    "pure-csi",
+)
+
+
+def is_copy_on_write_provisioner(provisioner: str) -> bool:
+    return bool(provisioner) and any(
+        provisioner == known or provisioner.endswith("." + known) for known in COPY_ON_WRITE_PROVISIONERS
+    )
+
+
+@dataclasses.dataclass(frozen=True)
+class StorageInfo:
+    storage_class: str
+    provisioner: str  # Empty if the storage class cannot be read
+    shared: bool  # ReadWriteMany or ReadOnlyMany, so VMs can run on any node
+
+    @property
+    def copy_on_write(self) -> bool:
+        return is_copy_on_write_provisioner(self.provisioner)
+
+
+class LinkedCloneMode(enum.StrEnum):
+    PERSISTENT = "persistent"
+    NON_PERSISTENT = "non_persistent"

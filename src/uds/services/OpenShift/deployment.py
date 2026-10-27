@@ -126,6 +126,7 @@ class OpenshiftUserService(DynamicUserService, autoserializable.AutoSerializable
             new_vm_name=self._name,
             new_dv_name=new_pvc_name,
             source_pvc_name=source_pvc_name,
+            options=self.service().machine_options(),
         )
 
     # In fact, we probably don't need to check task status, but this way we can include the error
