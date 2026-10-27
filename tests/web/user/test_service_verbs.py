@@ -53,6 +53,7 @@ class UserServiceVerbsTest(test.WEBTestCase):
         for name, kwargs in (
             ('webapi.enabler', {'service_id': DUMMY_SERVICE, 'transport_id': DUMMY_TRANSPORT}),
             ('webapi.action', {'service_id': DUMMY_SERVICE, 'action_string': 'release'}),
+            ('webapi.favorite_transport', {'service_id': DUMMY_SERVICE, 'transport_id': DUMMY_TRANSPORT}),
             ('webapi.transport_own_link', {'service_id': DUMMY_SERVICE, 'transport_id': DUMMY_TRANSPORT}),
         ):
             response = self.client.get(reverse(name, kwargs=kwargs))

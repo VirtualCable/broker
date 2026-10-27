@@ -26,6 +26,7 @@
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 """
 Author: Adolfo Gómez, dkmaster at dkmon dot com
+Author: Andres Schumann, aschumann at virtualcable dot es
 """
 
 import collections.abc
@@ -106,6 +107,17 @@ def _service_info(
     }
 
 
+def _favorite_transport_first(
+    transports: list[collections.abc.Mapping[str, typing.Any]],
+    favorite_id: str | None,
+) -> list[collections.abc.Mapping[str, typing.Any]]:
+    # The client launches transports[0] when the service icon is clicked, so the user's
+    # favorite goes first. A favorite not in the list (not valid for this IP/OS, or removed
+    # from the pool) is ignored and the admin priority order is kept.
+    marked = [{**t, "favorite": t["id"] == favorite_id} for t in transports]
+    return sorted(marked, key=lambda t: not t["favorite"])
+
+
 # pylint: disable=too-many-locals, too-many-branches, too-many-statements
 def get_services_info_dict(
     request: "ExtendedHttpRequestWithUser",
@@ -142,6 +154,9 @@ def get_services_info_dict(
     logger.debug("OS: %s", os_type)
 
     user_favorites: set[str] = request.user.get_favorites()
+    favorite_transports: dict[str, str] = (
+        request.user.get_favorite_transports() if GlobalConfig.ENABLE_FAVORITE_TRANSPORTS.as_bool() else {}
+    )
 
     def _is_valid_transport(t: Transport) -> bool:
         transport_type = t.get_type()
@@ -281,6 +296,7 @@ def get_services_info_dict(
 
         # If no usable pools, this is not visible
         if transports_in_meta:
+            transports_in_meta = _favorite_transport_first(transports_in_meta, favorite_transports.get(meta.uuid))
             group: collections.abc.MutableMapping[str, typing.Any] = (
                 meta.servicesPoolGroup.as_dict if meta.servicesPoolGroup else ServicePoolGroup.default().as_dict
             )
@@ -354,6 +370,10 @@ def get_services_info_dict(
         # If empty transports, do not include it on list
         if not trans:
             continue
+
+        # With transports hidden the user cannot choose, so the admin order is kept
+        if service_pool.show_transports:
+            trans = _favorite_transport_first(trans, favorite_transports.get(service_pool.uuid))
 
         # Locate if user service has any already assigned user service for this. Use "pre cached" number of assignations in this pool to optimize
         in_use = typing.cast(typing.Any, service_pool).number_in_use > 0  # number_in_use is anotated value

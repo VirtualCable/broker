@@ -43,6 +43,7 @@ from tests.utils.test import UDSTransactionTestCase
 from uds import models
 from uds.core import consts
 from uds.core import types
+from uds.core.util.config import GlobalConfig
 from uds.web.util import services
 
 
@@ -345,3 +346,84 @@ class TestGetServicesData(UDSTransactionTestCase):
         )
         # And priority should be 0, 1 and 2
         self.assertEqual([t["priority"] for t in result_services[0]["transports"]], [0, 1, 2])
+
+    def _pool_with_transports(self, count: int) -> models.ServicePool:
+        pool = fixtures_services.create_db_assigned_userservices(count=1, user=self.user, groups=self.groups)[
+            0
+        ].deployed_service
+        pool.transports.clear()
+        pool.transports.add(*self.transports[:count])
+        return pool
+
+    def _transport_ids(self) -> list[str]:
+        return [t["id"] for t in services.get_services_info_dict(self.request)["services"][0]["transports"]]
+
+    def test_transports_keep_admin_priority_without_favorite(self) -> None:
+        GlobalConfig.ENABLE_FAVORITE_TRANSPORTS.set(True)
+        self._pool_with_transports(3)
+
+        self.assertEqual(self._transport_ids(), [t.uuid for t in self.transports[:3]])
+
+    def test_favorite_transport_goes_first(self) -> None:
+        GlobalConfig.ENABLE_FAVORITE_TRANSPORTS.set(True)
+        pool = self._pool_with_transports(3)
+        self.user.set_favorite_transport(pool.uuid, self.transports[2].uuid)
+
+        transports = services.get_services_info_dict(self.request)["services"][0]["transports"]
+
+        self.assertEqual(
+            [t["id"] for t in transports],
+            [self.transports[2].uuid, self.transports[0].uuid, self.transports[1].uuid],
+        )
+        self.assertEqual([t["favorite"] for t in transports], [True, False, False])
+
+    def test_favorite_transport_ignored_when_not_available(self) -> None:
+        GlobalConfig.ENABLE_FAVORITE_TRANSPORTS.set(True)
+        pool = self._pool_with_transports(3)
+        self.user.set_favorite_transport(pool.uuid, self.transports[5].uuid)
+
+        self.assertEqual(self._transport_ids(), [t.uuid for t in self.transports[:3]])
+
+    def test_favorite_transport_ignored_when_feature_disabled(self) -> None:
+        GlobalConfig.ENABLE_FAVORITE_TRANSPORTS.set(False)
+        pool = self._pool_with_transports(3)
+        self.user.set_favorite_transport(pool.uuid, self.transports[2].uuid)
+
+        self.assertEqual(self._transport_ids(), [t.uuid for t in self.transports[:3]])
+
+    def test_favorite_transport_independent_of_favorite_services(self) -> None:
+        GlobalConfig.ENABLE_FAVORITE_SERVICES.set(True)
+        GlobalConfig.ENABLE_FAVORITE_TRANSPORTS.set(False)
+        pool = self._pool_with_transports(3)
+        self.user.set_favorite_transport(pool.uuid, self.transports[2].uuid)
+
+        self.assertEqual(self._transport_ids(), [t.uuid for t in self.transports[:3]])
+
+    def test_favorite_transport_ignored_when_transports_hidden(self) -> None:
+        GlobalConfig.ENABLE_FAVORITE_TRANSPORTS.set(True)
+        pool = self._pool_with_transports(3)
+        pool.show_transports = False
+        pool.save()
+        self.user.set_favorite_transport(pool.uuid, self.transports[2].uuid)
+
+        self.assertEqual(self._transport_ids(), [t.uuid for t in self.transports[:3]])
+
+    def test_favorite_transport_goes_first_in_meta_common(self) -> None:
+        GlobalConfig.ENABLE_FAVORITE_TRANSPORTS.set(True)
+        _pools, meta = self._generate_metapool_with_transports(
+            3, types.pools.TransportSelectionPolicy.COMMON, add_random_transports=False
+        )
+        self.user.set_favorite_transport(meta.uuid, self.transports[1].uuid)
+
+        self.assertEqual(
+            self._transport_ids(),
+            [self.transports[1].uuid, self.transports[0].uuid, self.transports[2].uuid],
+        )
+
+    def test_favorite_transport_set_replace_and_remove(self) -> None:
+        self.user.set_favorite_transport("pool", "t1")
+        self.user.set_favorite_transport("pool", "t2")
+        self.assertEqual(self.user.get_favorite_transports(), {"pool": "t2"})
+
+        self.user.remove_favorite_transport("pool")
+        self.assertEqual(self.user.get_favorite_transports(), {})

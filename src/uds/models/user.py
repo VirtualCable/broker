@@ -27,6 +27,7 @@
 
 """
 Author: Adolfo Gómez, dkmaster at dkmon dot com
+Author: Andres Schumann, aschumann at virtualcable dot es
 """
 
 import logging
@@ -187,6 +188,32 @@ class User(UUIDModel, properties.PropertiesMixin):
             if favorite in favs:
                 favs.discard(favorite)
                 props["favorites"] = list(favs)
+
+    def get_favorite_transports(self) -> dict[str, str]:
+        """
+        Returns the favorite transport of each service for this user, as {service_uuid: transport_id}
+        """
+        with self.properties as props:
+            return dict(props.get("favorite_transports", {}))
+
+    def set_favorite_transport(self, service_uuid: str, transport_id: str) -> None:
+        """
+        Sets the favorite transport for a service of this user, replacing the previous one
+        """
+        with self.properties as props:
+            favs = dict(props.get("favorite_transports", {}))
+            favs[service_uuid] = transport_id
+            props["favorite_transports"] = favs
+
+    def remove_favorite_transport(self, service_uuid: str) -> None:
+        """
+        Removes the favorite transport for a service of this user
+        """
+        with self.properties as props:
+            favs = dict(props.get("favorite_transports", {}))
+            if service_uuid in favs:
+                del favs[service_uuid]
+                props["favorite_transports"] = favs
 
     @property
     def rest_allowed_paths(self) -> list[str]:
