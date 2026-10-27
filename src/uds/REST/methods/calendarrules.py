@@ -56,6 +56,26 @@ from uds.REST.model import DetailHandler
 logger: logging.Logger = logging.getLogger(__name__)
 
 
+def _parse_iso(value: typing.Any) -> datetime.datetime:
+    try:
+        return datetime.datetime.fromisoformat(value)
+    except (TypeError, ValueError):
+        raise exceptions.rest.RequestError(f"Invalid ISO 8601 date/time: {value!r}") from None
+
+
+def _iso_to_utc(value: typing.Any) -> datetime.datetime:
+    parsed = _parse_iso(value)
+    if parsed.tzinfo is None:
+        parsed = parsed.replace(tzinfo=datetime.timezone.utc)
+    return parsed.astimezone(datetime.timezone.utc)
+
+
+def _iso_to_date(value: typing.Any) -> datetime.date:
+    # The end of a rule is a calendar day: keep the day as it was submitted, converting
+    # it to UTC could move it to the next or the previous one
+    return _parse_iso(value).date()
+
+
 @dataclasses.dataclass
 class CalendarRuleItem(types.rest.BaseRestItem):
     id: str
@@ -158,10 +178,9 @@ class CalendarRules(DetailHandler[CalendarRuleItem]):  # pylint: disable=too-man
         if int(fields["interval"]) < 1:
             raise exceptions.rest.RequestError("Repeat must be greater than zero")
 
-        # Convert timestamps to datetimes
-        fields["start"] = timezone.make_aware(datetime.datetime.fromtimestamp(fields["start"]))
+        fields["start"] = _iso_to_utc(fields["start"])
         if fields["end"] is not None:
-            fields["end"] = timezone.make_aware(datetime.datetime.fromtimestamp(fields["end"]))
+            fields["end"] = _iso_to_date(fields["end"])
 
         calendar_rule: CalendarRule
         try:

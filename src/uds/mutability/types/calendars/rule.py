@@ -4,7 +4,7 @@ Replicates ``POST``/``PUT``/``DELETE /calendars/{uuid}/rules[/{uuid}]`` (a
 detail: permissions are inherited from the calendar, exactly like
 services). The rules detail has no gui definition, so the mutable fields
 are the ones its ``save_item`` accepts, with the same shapes: ``start``
-and ``end`` are UNIX timestamps (seconds), ``frequency``/``duration_unit``
+and ``end`` are ISO 8601 date-times, ``frequency``/``duration_unit``
 are the enum names of the model.
 
 A creation is a detail of its calendar: the proposal targets the CALENDAR
@@ -57,12 +57,13 @@ _RULE_FIELDS: typing.Final[tuple[str, ...]] = (
     "duration_unit",
 )
 
-# Timestamp fields that are numeric but accept the null sentinel (end, and
-# start in a create payload that omits nothing): the handler reads them
+_DATETIME_FIELDS: typing.Final[frozenset[str]] = frozenset({"start", "end"})
+
+# Date-time fields that accept the null sentinel: the handler reads them
 # straight from the params and a None end means "no end", exactly what the
-# admin client sends. The generic numeric check would reject it, so these
+# admin client sends. The generic text check would reject it, so these
 # names are excused from it in this family.
-_NULLABLE_NUMERIC: typing.Final[frozenset[str]] = frozenset({"end"})
+_NULLABLE_FIELDS: typing.Final[frozenset[str]] = frozenset({"end"})
 
 
 def _def_from_choice(name: str, label: str, tooltip: str, choices: tuple[tuple[str, str], ...]) -> JsonObject:
@@ -95,16 +96,16 @@ def _rule_definitions() -> list[JsonObject]:
         _def_from_choice("frequency", "Frequency", "How often the rule repeats", FrequencyInfo.as_choices()),
         {
             "name": "start",
-            "type": "numeric",
+            "type": "text",
             "label": "Start",
-            "tooltip": "Start of the rule (UNIX timestamp, seconds)",
+            "tooltip": "Start of the rule (ISO 8601 date-time, e.g. 2026-10-27T10:00:00+02:00)",
             "secret": False,
         },
         {
             "name": "end",
-            "type": "numeric",
+            "type": "text",
             "label": "End",
-            "tooltip": "End of the rule (UNIX timestamp, seconds; null means no end)",
+            "tooltip": "End of the rule (ISO 8601 date-time; null means no end)",
             "secret": False,
         },
         {
@@ -134,7 +135,7 @@ class CalendarRuleUpdate(mutability_base.MutableActionType):
     description = (
         "Propose changes to an existing rule of a calendar. The proposal does NOT apply "
         "anything: it is queued until an administrator approves it. Mutable fields are "
-        "name, comments, frequency, start and end (UNIX timestamps in seconds), "
+        "name, comments, frequency, start and end (ISO 8601 date-times), "
         "interval, duration and duration_unit; use get_mutable_fields with the rule "
         "uuid to discover them and their current values."
     )
@@ -183,11 +184,11 @@ class CalendarRuleUpdate(mutability_base.MutableActionType):
             elif name == "frequency":
                 snapshot[name] = rule.frequency
             elif name == "start":
-                snapshot[name] = int(rule.start.timestamp())
+                snapshot[name] = rule.start.isoformat()
             elif name == "end":
                 # Same shape the REST item serialization uses for end
                 snapshot[name] = (
-                    int(timezone.make_aware(datetime.datetime.combine(rule.end, datetime.time.max)).timestamp())
+                    timezone.make_aware(datetime.datetime.combine(rule.end, datetime.time.max)).isoformat()
                     if rule.end
                     else None
                 )
@@ -251,10 +252,15 @@ class CalendarRuleUpdate(mutability_base.MutableActionType):
     def _field_type_errors(name: str, value: typing.Any, definition: JsonObject) -> list[str]:
         # ``end`` accepts the null sentinel ("no end", exactly what the
         # admin client sends on every permanent rule); the generic
-        # numeric check does not know field semantics and would reject
+        # text check does not know field semantics and would reject
         # it, so this family excuses it here and defers the rest.
-        if value is None and name in _NULLABLE_NUMERIC:
+        if value is None and name in _NULLABLE_FIELDS:
             return []
+        if name in _DATETIME_FIELDS:
+            try:
+                datetime.datetime.fromisoformat(value)
+            except (TypeError, ValueError):
+                return [f"field {name} must be an ISO 8601 date-time"]
         return mutability_base.MutableActionType._field_type_errors(name, value, definition)
 
     # ---------------------------------------------------- standard texts
@@ -272,7 +278,7 @@ class CalendarRuleUpdate(mutability_base.MutableActionType):
         if self.operation is ActionOperation.CREATE:
             return mutability_verbs.create_tool_description(
                 "calendar rule",
-                "name (required), comments, frequency, start (UNIX timestamp in seconds), "
+                "name (required), comments, frequency, start (ISO 8601 date-time), "
                 "end (null for no end), interval, duration and duration_unit",
                 needs_parent=True,
             )

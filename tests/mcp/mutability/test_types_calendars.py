@@ -165,20 +165,28 @@ class CalendarRuleUpdateTest(FlowTestCase):
         rule = self._rule()
         self.assertIs(CalendarRuleUpdate().permission_target(rule), rule.calendar)
 
-    def test_snapshot_uses_the_handler_timestamp_shapes(self) -> None:
+    def test_snapshot_uses_the_handler_datetime_shapes(self) -> None:
         rule = self._rule()
         action_type = CalendarRuleUpdate()
         snapshot = action_type.snapshot_values(rule, ["frequency", "interval", "start", "end"])
 
         self.assertEqual(snapshot["frequency"], "WEEKLY")
         self.assertEqual(snapshot["interval"], 1)
-        self.assertEqual(snapshot["start"], int(rule.start.timestamp()))
+        self.assertEqual(snapshot["start"], rule.start.isoformat())
         self.assertIsNone(snapshot["end"])
 
         base = action_type.fingerprint(rule)
         rule.duration = 60
         rule.save(update_fields=["duration"])
         self.assertNotEqual(base, action_type.fingerprint(rule))
+
+    def test_snapshot_end_is_an_iso_date_time_of_the_same_day(self) -> None:
+        rule = self._rule()
+        rule.end = datetime.date(2026, 10, 27)
+        rule.save(update_fields=["end"])
+        end = CalendarRuleUpdate().snapshot_values(rule, ["end"])["end"]
+
+        self.assertEqual(datetime.datetime.fromisoformat(end).date(), datetime.date(2026, 10, 27))
 
     def test_execute_merges_over_the_cas_verified_values(self) -> None:
         rule = self._rule()
@@ -241,15 +249,15 @@ class CalendarRuleCreateTest(FlowTestCase):
         for field in ("name", "frequency", "start"):
             self.assertTrue(any(field in e for e in errors), field)
         self.assertEqual(
-            create.create_validate_values("calendar_rule", {"name": "r", "frequency": "WEEKLY", "start": 1}),
+            create.create_validate_values("calendar_rule", {"name": "r", "frequency": "WEEKLY", "start": "2026-10-27T10:00:00+02:00"}),
             [],
         )
-        # out-of-universe choices and non-numeric timestamps still fail
+        # out-of-universe choices and non-ISO date-times still fail
         self.assertTrue(
             any(
                 "frequency" in e
                 for e in create.create_validate_values(
-                    "calendar_rule", {"name": "r", "frequency": "HOURLY", "start": 1}
+                    "calendar_rule", {"name": "r", "frequency": "HOURLY", "start": "2026-10-27T10:00:00+02:00"}
                 )
             )
         )
@@ -267,7 +275,7 @@ class CalendarRuleCreateTest(FlowTestCase):
         create = _rule_bound("create")
         self.assertEqual(
             create.create_validate_values(
-                "calendar_rule", {"name": "r", "frequency": "WEEKLY", "start": 1, "end": None}
+                "calendar_rule", {"name": "r", "frequency": "WEEKLY", "start": "2026-10-27T10:00:00+02:00", "end": None}
             ),
             [],
         )
@@ -278,7 +286,7 @@ class CalendarRuleCreateTest(FlowTestCase):
         action = build_action(
             action_type="calendar_rule.create",
             target_uuid=self.calendar.uuid,
-            values={"name": "easter", "frequency": "YEARLY", "start": 1_777_000_000},
+            values={"name": "easter", "frequency": "YEARLY", "start": "2026-04-05T00:00:00+00:00"},
             base_values={},
             base_etag="",
         )
@@ -314,7 +322,7 @@ class CalendarRuleCreateTest(FlowTestCase):
                 "name": "easter",
                 "comments": "",
                 "frequency": "YEARLY",
-                "start": 1_777_000_000,
+                "start": "2026-04-05T00:00:00+00:00",
                 "end": None,
                 "interval": 1,
                 "duration": 0,
