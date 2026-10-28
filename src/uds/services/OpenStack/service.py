@@ -38,7 +38,7 @@ from django.utils.translation import gettext_noop as _
 from uds.core import types
 from uds.core.services.generics.dynamic.service import DynamicService
 from uds.core.ui import gui
-from uds.core.util import validators
+from uds.core.util import fields, validators
 
 from . import helpers
 from .deployment import OpenStackLiveUserService
@@ -180,7 +180,11 @@ class OpenStackLiveService(DynamicService):
     maintain_on_error = DynamicService.maintain_on_error
     try_soft_shutdown = DynamicService.try_soft_shutdown
     remove_duplicates = DynamicService.remove_duplicates
-    put_back_to_cache = DynamicService.put_back_to_cache
+    put_back_to_cache = fields.put_back_to_cache_field(
+        order=105,
+        tab=types.ui.Tab.ADVANCED,
+        has_snapshot=False,
+    )
 
     cached_api: "client.OpenStackClient | None" = None
 

@@ -90,7 +90,11 @@ class OpenshiftService(DynamicService):
 
     try_soft_shutdown = DynamicService.try_soft_shutdown  # Before deleting, try a soft shutdown
     maintain_on_error = DynamicService.maintain_on_error  # If an error occurs, maintain the service
-    put_back_to_cache = DynamicService.put_back_to_cache
+    put_back_to_cache = fields.put_back_to_cache_field(
+        order=105,
+        tab=types.ui.Tab.ADVANCED,
+        has_snapshot=False,
+    )
 
     storage_class = gui.ChoiceField(
         order=20,
