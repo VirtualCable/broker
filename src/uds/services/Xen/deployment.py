@@ -39,6 +39,8 @@ from uds.core import types
 from uds.core.services.generics.dynamic.userservice import DynamicUserService
 from uds.core.util import autoserializable
 
+from .xen import exceptions as xen_exceptions
+
 # Not imported at runtime, just for type checking
 if typing.TYPE_CHECKING:
     from .publication import XenPublication
@@ -171,3 +173,32 @@ class XenLinkedUserService(DynamicUserService, autoserializable.AutoSerializable
                 raise Exception(f"Error deploying machine: {task_info.result}")
 
         return types.states.TaskState.RUNNING
+
+    # The machine must not leave the cache until XenServer has really finished the snapshot task
+    def _check_snapshot_task(self, operation: str) -> types.states.TaskState:
+        if self._task == "":
+            return types.states.TaskState.FINISHED
+
+        try:
+            with self.service().provider().get_connection() as api:
+                task_info = api.get_task_info(self._task)
+            if not task_info.status.is_done():
+                return types.states.TaskState.RUNNING
+            if not task_info.is_success():
+                raise Exception(task_info.result)
+        except xen_exceptions.XenRetryableError:
+            return types.states.TaskState.RUNNING
+        except Exception as e:
+            # Same outcome as a failed snapshot call: logged, but the machine is not sent to error
+            self.do_log(types.log.LogLevel.WARNING, f"Could not {operation} SNAPSHOT for this VM. ({e})")
+
+        self._task = ""
+        return types.states.TaskState.FINISHED
+
+    @typing.override
+    def op_back_to_cache_snapshot_create_checker(self) -> types.states.TaskState:
+        return self._check_snapshot_task("create")
+
+    @typing.override
+    def op_back_to_cache_snapshot_recover_checker(self) -> types.states.TaskState:
+        return self._check_snapshot_task("restore")
