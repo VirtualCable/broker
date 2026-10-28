@@ -74,3 +74,6 @@ SESSION_UNLOCK_DATA: typing.Final[str] = "webauthn_unlock"  # Pending unlock (ro
 
 # Maximum age, in seconds, of a pending registration
 PENDING_SAVE_MAX_AGE: typing.Final[int] = 120
+
+# Maximum length of the random device id the browser sends on registration
+DEVICE_ID_MAX_LENGTH: typing.Final[int] = 64

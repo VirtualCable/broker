@@ -80,6 +80,7 @@ class OpenshiftTemplatePublication(DynamicPublication, autoserializable.AutoSeri
             new_vm_name=self._name,
             new_dv_name=new_pvc_name,
             source_pvc_name=source_pvc_name,
+            options=self.service().machine_options(),
         )
 
     @typing.override
@@ -138,6 +139,20 @@ class OpenshiftTemplatePublication(DynamicPublication, autoserializable.AutoSeri
             logger.debug(f"VM '{self._name}' still running, waiting.")
             return TaskState.RUNNING
 
+        return TaskState.FINISHED
+
+    @typing.override
+    def op_destroy_validator_checker(self) -> TaskState:
+        """
+        Non persistent linked clones run over the disk of this publication. Kubernetes keeps a
+        PVC in use (pvc-protection), so deleting now would leave the publication stuck removing:
+        wait until no ephemeral VM uses it. UDS only unpublishes once its user services are gone
+        or in error, so this only waits for VMs kept on error.
+        """
+        users = self.service().api.list_ephemeral_vms_using_pvc(f"{self._name}-disk")
+        if users:
+            logger.info("Publication %s disk still used by %s, waiting to delete it", self._name, ", ".join(users))
+            return TaskState.RUNNING
         return TaskState.FINISHED
 
     # Here ends the publication needed methods.

@@ -1132,6 +1132,13 @@ class GlobalConfig:
         help=_("Enable or disable add favorite services feature"),
         group=Config.GroupType.APPEARANCE,
     )
+    ENABLE_FAVORITE_TRANSPORTS: Config.Value = Config.section(Config.SectionType.CUSTOM).value(
+        "Enable favorite transports",
+        "0",
+        type=Config.FieldType.BOOLEAN,
+        help=_("Enable or disable choosing a favorite transport per service"),
+        group=Config.GroupType.APPEARANCE,
+    )
     ALLOW_ANIMATED_BACKGROUNDS: Config.Value = Config.section(Config.SectionType.CUSTOM).value(
         "Animated backgrounds",
         "1",

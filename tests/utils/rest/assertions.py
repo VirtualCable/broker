@@ -29,6 +29,7 @@ Author: Adolfo Gómez, dkmaster at dkmon dot com
 """
 
 import collections.abc
+import datetime
 import logging
 import typing
 
@@ -52,10 +53,12 @@ def assert_user_is(
         ignore_fields.append("id")
 
     # If last_access is present, compare it here, because it's a datetime object
-    if "last_access" in compare_to and int(user.last_access.timestamp()) != compare_to["last_access"]:
+    if "last_access" in compare_to and user.last_access != datetime.datetime.fromisoformat(
+        compare_to["last_access"]
+    ):
         logger.info(
             "User last_access do not match: %s != %s",
-            user.last_access.timestamp(),
+            user.last_access.isoformat(),
             compare_to["last_access"],
         )
         return False

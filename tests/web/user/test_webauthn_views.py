@@ -178,6 +178,66 @@ class WebAuthnViewsTest(test.WEBTestCase):
         self.assertTrue(result.get("available"))
         self.assertEqual(result.get("credential_id"), first.credential_id)
 
+    def _register_from_device(
+        self, device_id: str | None, credential_id: bytes, password: str | None = None
+    ) -> int:
+        """Registers a credential tagged with a browser device id; returns the login status code."""
+        body: dict[str, typing.Any] = {"username": self.user.name, "auth_id": self.auth.uuid}
+        if device_id is not None:
+            body["device_id"] = device_id
+        start = self.post_json(reverse("webapi.webauthn.save_start"), body)
+        payload = synthetic.registration_payload(
+            self.private_key,
+            self.rp_id,
+            self.origin,
+            b64url_decode(start["challenge"]),
+            credential_id=credential_id,
+        )
+        result = self.post_json(reverse("webapi.webauthn.save_finish"), payload)
+        self.assertTrue(result.get("ok"), f"save_finish failed: {result}")
+        response = self.client.post(
+            reverse("page.login"),
+            {"user": self.user.name, "password": password or self.user.name, "authenticator": self.auth.uuid},
+        )
+        return response.status_code
+
+    def _credential_ids(self) -> set[str]:
+        return {c.credential_id for c in self._reloaded_user().webauthn_credentials}
+
+    def test_registering_again_from_the_same_device_replaces_its_credential(self) -> None:
+        self._register_from_device("device-a", b"\x01" * 32)
+        self._register_from_device("device-a", b"\x02" * 32)
+
+        self.assertEqual(self._credential_ids(), {b64url_encode(b"\x02" * 32)})
+
+    def test_each_device_keeps_its_own_credential(self) -> None:
+        self._register_from_device("device-a", b"\x01" * 32)
+        self._register_from_device("device-b", b"\x02" * 32)
+
+        self.assertEqual(self._credential_ids(), {b64url_encode(b"\x01" * 32), b64url_encode(b"\x02" * 32)})
+
+    def test_a_failed_login_does_not_replace_the_device_credential(self) -> None:
+        self._register_from_device("device-a", b"\x01" * 32)
+        self._register_from_device("device-a", b"\x02" * 32, password="wrong password")
+
+        self.assertEqual(self._credential_ids(), {b64url_encode(b"\x01" * 32)})
+
+    def test_registration_without_device_id_keeps_adding(self) -> None:
+        self._register_from_device(None, b"\x01" * 32)
+        self._register_from_device(None, b"\x02" * 32)
+
+        self.assertEqual(self._credential_ids(), {b64url_encode(b"\x01" * 32), b64url_encode(b"\x02" * 32)})
+
+    def test_save_start_does_not_disclose_credentials(self) -> None:
+        self._register_from_device("device-a", b"\x01" * 32)
+        start = self.post_json(
+            reverse("webapi.webauthn.save_start"),
+            {"username": self.user.name, "auth_id": self.auth.uuid, "device_id": "device-a"},
+        )
+
+        self.assertEqual(set(start), {"challenge", "user", "salts"})
+        self.assertNotIn(b64url_encode(b"\x01" * 32), json.dumps(start))
+
     def test_save_requires_vault(self) -> None:
         start = self.post_json(
             reverse("webapi.webauthn.save_start"),

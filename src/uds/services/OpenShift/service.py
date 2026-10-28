@@ -32,9 +32,10 @@ import collections.abc
 import logging
 import typing
 
+from django.utils.translation import gettext
 from django.utils.translation import gettext_lazy as _
 
-from uds.core import types
+from uds.core import exceptions, types
 from uds.core.services.generics.dynamic.publication import DynamicPublication
 from uds.core.services.generics.dynamic.service import DynamicService
 from uds.core.services.generics.dynamic.userservice import DynamicUserService
@@ -42,8 +43,10 @@ from uds.core.ui import gui
 from uds.core.util import fields
 from uds.core.util import validators
 
+from . import helpers
 from .deployment import OpenshiftUserService
 from .openshift import exceptions as oshift_exceptions
+from .openshift import types as oshift_types
 from .publication import OpenshiftTemplatePublication
 
 logger: logging.Logger = logging.getLogger(__name__)
@@ -89,6 +92,54 @@ class OpenshiftService(DynamicService):
     maintain_on_error = DynamicService.maintain_on_error  # If an error occurs, maintain the service
     put_back_to_cache = DynamicService.put_back_to_cache
 
+    storage_class = gui.ChoiceField(
+        order=20,
+        label=_("Storage Class"),
+        tooltip=_("Storage class for the disks of the new VMs. Empty keeps the template storage class."),
+        default="",
+        required=False,
+        tab=types.ui.Tab.MACHINE,
+    )
+    instance_type = gui.ChoiceField(
+        order=21,
+        label=_("Instance Type"),
+        tooltip=_(
+            "Cluster instance type (size) for the new VMs. Empty keeps the template CPU and memory. "
+            "Cannot be combined with Cores or Memory."
+        ),
+        default="",
+        required=False,
+        tab=types.ui.Tab.MACHINE,
+    )
+    cores = gui.NumericField(
+        order=22,
+        label=_("Cores"),
+        length=3,
+        default=0,
+        min_value=0,
+        tooltip=_('Number of cores of the new VMs. (Zero value means "keep template cores")'),
+        required=True,
+        tab=types.ui.Tab.MACHINE,
+    )
+    memory = gui.NumericField(
+        order=23,
+        label=_("Memory (Mb)"),
+        length=7,
+        default=0,
+        min_value=0,
+        tooltip=_('Memory of the new VMs. (Zero value means "keep template memory")'),
+        required=True,
+        tab=types.ui.Tab.MACHINE,
+    )
+    network = gui.ChoiceField(
+        order=24,
+        label=_("Network"),
+        tooltip=_("Network of the first interface of the new VMs. Empty keeps the template network."),
+        default="",
+        required=False,
+        tab=types.ui.Tab.MACHINE,
+    )
+
     prov_uuid = gui.HiddenField(value=None)
 
     _cached_api: "OpenshiftClient | None" = None
@@ -109,6 +160,11 @@ class OpenshiftService(DynamicService):
 
         self.basename.value = validators.validate_basename(self.basename.value, length=self.lenname.as_int())
 
+        if self.instance_type.value and (self.cores.as_int() or self.memory.as_int()):
+            raise exceptions.ui.ValidationError(
+                gettext("An instance type already sets cores and memory: leave Cores and Memory at zero")
+            )
+
     @typing.override
     def init_gui(self) -> None:
         """
@@ -122,6 +178,21 @@ class OpenshiftService(DynamicService):
                 for template in self.provider().api.list_vms()
                 if template.is_usable() and not template.name.startswith("uds-")
             ]
+        )
+
+        choices = {item["name"]: item["choices"] for item in helpers.machine_choices(self.provider().api)}
+        self.storage_class.set_choices(choices["storage_class"])
+        self.instance_type.set_choices(choices["instance_type"])
+        self.network.set_choices(choices["network"])
+
+    def machine_options(self) -> oshift_types.MachineOptions:
+        """Overrides chosen by the administrator for the VMs of this service."""
+        return oshift_types.MachineOptions(
+            storage_class=self.storage_class.value or "",
+            instance_type=self.instance_type.value or "",
+            cores=self.cores.as_int(),
+            memory_mb=self.memory.as_int(),
+            network=self.network.value or "",
         )
 
     @typing.override

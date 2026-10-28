@@ -238,6 +238,11 @@ urlpatterns = [
         name="webapi.status",
     ),
     re_path(
+        r"^uds/webapi/action/(?P<service_id>[a-zA-Z0-9:-]+)/favorite_transport/(?P<transport_id>[a-zA-Z0-9:-]+)$",
+        service.favorite_transport,
+        name="webapi.favorite_transport",
+    ),
+    re_path(
         r"^uds/webapi/action/(?P<service_id>[a-zA-Z0-9:-]+)/(?P<action_string>[a-zA-Z0-9:-]+)$",
         service.action,
         name="webapi.action",
