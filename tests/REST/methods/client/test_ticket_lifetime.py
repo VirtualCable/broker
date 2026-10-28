@@ -27,6 +27,7 @@
 """
 Author: Janier Rodríguez, jrodriguez at virtualcable dot es
 """
+import datetime
 import typing
 from unittest import mock
 
@@ -63,18 +64,46 @@ class ClientTicketLifetimeTest(test.UDSTestCase):
         client._request = mock.MagicMock()
         return client, ticket
 
-    def test_service_in_preparation_keeps_ticket(self) -> None:
-        client, ticket = self._build()
+    def _age_ticket(self, ticket: str, seconds: int) -> None:
+        stored = TicketStore.objects.get(uuid=ticket)
+        stored.stamp -= datetime.timedelta(seconds=seconds)
+        stored.save(update_fields=['stamp'])
 
+    def _process_in_preparation(self, client: Client, ticket: str) -> dict[str, typing.Any]:
         with mock.patch('uds.REST.methods.client.User'), mock.patch(
             'uds.REST.methods.client.UserServiceManager'
         ) as manager:
             manager.manager.return_value.get_user_service_info.side_effect = ServiceNotReadyError()
-            result = client.process(ticket, SCRAMBLER)
+            return client.process(ticket, SCRAMBLER)
+
+    def test_service_in_preparation_keeps_ticket(self) -> None:
+        client, ticket = self._build()
+
+        result = self._process_in_preparation(client, ticket)
 
         self.assertEqual(result['error']['message'], types.errors.Error.SERVICE_IN_PREPARATION.message)
         self.assertTrue(result['error']['is_retryable'])
         self.assertTrue(TicketStore.objects.filter(uuid=ticket).exists())
+
+    def test_service_in_preparation_restarts_ticket_validity(self) -> None:
+        client, ticket = self._build()
+        self._age_ticket(ticket, consts.ticket.DEFAULT_TICKET_VALIDITY_TIME - 5)
+
+        self._process_in_preparation(client, ticket)
+        self._age_ticket(ticket, 10)
+        result = self._process_in_preparation(client, ticket)
+
+        self.assertEqual(result['error']['message'], types.errors.Error.SERVICE_IN_PREPARATION.message)
+        self.assertTrue(result['error']['is_retryable'])
+
+    def test_expired_ticket_is_denied(self) -> None:
+        client, ticket = self._build()
+        self._age_ticket(ticket, consts.ticket.DEFAULT_TICKET_VALIDITY_TIME + 1)
+
+        result = self._process_in_preparation(client, ticket)
+
+        self.assertEqual(result['error']['message'], types.errors.Error.ACCESS_DENIED.message)
+        self.assertFalse(result['error']['is_retryable'])
 
     def test_served_request_consumes_ticket(self) -> None:
         client, ticket = self._build()

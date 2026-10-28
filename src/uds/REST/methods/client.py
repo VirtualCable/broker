@@ -210,6 +210,8 @@ class Client(Handler):
             else:
                 return Client.result(result=transport_script.as_encrypted_dict(kem_key, ticket_id=ticket))
         except ServiceNotReadyError as e:
+            # Creating a service takes longer than one ticket lifetime: every retry starts it again
+            TicketStore.revalidate(ticket)
             keep_ticket = True
             return Client.result(
                 error=types.errors.Error.SERVICE_IN_PREPARATION, percent=e.code * 25, is_retrayable=True
