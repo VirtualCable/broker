@@ -37,6 +37,7 @@ from unittest import mock
 
 from uds.core import types
 from uds.core.environment import Environment
+from uds.core.managers.userservice import UserServiceManager
 from uds.core.types.states import State
 from tests.fixtures.modules.service.provider import TestProvider
 from tests.fixtures.modules.service.service import TestServiceCache
@@ -192,6 +193,26 @@ class ServiceCacheUpdaterTest(UDSTestCase):
         # This allows us to "honor" some external providers that, in some cases, will not have services available...
         TestServiceCache.userservices_limit = 0
         self.assertEqual(self.execute_cache_updater(self.servicepool.cache_l1_srvs + 10), 0)
+
+    def test_l2_to_l1_keeps_preparing_while_operation_runs(self) -> None:
+        self.set_cache(initial=0, cache=1, cache2=1, max=10)
+        publication = self.servicepool.active_publication()
+        assert publication is not None
+        userservice = services_fixtures.create_db_userservice(self.servicepool, publication)
+        userservice.cache_level = types.services.CacheLevel.L2
+        userservice.state = State.PREPARING
+        userservice.os_state = State.PREPARING
+        userservice.save()
+
+        stats = UserServiceManager.manager().get_cache_servicepool_stats(self.servicepool)
+        with mock.patch.object(
+            type(userservice.get_instance()), "move_to_cache", return_value=types.states.TaskState.RUNNING
+        ):
+            ServiceCacheUpdater(Environment.testing_environment()).grow_l1_cache(stats)
+
+        userservice.refresh_from_db()
+        self.assertEqual(userservice.cache_level, types.services.CacheLevel.L1)
+        self.assertEqual(userservice.state, State.PREPARING)
 
 
 class ServiceCacheUpdaterLimitsIsolationTest(UDSTestCase):
