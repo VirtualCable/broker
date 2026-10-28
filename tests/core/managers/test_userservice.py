@@ -90,6 +90,32 @@ class TestUserserviceManager(UDSTransactionTestCase):
         self.assertEqual(assigned.src_ip, orig_src_ip)
         self.assertEqual(assigned.src_hostname, orig_src_hostname)
 
+    def test_forced_move_assigned_to_l1_keeps_preparing_while_operation_runs(self) -> None:
+        userservice = services_fixtures.create_db_assigned_userservices()[0]
+        instance = userservice.get_instance()
+
+        with mock.patch.object(
+            type(instance), "move_to_cache", return_value=core_types.states.TaskState.RUNNING
+        ):
+            self.manager.forced_move_assigned_to_cache_l1(userservice)
+
+        userservice = models.UserService.objects.get(uuid=userservice.uuid)
+        self.assertEqual(userservice.cache_level, core_types.services.CacheLevel.L1)
+        self.assertEqual(userservice.state, core_types.states.State.PREPARING)
+
+    def test_forced_move_assigned_to_l1_is_usable_when_operation_finishes(self) -> None:
+        userservice = services_fixtures.create_db_assigned_userservices()[0]
+        instance = userservice.get_instance()
+
+        with mock.patch.object(
+            type(instance), "move_to_cache", return_value=core_types.states.TaskState.FINISHED
+        ):
+            self.manager.forced_move_assigned_to_cache_l1(userservice)
+
+        userservice = models.UserService.objects.get(uuid=userservice.uuid)
+        self.assertEqual(userservice.cache_level, core_types.services.CacheLevel.L1)
+        self.assertEqual(userservice.state, core_types.states.State.USABLE)
+
     def test_release_from_logout(self) -> None:
         pass
 
