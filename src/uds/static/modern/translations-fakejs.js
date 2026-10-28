@@ -19,6 +19,8 @@ gettext("seconds");
 gettext("Username");
 gettext("Password");
 gettext("Domain");
+gettext("Remove favorite connection");
+gettext("Set as favorite connection");
 gettext("Service is in maintenance");
 gettext("This service is currently not accessible due to schedule restrictions.");
 gettext("Launcher");

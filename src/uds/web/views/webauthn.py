@@ -310,7 +310,9 @@ def biometric_finish(request: HttpRequest) -> JsonResponse:
 def save_start(request: HttpRequest) -> JsonResponse:
     """Starts the "register biometric credential" flow.
 
-    Body: {"auth_id": <id>, "username": <str>}
+    Body: {"auth_id": <id>, "username": <str>} (optionally "device_id", a
+    random id kept by the browser: the credential it registered before is
+    replaced when this registration is committed)
 
     The user has just typed the password in the login form that will be
     submitted a moment later. The challenge, the PRF salts pair and the user
@@ -328,6 +330,7 @@ def save_start(request: HttpRequest) -> JsonResponse:
 
     username = str(data.get("username", ""))
     auth_id = str(data.get("auth_id", "") or "")
+    device_id = str(data.get("device_id", "") or "")[: consts.webauthn.DEVICE_ID_MAX_LENGTH]
 
     if not username or not auth_id:
         return _json_error("Missing required parameters")
@@ -350,6 +353,7 @@ def save_start(request: HttpRequest) -> JsonResponse:
         "user_handle": b64url_encode(user_handle),
         "user_id": user.id,
         "rp_id": rp_id,
+        "device_id": device_id,
         "created": time.time(),
     }
 
@@ -459,6 +463,14 @@ def apply_pending_save(request: HttpRequest, user: models.User) -> None:
         logger.info("Pending biometric registration not finished, discarding")
         return
 
+    # Only reached after a successful password login, so a device id sent by
+    # someone else cannot remove the credentials of this user.
+    device_id = str(session_data.get("device_id", ""))
+    if device_id:
+        for credential in user.webauthn_credentials.all(rp_id=str(session_data["rp_id"])):
+            if credential.device_id == device_id:
+                user.webauthn_credentials.remove(credential.credential_id)
+
     user.webauthn_credentials.add(
         types.webauthn.StoredCredential(
             credential_id=str(session_data["credential_id"]),
@@ -472,6 +484,7 @@ def apply_pending_save(request: HttpRequest, user: models.User) -> None:
             generation=0,
             created=webauthn_credentials.now_epoch(),
             last_used=None,
+            device_id=device_id,
         )
     )
     logger.info("Biometric credential registered for user %s", user.name)

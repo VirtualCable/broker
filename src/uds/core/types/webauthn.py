@@ -100,6 +100,9 @@ class StoredCredential:
     created: float  # epoch seconds
     last_used: float | None  # epoch seconds
     enabled: bool = True
+    # Random id kept by the browser that registered the credential. Credentials
+    # registered before it existed have it empty.
+    device_id: str = ""
 
     def to_dict(self) -> dict[str, typing.Any]:
         """Serializes to a JSON-compatible dict (property value)."""
@@ -122,6 +125,7 @@ class StoredCredential:
                 created=float(data.get("created", 0.0)),
                 last_used=(float(data["last_used"]) if data.get("last_used") is not None else None),
                 enabled=bool(data.get("enabled", True)),
+                device_id=str(data.get("device_id", "")),
             )
         except (KeyError, TypeError, ValueError):
             return None
