@@ -119,7 +119,9 @@ def server_group_field(
         order=2,
         tooltip=_("Server group to use"),
         required=True,
-        choices=functools.partial(_server_group_values, valid_types, subtype),  # So it gets evaluated at runtime
+        choices=functools.partial(
+            _server_group_values, valid_types, subtype
+        ),  # So it gets evaluated at runtime
         tab=tab,
     )
 
@@ -400,7 +402,9 @@ def macs_range_field(
         default=default,
         order=order,
         readonly=readonly,
-        tooltip=_("Range of valid macs for created machines. Must be in the range {default}").format(default=default),
+        tooltip=_("Range of valid macs for created machines. Must be in the range {default}").format(
+            default=default
+        ),
         required=True,
         tab=tab,
         old_field_name="macsRange",
@@ -420,7 +424,9 @@ def mfa_attr_field(order: int = 20, tab: "types.ui.Tab|str|None" = types.ui.Tab.
     )
 
 
-def on_logout_field(order: int = 10, tab: "types.ui.Tab|str|None" = types.ui.Tab.ADVANCED) -> ui.gui.ChoiceField:
+def on_logout_field(
+    order: int = 10, tab: "types.ui.Tab|str|None" = types.ui.Tab.ADVANCED
+) -> ui.gui.ChoiceField:
     return ui.gui.ChoiceField(
         label=_("Logout Action"),
         order=order,
@@ -484,17 +490,22 @@ def login_without_mfa_policy_field(
 
 
 def put_back_to_cache_field(
-    order: int = 120, tab: "types.ui.Tab|str|None" = types.ui.Tab.ADVANCED
+    order: int = 120, tab: "types.ui.Tab|str|None" = types.ui.Tab.ADVANCED, *, has_snapshot: bool = True
 ) -> ui.gui.ChoiceField:
+    choices = [
+        types.ui.ChoiceItem(id="no", text=_("No. Never put it back to cache")),
+        types.ui.ChoiceItem(id="yes", text=_("Yes, try to put it back to cache")),
+    ] + (
+        [types.ui.ChoiceItem(id="snapshot", text=_("Yes, try to put it back to cache and recover snapshot"))]
+        if has_snapshot
+        else []
+    )
+
     return ui.gui.ChoiceField(
         order=order,
         label=_("Put back to cache"),
         tooltip=_("On machine releasy by logout, put it back to cache instead of deleting if possible."),
-        choices=[
-            types.ui.ChoiceItem(id="no", text=_("No. Never put it back to cache")),
-            types.ui.ChoiceItem(id="yes", text=_("Yes, try to put it back to cache")),
-            types.ui.ChoiceItem(id="snapshot", text=_("Yes, try to put it back to cache and recover snapshot")),
-        ],
+        choices=choices,
         tab=tab,
     )
 
@@ -510,7 +521,9 @@ def username_attr_field(
         lines=3,
         default=default or "",
         order=order,
-        tooltip=_("Attributes that contains the user name attributes or attribute patterns (one for each line)"),
+        tooltip=_(
+            "Attributes that contains the user name attributes or attribute patterns (one for each line)"
+        ),
         required=True,
         tab=tab,
     )
@@ -527,7 +540,9 @@ def groupname_attr_field(
         lines=3,
         default=default or "",
         order=order,
-        tooltip=_("Attribute that contains the group name attributes or attribute patterns (one for each line)"),
+        tooltip=_(
+            "Attribute that contains the group name attributes or attribute patterns (one for each line)"
+        ),
         required=True,
         tab=tab,
     )
