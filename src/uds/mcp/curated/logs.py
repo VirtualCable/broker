@@ -1,5 +1,6 @@
 """Log tools: the unified per-object trail and the admin-only global log."""
 
+import re
 import typing
 
 from asgiref.sync import sync_to_async
@@ -17,10 +18,31 @@ from uds.REST.methods.services_pools import ServicesPools
 from uds.REST.methods.user_services import AssignedUserService
 
 from ..catalog import ToolDefinition
+from ..redaction import REDACTED
 from ..rest_proxy import RestProxy, RestTarget
 from .helpers import GET, JsonObject, check_required, schema, string_property, uuid_property
 
 __all__ = ["curated_tools"]
+
+# The random password os managers log each generated password on purpose so
+# admins can read it from the service log; agents must not.
+_GENERATED_PASSWORD = re.compile(r'(Password set to ")[^"]*(")')
+
+
+def _hide_generated_password(entry: typing.Any) -> typing.Any:
+    if not isinstance(entry, dict):
+        return entry
+    fields = typing.cast(dict[str, typing.Any], entry)
+    message = fields.get("message")
+    if not isinstance(message, str):
+        return fields
+    return {**fields, "message": _GENERATED_PASSWORD.sub(rf"\g<1>{REDACTED}\g<2>", message)}
+
+
+def _hide_generated_passwords(entries: typing.Any) -> typing.Any:
+    if not isinstance(entries, list):
+        return entries
+    return [_hide_generated_password(entry) for entry in typing.cast(list[typing.Any], entries)]
 
 
 def _item_logs_tool() -> ToolDefinition:
@@ -82,9 +104,10 @@ def _item_logs_tool() -> ToolDefinition:
             args=(item_id, consts.rest.LOG),
             parent=RestTarget(parent_cls, parent_path),
         )
-        return await sync_to_async(RestProxy._execute_sync, thread_sensitive=True)(
+        entries = await sync_to_async(RestProxy._execute_sync, thread_sensitive=True)(
             target, RestProxy._bound(request), {}, str(arguments["uuid"])
         )
+        return _hide_generated_passwords(entries)
 
     return ToolDefinition(
         name="get_item_logs",
