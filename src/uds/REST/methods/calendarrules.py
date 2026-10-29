@@ -81,8 +81,19 @@ class CalendarRuleItem(types.rest.BaseRestItem):
     id: str
     name: str
     comments: str
-    start: datetime.datetime
-    end: datetime.datetime | None
+    start: datetime.datetime = dataclasses.field(
+        metadata={
+            "description": "ISO 8601 date-time. Without UTC offset it is taken as UTC. "
+            "Integer timestamps are rejected."
+        }
+    )
+    end: datetime.datetime | None = dataclasses.field(
+        metadata={
+            "description": "Last day of the rule, ISO 8601 (date or date-time). Only the calendar day "
+            "is used, as sent, without converting it to UTC. Returned as the last instant of that day. "
+            "Null means no end."
+        }
+    )
     frequency: str
     interval: int
     duration: int
