@@ -61,6 +61,14 @@ class TestServiceMulti(UDSTransactionTestCase):
         )
         self.assertEqual(service.randomize_host.value, fixtures.SERVICE_MULTI_VALUES_DICT["randomize_host"])
 
+    def test_fields_order_is_unique_per_tab(self) -> None:
+        orders: dict[tuple[str, int], list[str]] = {}
+        for name, field in fixtures.create_service_multi()._gui.items():
+            info = field._field_info
+            orders.setdefault((str(info.tab), info.order), []).append(name)
+
+        self.assertEqual({key: names for key, names in orders.items() if len(names) > 1}, {})
+
     def test_userservices_limit(self) -> None:
         service = fixtures.create_service_multi()
         # userservices_limit is recovered on unmarshal, so simulate a load from db
