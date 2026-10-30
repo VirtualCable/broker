@@ -375,6 +375,30 @@ class XenLinkedService(DynamicService):  # pylint: disable=too-many-public-metho
             api.shutdown_vm(vmid)
 
     @typing.override
+    def snapshot_creation(self, userservice_instance: DynamicUserService) -> None:
+        userservice_instance = typing.cast(XenLinkedUserService, userservice_instance)
+        vmid = userservice_instance._vmid
+        userservice_instance._task = ""
+        try:
+            with self.provider().get_connection() as api:
+                if not api.list_snapshots(vmid, full_info=False, force=True):
+                    userservice_instance._task = api.create_snapshot(vmid, name="UDS Snapshot")
+        except Exception as e:
+            self.do_log(types.log.LogLevel.WARNING, f"Could not create SNAPSHOT for this VM. ({e})")
+
+    @typing.override
+    def snapshot_recovery(self, userservice_instance: DynamicUserService) -> None:
+        userservice_instance = typing.cast(XenLinkedUserService, userservice_instance)
+        userservice_instance._task = ""
+        try:
+            with self.provider().get_connection() as api:
+                snapshots = api.list_snapshots(userservice_instance._vmid, full_info=True, force=True)
+                if snapshots:
+                    userservice_instance._task = api.restore_snapshot(snapshots[0].opaque_ref)
+        except Exception as e:
+            self.do_log(types.log.LogLevel.WARNING, f"Could not restore SNAPSHOT for this VM. ({e})")
+
+    @typing.override
     def execute_delete(self, vmid: str) -> None:
         """
         Removes the machine, or queues it for removal, or whatever :)
