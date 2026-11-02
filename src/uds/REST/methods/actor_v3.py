@@ -64,7 +64,7 @@ from ..handlers import Handler
 
 # Not imported at runtime, just for type checking
 if typing.TYPE_CHECKING:
-    from django.db.models.manager import BaseManager
+    from django.db.models.manager import QuerySet
 
     from uds.core import services
     from uds.core.types.requests import ExtendedHttpRequest
@@ -87,7 +87,8 @@ def get_list_of_ids(handler: "Handler") -> list[str]:
         i.lower()
         for i in typing.cast(
             list[str],
-            ["1" + x["mac"] for x in handler._params["id"]] + ["0" + x["ip"] for x in handler._params["id"]][:10],
+            ["1" + x["mac"] for x in handler._params["id"]]
+            + ["0" + x["ip"] for x in handler._params["id"]][:10],
         )
     }
 
@@ -115,7 +116,7 @@ def check_ip_is_blocked(request: "ExtendedHttpRequest") -> None:
         raise exceptions.rest.BlockAccess()
 
 
-def get_managed_userservices_for_token(token: str) -> "BaseManager[UserService]":
+def get_managed_userservices_for_token(token: str) -> "QuerySet[UserService]":
     if Server.validate_token(token, server_type=types.servers.ServerType.ACTOR):
         return UserService.objects.all()
 
@@ -142,7 +143,9 @@ def clear_on_success(func: collections.abc.Callable[P, T]) -> collections.abc.Ca
     @functools.wraps(func)
     def wrapper(*args: P.args, **kwargs: P.kwargs) -> T:
         _self = typing.cast("ActorV3Action", args[0])
-        result = func(*args, **kwargs)  # If raises any exception, it will be raised and we will not clear the counter
+        result = func(
+            *args, **kwargs
+        )  # If raises any exception, it will be raised and we will not clear the counter
         clear_failed_ip_counter(_self._request)  # pylint: disable=protected-access
         return result
 
@@ -324,7 +327,9 @@ class Register(ActorV3Action):
         user_agent = self._request.headers.get("User-Agent", "")
         match = re.search(r"UDS Actor v(.+)", user_agent)
         if match:
-            self._params["version"] = self._params.get("version", match.group(1))  # override version if not provided
+            self._params["version"] = self._params.get(
+                "version", match.group(1)
+            )  # override version if not provided
 
         # Actors does not support any SERVER API version in fact, they has their own interfaces on UserServices
         # This means that we can invoke its API from user_service, but not from server (The actor token is transformed as soon as initialized to a user service token)
@@ -704,7 +709,7 @@ class Login(ActorV3Action):
             session_id = userservice.start_session()  # creates a session for every login requested
 
             # For os managed services, let's check if we honor deadline
-            # For non os manager machines, process deadline as always            
+            # For non os manager machines, process deadline as always
             if osmanager and osmanager.ignore_deadline():
                 deadline = None
             else:
@@ -826,7 +831,8 @@ class Ticket(ActorV3Action):
                     try:
                         # Simple check that token exists
                         Server.objects.get(
-                            token_hash=Server.hash_token(self._params["token"]), type=types.servers.ServerType.ACTOR
+                            token_hash=Server.hash_token(self._params["token"]),
+                            type=types.servers.ServerType.ACTOR,
                         )  # Not assigned, because only needs check
                     except Server.DoesNotExist:
                         logger.error("Actor token not found (params: %s)", sanitize_params(self._params))
@@ -842,6 +848,19 @@ class Ticket(ActorV3Action):
                     return ActorV3Action.actor_result(
                         TicketStore.get(uuid=self._params["ticket"], owner=userservice.uuid, invalidate=True)
                     )
+                case "connection":
+                    command = self._args[1] if len(self._args) > 1 else ""
+                    match command:
+                        case "start":
+                            # TODO: As tunnel ticket start, but for connections
+                            # This return is dummy, this must be completed
+                            return ActorV3Action.actor_result(error="Not implemented yet")
+                        case "end":
+                            # TODO: As tunnel ticket end, but for connections
+                            # This return is dummy, this must be completed
+                            return ActorV3Action.actor_result(error="Not implemented yet")
+                        case _:
+                            raise exceptions.rest.RequestError("Invalid request")
 
                 case _:
                     raise exceptions.rest.RequestError("Invalid request")

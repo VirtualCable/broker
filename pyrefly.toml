@@ -9,6 +9,7 @@ project-excludes = [
     "src/**/transports/**/scripts/**/*.py",
     "src/uds/migrations/**/*.py",
     "src/uds/core/util/ldaputil_old.py",
+    "../../env/**"
 ]
 
 # Let the type checker resolve `tests.utils.test` etc.

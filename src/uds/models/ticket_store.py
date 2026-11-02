@@ -160,7 +160,7 @@ class TicketStore(UUIDModel):
         if t.stamp + validity < now:
             raise TicketStore.DoesNotExist("Not valid anymore")
 
-        data: bytes = t.data
+        data = typing.cast(bytes, t.data)
 
         if secure:  # If secure, we must decrypt the data
             data = CryptoManager.manager().aes256_cbc_decrypt(data, key)
@@ -201,7 +201,7 @@ class TicketStore(UUIDModel):
 
             t = TicketStore.objects.get(uuid=uuid)
 
-            data: bytes = t.data
+            data = typing.cast(bytes, t.data)
 
             if secure:  # Owner has already been tested and it's not empty
                 data = CryptoManager.manager().aes256_cbc_decrypt(data, key)
