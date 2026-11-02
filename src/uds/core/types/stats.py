@@ -52,6 +52,10 @@ class EventType(enum.IntEnum):
     OSMANAGER_READY = 9
     OSMANAGER_RELEASE = 10
 
+    # Connection related
+    CONNECTION_OPEN = 11
+    CONNECTION_CLOSE = 12
+
     # Unknown event type
     UNKNOWN = 9999
 

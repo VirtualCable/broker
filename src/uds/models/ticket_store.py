@@ -160,7 +160,7 @@ class TicketStore(UUIDModel):
         if t.stamp + validity < now:
             raise TicketStore.DoesNotExist("Not valid anymore")
 
-        data = typing.cast(bytes, t.data)
+        data: bytes = t.data
 
         if secure:  # If secure, we must decrypt the data
             data = CryptoManager.manager().aes256_cbc_decrypt(data, key)
@@ -201,7 +201,7 @@ class TicketStore(UUIDModel):
 
             t = TicketStore.objects.get(uuid=uuid)
 
-            data = typing.cast(bytes, t.data)
+            data: bytes = t.data
 
             if secure:  # Owner has already been tested and it's not empty
                 data = CryptoManager.manager().aes256_cbc_decrypt(data, key)
@@ -286,9 +286,7 @@ class TicketStore(UUIDModel):
         )
 
     @staticmethod
-    def get_for_tunnel(
-        ticket: str,
-    ) -> types.tickets.TunnelTicket:
+    def get_for_tunnel(ticket: str, *, invalidate: bool = False) -> types.tickets.TunnelTicket:
         """
         Returns the ticket for a tunneled connection
         The returned value is a tuple:
@@ -297,7 +295,7 @@ class TicketStore(UUIDModel):
         try:
             uuid, owner = _get_uuid_and_owner_from_tunnel_ticket(ticket)
             return types.tickets.TunnelTicket.from_dict(
-                TicketStore.get(uuid, invalidate=False, owner=owner, secure=True)
+                TicketStore.get(uuid, invalidate=invalidate, owner=owner, secure=True)
             )
         except Exception as e:
             raise TicketStore.DoesNotExist(str(e))

@@ -48,14 +48,13 @@ from uds.core.managers.crypto import CryptoManager
 from uds.core.managers.userservice import UserServiceManager
 from uds.core.types.states import State
 from uds.core.util import log
+from uds.core.util import net
 from uds.core.util import security
 from uds.core.util.cache import Cache
 from uds.core.util.config import GlobalConfig
 from uds.core.util.model import sql_now
-from uds.models import Server
-from uds.models import Service
-from uds.models import TicketStore
-from uds.models import UserService
+from uds.core.util.stats import events
+from uds import models
 from uds.models.service import ServiceTokenAlias
 from uds.models.user_service import create_actor_token, hash_actor_token
 from uds.REST.utils import rest_result, sanitize_params
@@ -64,7 +63,7 @@ from ..handlers import Handler
 
 # Not imported at runtime, just for type checking
 if typing.TYPE_CHECKING:
-    from django.db.models.manager import QuerySet
+    from django.db.models.query import QuerySet
 
     from uds.core import services
     from uds.core.types.requests import ExtendedHttpRequest
@@ -116,13 +115,13 @@ def check_ip_is_blocked(request: "ExtendedHttpRequest") -> None:
         raise exceptions.rest.BlockAccess()
 
 
-def get_managed_userservices_for_token(token: str) -> "QuerySet[UserService]":
-    if Server.validate_token(token, server_type=types.servers.ServerType.ACTOR):
-        return UserService.objects.all()
+def get_managed_userservices_for_token(token: str) -> "QuerySet[models.UserService]":
+    if models.Server.validate_token(token, server_type=types.servers.ServerType.ACTOR):
+        return models.UserService.objects.all()
 
     # Managed actors clear the registration token after their first initialize, so from then
     # on they can only present the own_token we returned to them
-    userservices = UserService.objects.filter(token_hash=hash_actor_token(token))
+    userservices = models.UserService.objects.filter(token_hash=hash_actor_token(token))
     if not userservices.exists():
         raise exceptions.rest.BlockAccess()
 
@@ -166,7 +165,7 @@ class ActorV3Action(Handler):
         return rest_result(result=result, **kwargs)
 
     @staticmethod
-    def set_comms_endpoint(userservice: UserService, ip: str, port: int, secret: str) -> None:
+    def set_comms_endpoint(userservice: models.UserService, ip: str, port: int, secret: str) -> None:
         userservice.set_comms_info(f"https://{ip}:{port}/actor/{secret}", secret)
 
     @staticmethod
@@ -182,15 +181,15 @@ class ActorV3Action(Handler):
             }
         )
 
-    def get_userservice(self) -> UserService:
+    def get_userservice(self) -> models.UserService:
         """
         Looks for an userservice by token or uuid (for backward compat) and, if not found, raises a exceptions.rest.BlockAccess request
         """
         try:
-            return UserService.objects.get(
+            return models.UserService.objects.get(
                 Q(token_hash=hash_actor_token(self._params["token"])) | Q(uuid=self._params["token"])
             )
-        except UserService.DoesNotExist:
+        except models.UserService.DoesNotExist:
             logger.error("User service not found (params: %s)", sanitize_params(self._params))
             raise exceptions.rest.BlockAccess() from None
 
@@ -227,7 +226,7 @@ class ActorV3Action(Handler):
         """
         try:
             # If unmanaged, use Service locator
-            service: services.Service = Service.objects.get(token=self._params["token"]).get_instance()
+            service: services.Service = models.Service.objects.get(token=self._params["token"]).get_instance()
 
             # We have a valid service, now we can make notifications
 
@@ -276,10 +275,11 @@ class Test(ActorV3Action):
         # First, try to locate an user service providing this token.
         try:
             if self._params.get("type") == consts.actor.UNMANAGED:
-                Service.objects.get(token=self._params["token"])
+                models.Service.objects.get(token=self._params["token"])
             else:
-                Server.objects.get(
-                    token_hash=Server.hash_token(self._params["token"]), type=types.servers.ServerType.ACTOR
+                models.Server.objects.get(
+                    token_hash=models.Server.hash_token(self._params["token"]),
+                    type=types.servers.ServerType.ACTOR,
                 )  # Not assigned, because only needs check
             clear_failed_ip_counter(self._request)
         except Exception as e:
@@ -319,7 +319,7 @@ class Register(ActorV3Action):
         # Look for a token for this mac. mac is "inside" data, so we must filter first by type and then ensure mac is inside data
         # and mac is the requested one
         found = False
-        actor_token: Server | None = Server.objects.filter(
+        actor_token: models.Server | None = models.Server.objects.filter(
             type=types.servers.ServerType.ACTOR, mac=self._params["mac"]
         ).first()
 
@@ -351,7 +351,7 @@ class Register(ActorV3Action):
                 "custom": self._params.get("custom", ""),
             }
 
-        raw_token = Server.create_token()
+        raw_token = models.Server.create_token()
 
         if actor_token:
             # Update parameters
@@ -366,10 +366,10 @@ class Register(ActorV3Action):
             actor_token.data = data
             actor_token.stamp = sql_now()
             actor_token.os_type = self._params.get("os", types.os.KnownOS.UNKNOWN.os_name())[:31]
-            actor_token.token_hash = Server.hash_token(raw_token)
+            actor_token.token_hash = models.Server.hash_token(raw_token)
             # Mac is already set, as type was used to locate it
             actor_token.save()
-            actor_token.properties["token_hint"] = Server.token_hint(raw_token)
+            actor_token.properties["token_hint"] = models.Server.token_hint(raw_token)
             logger.info("Registered actor %s", sanitize_params(self._params))
             found = True
 
@@ -384,14 +384,14 @@ class Register(ActorV3Action):
                 "hostname": self._params["hostname"],
                 "log_level": self._params["log_level"],
                 "data": data,
-                "token_hash": Server.hash_token(raw_token),
+                "token_hash": models.Server.hash_token(raw_token),
                 "stamp": sql_now(),
                 "os_type": self._params.get("os", types.os.KnownOS.UNKNOWN.os_name()),
                 "mac": self._params["mac"],
             }
 
-            actor_token = Server.objects.create(**kwargs)
-            actor_token.properties["token_hint"] = Server.token_hint(raw_token)
+            actor_token = models.Server.objects.create(**kwargs)
+            actor_token.properties["token_hint"] = models.Server.token_hint(raw_token)
 
         return ActorV3Action.actor_result(raw_token)  # type: ignore  # actorToken is always assigned
 
@@ -444,7 +444,7 @@ class Initialize(ActorV3Action):
         """
         # First, validate token...
         logger.debug("Args: %s,  Params: %s", self._args, sanitize_params(self._params))
-        service: Service | None = None
+        service: models.Service | None = None
         # alias_token will contain a new master token (or same alias if not a token) to allow change on unmanaged machines.
         # Managed machines will not use this field (will return None)
         alias_token: str | None = None
@@ -486,7 +486,7 @@ class Initialize(ActorV3Action):
                 # If not found an alias, try to locate on service table
                 # Not on alias token, try to locate on Service table
                 if not service:
-                    service = Service.objects.get(token=token)
+                    service = models.Service.objects.get(token=token)
                     if service.aliases.filter(unique_id=master_id).exists():
                         # If found, get the alias token
                         alias_token = service.aliases.get(unique_id=master_id).alias
@@ -496,7 +496,7 @@ class Initialize(ActorV3Action):
 
                 # Locate an userService that belongs to this service and which
                 # Build the possible ids and make initial filter to match service
-                dbfilter = UserService.objects.filter(deployed_service__service=service)
+                dbfilter = models.UserService.objects.filter(deployed_service__service=service)
             else:
                 dbfilter = get_managed_userservices_for_token(token)
 
@@ -509,7 +509,7 @@ class Initialize(ActorV3Action):
                     state__in=State.VALID_STATES,
                 )
 
-                userservice: UserService = next(iter(dbfilter))
+                userservice: models.UserService = next(iter(dbfilter))
             except Exception as e:
                 logger.info("Not managed host request: %s, %s", sanitize_params(self._params), e)
                 return _initialization_result(None, None, None, alias_token)
@@ -533,7 +533,7 @@ class Initialize(ActorV3Action):
             userservice.save(update_fields=["token_hash"])
 
             return _initialization_result(actor_token_raw, userservice.unique_id, os_data, alias_token)
-        except Service.DoesNotExist:
+        except models.Service.DoesNotExist:
             raise exceptions.rest.BlockAccess() from None
 
 
@@ -682,7 +682,7 @@ class Login(ActorV3Action):
     #    }
 
     @staticmethod
-    def process_login(userservice: UserService, username: str) -> osmanagers.OSManager | None:
+    def process_login(userservice: models.UserService, username: str) -> osmanagers.OSManager | None:
         osmanager = userservice.get_osmanager_instance()
         if not userservice.in_use:  # If already logged in, do not add a second login (windows does this i.e.)
             osmanagers.OSManager.logged_in(userservice, username)
@@ -698,7 +698,7 @@ class Login(ActorV3Action):
         logger.debug("Login Args: %s,  Params: %s", self._args, sanitize_params(self._params))
 
         try:
-            userservice: UserService = self.get_userservice()
+            userservice: models.UserService = self.get_userservice()
             osmanager = Login.process_login(userservice, self._params.get("username") or "")
 
             max_idle = osmanager.max_idle() if osmanager else None
@@ -742,7 +742,7 @@ class Logout(ActorV3Action):
     NAME = "logout"
 
     @staticmethod
-    def process_logout(userservice: UserService, username: str, session_id: str) -> None:
+    def process_logout(userservice: models.UserService, username: str, session_id: str) -> None:
         """
         This method is static so can be invoked from elsewhere
         """
@@ -764,7 +764,7 @@ class Logout(ActorV3Action):
 
         logger.debug("Args: %s,  Params: %s", self._args, sanitize_params(self._params))
         try:
-            userservice: UserService = self.get_userservice()  # if not exists, will raise an error
+            userservice: models.UserService = self.get_userservice()  # if not exists, will raise an error
             Logout.process_logout(
                 userservice,
                 self._params.get("username") or "",
@@ -818,9 +818,9 @@ class Ticket(ActorV3Action):
     def action(self) -> dict[str, typing.Any]:
         logger.debug("Args: %s,  Params: %s", self._args, sanitize_params(self._params))
 
-        # A simple path check, in fact, we can ignore the remainder od the args
-        # args are the url path sections (i.e. /actor/v3/ticket/.../.../...)
-        if len(self._args) > 2:  # 1 for kind, 1 for command in case of connection
+        # Args are the url path sections (i.e. /actor/v3/ticket/[kind]/...)
+        # No args = compat "server" kind, one arg = explicit kind (i.e. "connection")
+        if len(self._args) > 1:
             raise exceptions.rest.RequestError("Invalid request")
 
         # Compat, 0 params = server
@@ -833,15 +833,17 @@ class Ticket(ActorV3Action):
                     # Enough secure this way (no onwer)
                     try:
                         # Simple check that token exists
-                        Server.objects.get(
-                            token_hash=Server.hash_token(self._params["token"]),
+                        models.Server.objects.get(
+                            token_hash=models.Server.hash_token(self._params["token"]),
                             type=types.servers.ServerType.ACTOR,
                         )  # Not assigned, because only needs check
-                    except Server.DoesNotExist:
+                    except models.Server.DoesNotExist:
                         logger.error("Actor token not found (params: %s)", sanitize_params(self._params))
                         raise exceptions.rest.BlockAccess() from None  # If too many blocks...
 
-                    return ActorV3Action.actor_result(TicketStore.get(self._params["ticket"], invalidate=True))
+                    return ActorV3Action.actor_result(
+                        models.TicketStore.get(self._params["ticket"], invalidate=True)
+                    )
 
                 case "userservice":
                     # Userservice also has owner, to increase security
@@ -849,25 +851,105 @@ class Ticket(ActorV3Action):
                     userservice = self.get_userservice()
 
                     return ActorV3Action.actor_result(
-                        TicketStore.get(uuid=self._params["ticket"], owner=userservice.uuid, invalidate=True)
+                        models.TicketStore.get(
+                            uuid=self._params["ticket"], owner=userservice.uuid, invalidate=True
+                        )
                     )
                 case "connection":
-                    command = self._args[1] if len(self._args) > 1 else ""
-                    match command:
+                    req = types.tickets.TunnelTicketRequest.from_dict(self._params)
+
+                    match req.command:
                         case "start":
-                            # TODO: As tunnel ticket start, but for connections
-                            # This return is dummy, this must be completed
-                            return ActorV3Action.actor_result(error="Not implemented yet")
-                        case "end":
-                            # TODO: As tunnel ticket end, but for connections
-                            # This return is dummy, this must be completed
-                            return ActorV3Action.actor_result(error="Not implemented yet")
+                            # Validate the request and authenticate the actor
+                            # BEFORE consuming the ticket, so an invalid request
+                            # does not waste it
+                            if net.ip_to_long(req.ip).version == 0:
+                                raise Exception("Invalid from IP")
+
+                            userservice = self.get_userservice()
+
+                            ticket = models.TicketStore.get_for_tunnel(req.ticket)
+                            if ticket.userservice is None or ticket.userservice.user is None:
+                                raise Exception(
+                                    "Ticket has no associated userservice or the userservice has no user"
+                                )
+
+                            # If the userservice does not match...
+                            if ticket.userservice.uuid != userservice.uuid:
+                                raise Exception("Invalid ticket for this userservice")
+
+                            # At least one remote is required (host/port are
+                            # dummy and ignored, they just carry the "extra" data)
+                            if len(ticket.remotes) == 0:
+                                raise Exception("Ticket has no remotes")
+
+                            # All checks passed, consume the ticket
+                            models.TicketStore.invalidate_for_tunnel(req.ticket)
+
+                            events.add_event(
+                                userservice.service_pool,
+                                events.types.stats.EventType.CONNECTION_OPEN,
+                                username=ticket.userservice.user.pretty_name,
+                                srcip=req.ip,
+                                # Remotes are dummy for connections, destination is the userservice itself
+                                dstip=userservice.get_instance().get_ip(),
+                            )
+                            msg = f"User {ticket.userservice.user.name} started connection to {userservice.friendly_name}... from {req.ip}."
+                            log.log(ticket.userservice.user.manager, types.log.LogLevel.INFO, msg)
+                            log.log(ticket.userservice, types.log.LogLevel.INFO, msg)
+                            # Generate a new notify-only ticket for the userservice
+                            # to notify the broker when done, keeping the remotes
+                            # (so the "extra" data travels with it)
+                            notify_ticket = models.TicketStore.create_for_tunnel(
+                                userservice=ticket.userservice,
+                                remotes=ticket.remotes,
+                                validity=consts.ticket.MAX_SESSION_LENGTH,
+                            )
+
+                            return ActorV3Action.actor_result(
+                                types.tickets.TunnelTicketResponse(
+                                    remotes=ticket.remotes,
+                                    notify=notify_ticket,
+                                    shared_secret=ticket.shared_secret.hex() if ticket.shared_secret else "",
+                                    # UDP support on direct connections is up to the actor
+                                    enable_udp=True,
+                                ).as_encrypted_dict(req.kem_kyber_key, ticket_id=req.ticket)
+                            )
+
+                        case "stop":
+                            ticket = models.TicketStore.get_for_tunnel(req.ticket)
+                            if ticket.userservice is None or ticket.userservice.user is None:
+                                raise Exception(
+                                    "Ticket has no associated userservice or the userservice has no user"
+                                )
+
+                            userservice = self.get_userservice()
+
+                            # If the userservice does not match...
+                            if ticket.userservice.uuid != userservice.uuid:
+                                raise Exception("Invalid ticket for this userservice")
+
+                            # This data will always be with tz info (from 5.0 onwards)
+                            total_time = sql_now() - ticket.started
+
+                            msg = f"User {ticket.userservice.user.name} stopped connection to {userservice.friendly_name}: u:{req.sent}/d:{req.recv}/t:{total_time}."
+                            log.log(ticket.userservice.user.manager, types.log.LogLevel.INFO, msg)
+                            log.log(ticket.userservice, types.log.LogLevel.INFO, msg)
+
+                            events.add_event(
+                                userservice.service_pool,
+                                events.types.stats.EventType.CONNECTION_CLOSE,
+                                duration=total_time,
+                                sent=req.sent,
+                                received=req.recv,
+                            )
+                            return ActorV3Action.actor_result()
                         case _:
                             raise exceptions.rest.RequestError("Invalid request")
 
                 case _:
                     raise exceptions.rest.RequestError("Invalid request")
-        except TicketStore.DoesNotExist:
+        except models.TicketStore.DoesNotExist:
             logger.error("Actor ticket not found (params: %s)", sanitize_params(self._params))
             return ActorV3Action.actor_result(error="Invalid ticket")
 
@@ -899,7 +981,7 @@ class Unmanaged(ActorV3Action):
                 # Retrieve real service from token alias
                 dbservice = dbservice_alias.service
             else:
-                dbservice = Service.objects.get(token=token)
+                dbservice = models.Service.objects.get(token=token)
             service: services.Service = dbservice.get_instance()
         except Exception:
             logger.warning("Unmanaged host request: %s", sanitize_params(self._params))
@@ -914,7 +996,7 @@ class Unmanaged(ActorV3Action):
         try:
             userservice = next(
                 iter(
-                    UserService.objects.filter(
+                    models.UserService.objects.filter(
                         unique_id__in=list_of_ids,
                         state__in=[State.USABLE, State.PREPARING],
                     )
@@ -988,7 +1070,7 @@ class Notify(ActorV3Action):
                 self.notify_service(action)
 
             return ActorV3Action.actor_result("ok")
-        except UserService.DoesNotExist:
+        except models.UserService.DoesNotExist:
             # For blocking attacks
             increase_failed_ip_count(self._request)  # pylint: disable=protected-access
 

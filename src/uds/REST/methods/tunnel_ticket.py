@@ -49,9 +49,6 @@ from .servers import ServerRegisterBase
 
 logger: logging.Logger = logging.getLogger(__name__)
 
-# Two weeks is max session length for a tunneled connection
-MAX_SESSION_LENGTH = 60 * 60 * 24 * 7 * 2
-
 
 class TunnelTicket(Handler):
     """
@@ -125,7 +122,7 @@ class TunnelTicket(Handler):
                 case "start":
                     if net.ip_to_long(req.ip).version == 0:
                         raise Exception("Invalid from IP")
-                    if ticket.remotes is None or len(ticket.remotes) == 0:
+                    if len(ticket.remotes) == 0:
                         raise Exception("Ticket has no remotes")
 
                     if ticket.remotes[0].extra.get("once"):
@@ -149,7 +146,7 @@ class TunnelTicket(Handler):
                     notify_ticket = models.TicketStore.create_for_tunnel(
                         userservice=ticket.userservice,
                         remotes=ticket.remotes,
-                        validity=MAX_SESSION_LENGTH,
+                        validity=consts.ticket.MAX_SESSION_LENGTH,
                     )
 
                     return types.tickets.TunnelTicketResponse(

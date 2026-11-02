@@ -1,4 +1,3 @@
-
 #
 # Copyright (c) 2024 Virtual Cable S.L.
 # All rights reserved.
@@ -37,6 +36,10 @@ DEFAULT_TICKET_VALIDITY_TIME: typing.Final[int] = 60  # 1 minute
 MAX_TICKET_VALIDITY_TIME: typing.Final[int] = 60 * 60 * 24 * 7  # 1 week
 TUNNEL_TICKET_VALIDITY_TIME: typing.Final[int] = 60 * 60 * 24 * 7  # 1 week
 CB_TICKET_VALIDITY_TIME: typing.Final[int] = 60 * 60  # 1 Hour
+
+# Two weeks is max session length for a connection (tunneled or own client)
+MAX_SESSION_LENGTH: typing.Final[int] = 60 * 60 * 24 * 7 * 2
+
 
 TICKET_SECURED_OWNER: typing.Final[str] = (
     "#SECURE#"  # Just a "different" owner. If used anywhere, it's not important (will not fail), but weird enough
