@@ -818,10 +818,13 @@ class Ticket(ActorV3Action):
     def action(self) -> dict[str, typing.Any]:
         logger.debug("Args: %s,  Params: %s", self._args, sanitize_params(self._params))
 
-        if len(self._args) > 1:
+        # A simple path check, in fact, we can ignore the remainder od the args
+        # args are the url path sections (i.e. /actor/v3/ticket/.../.../...)
+        if len(self._args) > 2:  # 1 for kind, 1 for command in case of connection
             raise exceptions.rest.RequestError("Invalid request")
 
-        kind = self._args[0] if len(self._args) == 1 else "server"
+        # Compat, 0 params = server
+        kind = self._args[0] if len(self._args) > 0 else "server"
 
         try:
             match kind:
