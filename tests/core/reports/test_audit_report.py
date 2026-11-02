@@ -40,7 +40,6 @@ import io
 import time
 
 from django.test import override_settings
-from django.utils import timezone
 
 from uds.core import types
 from uds.core.util import log as log_util
@@ -51,7 +50,7 @@ from ...utils.test import UDSTransactionTestCase
 
 RANGE_START = datetime.date(2024, 1, 1)
 RANGE_END = datetime.date(2024, 1, 31)
-_STAMP = timezone.make_aware(datetime.datetime(2024, 1, 15, 12, 0, 0))
+_STAMP = datetime.datetime(2024, 1, 15, 12, 0, 0, tzinfo=datetime.timezone.utc)
 
 
 class AuditReportTest(UDSTransactionTestCase):
@@ -125,7 +124,7 @@ class AuditReportTest(UDSTransactionTestCase):
         Log.objects.create(
             owner_id=0,
             owner_type=int(types.log.LogObjectType.SYSLOG),
-            created=timezone.make_aware(datetime.datetime(2023, 12, 31, 12, 0, 0)),
+            created=datetime.datetime(2023, 12, 31, 12, 0, 0, tzinfo=datetime.timezone.utc),
             source=types.log.LogSource.REST,
             level=int(log_util.LogLevel.INFO),
             data="10.0.0.8 [admin]: [GET/200] /out-of-range",
