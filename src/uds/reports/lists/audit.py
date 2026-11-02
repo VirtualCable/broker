@@ -168,7 +168,7 @@ class ListReportAuditCSV(ListReport):
 
         writer.writerow(
             [
-                gettext("Date"),
+                f"{gettext('Date')} (UTC)",
                 gettext("Level"),
                 gettext("IP"),
                 gettext("User"),

@@ -187,7 +187,8 @@ class Report(UserInterface, abc.ABC):
             .replace("{water}", water or "UDS Report")
             .replace(
                 "{printed}",
-                _("Printed in {now:%Y, %b %d} at {now:%H:%M}").format(now=timezone.localtime()),
+                _("Printed in {now:%Y, %b %d} at {now:%H:%M}").format(now=timezone.localtime())
+                + f" ({timezone.get_current_timezone_name()})",
             )
         )
 

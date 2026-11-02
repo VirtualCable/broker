@@ -185,7 +185,7 @@ class InactiveUsersReportCSV(InactiveUsersReport):
                 gettext("Authenticator"),
                 gettext("User ID"),
                 gettext("Real Name"),
-                gettext("Last access"),
+                f"{gettext('Last access')} (UTC)",
                 gettext("Inactive days"),
             ]
         )

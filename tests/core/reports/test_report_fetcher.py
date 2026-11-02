@@ -34,9 +34,12 @@ break report generation.
 """
 
 import logging
+from unittest import mock
 
 import pytest
+from django.utils import timezone
 
+from uds.core.reports import report as report_module
 from uds.core.reports import stock
 from uds.core.reports.report import Report
 from uds.core.reports.report import _ReportFetcher
@@ -87,6 +90,14 @@ class ReportPdfTest(UDSTestCase):
         pdf = Report.as_pdf("<html><body><h1>Hi</h1></body></html>")
         self.assertTrue(pdf.startswith(b"%PDF"))
         self.assertGreater(len(pdf), 1000)
+
+    def test_as_pdf_footer_shows_broker_timezone(self) -> None:
+        with (
+            timezone.override("Australia/Sydney"),
+            mock.patch("uds.core.reports.report.CSS", wraps=report_module.CSS) as css,
+        ):
+            Report.as_pdf("<html><body><h1>Hi</h1></body></html>")
+        self.assertIn("(Australia/Sydney)", css.call_args.kwargs["string"])
 
     def test_as_pdf_with_stock_image(self) -> None:
         html = '<html><body><img src="stock://logo-512.png" /></body></html>'

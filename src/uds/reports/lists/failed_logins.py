@@ -211,7 +211,7 @@ class FailedLoginsReportCSV(FailedLoginsReport):
         writer = csv.writer(output)
         writer.writerow(
             [
-                gettext("Date"),
+                f"{gettext('Date')} (UTC)",
                 gettext("Authenticator"),
                 gettext("User"),
                 gettext("IP"),

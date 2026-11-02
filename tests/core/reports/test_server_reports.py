@@ -274,5 +274,7 @@ class ServersListTest(_ServerReportsBase):
         rows = list(csv.reader(io.StringIO(r.generate().decode())))
         row = next(row for row in rows[1:] if row[1] == server.hostname)
 
+        self.assertEqual(rows[0][8], "Locked until (UTC)")
+        self.assertEqual(rows[0][9], "Last stats (UTC)")
         self.assertEqual(row[8], "2024-01-15T13:30:00Z")
         self.assertEqual(row[9], "2024-01-15T12:00:00Z")

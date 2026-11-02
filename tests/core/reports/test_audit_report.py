@@ -146,6 +146,8 @@ class AuditReportTest(UDSTransactionTestCase):
             data="10.0.0.7 [admin]: [GET/200] /tz-row",
         )
 
-        body = self._generate_rows()[1:]
+        rows = self._generate_rows()
+        self.assertEqual(rows[0][0], "Date (UTC)")
+        body = rows[1:]
         self.assertEqual(len(body), 1)
         self.assertEqual(body[0][0], "2024-01-15T12:00:00Z")
