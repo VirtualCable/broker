@@ -86,7 +86,7 @@ class LogMaintenance(Job):
                         owner_id=owner_id,
                         owner_type=owner_type,
                     )
-                    .order_by("created", "id")
+                    .order_by("-created", "-id")
                     .values_list("id", flat=True)[max_elements : max_elements + MAX_BATCH_SIZE]
                 )
 
