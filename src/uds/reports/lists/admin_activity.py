@@ -188,7 +188,7 @@ class AdminActivityReportCSV(AdminActivityReport):
                 gettext("Requests"),
                 gettext("Errors"),
                 gettext("Error %"),
-                gettext("Last seen"),
+                f"{gettext('Last seen')} (UTC)",
                 gettext("Top endpoints"),
             ]
         )

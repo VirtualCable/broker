@@ -114,7 +114,7 @@ class ListReportsUsersCSV(ListReportUsers):
         auth = Authenticator.objects.get(uuid=self.authenticator.value)
         users = auth.users.order_by("name")
 
-        writer.writerow([gettext("User ID"), gettext("Real Name"), gettext("Last access")])
+        writer.writerow([gettext("User ID"), gettext("Real Name"), f"{gettext('Last access')} (UTC)"])
 
         for v in users:
             writer.writerow([v.name, v.real_name, dateutils.as_utc_iso(v.last_access)])
