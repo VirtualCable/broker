@@ -2,6 +2,7 @@
 Author: Andres Schumann, aschumann at virtualcable dot es
 """
 
+import collections.abc
 import contextlib
 import dataclasses
 import typing
@@ -136,7 +137,7 @@ class FakeOpenNebula:
 
 
 @contextlib.contextmanager
-def patched_opennebula() -> typing.Iterator[FakeOpenNebula]:
+def patched_opennebula() -> collections.abc.Generator[FakeOpenNebula]:
     fake = FakeOpenNebula()
     with contextlib.ExitStack() as stack:
         for module, name, method in (
