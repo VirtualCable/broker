@@ -124,13 +124,14 @@ class BaseModelHandler(Handler, abc.ABC, typing.Generic[T_Item]):
         """
         Returns a dictionary describing the type (the name, the icon, description, etc...)
         """
+        group = getattr(type_, "group", None)
         return types.rest.TypeInfo(
             name=_(type_.mod_name()),
             type=type_.mod_type(),
             description=_(type_.description()),
             icon=type_.icon64().replace("\n", ""),
             extra=cls.extra_type_info(type_),
-            group=getattr(type_, "group", None),
+            group=_(group) if group else None,
         )
 
     def fields_from_params(

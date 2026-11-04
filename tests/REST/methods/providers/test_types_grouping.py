@@ -28,9 +28,11 @@
 Provider types are clustered in the administration "New" menu by ``group``.
 
 Author: Andres Schumann, aschumann at virtualcable dot es
+Author: Janier Rodríguez, jrodriguez at virtualcable dot es
 """
 
 import typing
+from unittest import mock
 
 from uds.core import services, types
 from uds.services.OVirt.provider import OVirtProvider
@@ -86,3 +88,10 @@ class ProviderGroupingTest(rest.test.RESTTestCase):
         for provider_type in services.factory().providers().values():
             with self.subTest(provider=provider_type.__name__):
                 self.assertEqual(exposed[provider_type.mod_type()], provider_type.group.value)
+
+    def test_rest_types_translate_the_group(self) -> None:
+        with mock.patch("uds.REST.model.base._", side_effect=lambda text: f"translated:{text}"):
+            response = self.client.rest_get("providers/types")
+        self.assertEqual(response.status_code, 200)
+        exposed = {item["type"]: item["group"] for item in response.json()}
+        self.assertEqual(exposed[ProxmoxProvider.mod_type()], f"translated:{Grouping.VIRTUALIZATION.value}")
