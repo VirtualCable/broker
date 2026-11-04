@@ -32,8 +32,9 @@ Author: Adolfo Gómez, dkmaster at dkmon dot com
 import collections.abc
 import logging
 import typing
+from xml.sax.saxutils import escape
 
-from defusedxml import minidom
+from defusedxml import ElementTree, minidom
 
 from . import types
 from .common import sanitized_name
@@ -171,21 +172,79 @@ def remove(api: "client.OpenNebulaClient", template_id: str) -> None:
         logger.error("Removing template on OpenNebula")
 
 
-def deploy_from(api: "client.OpenNebulaClient", template_id: str, name: str) -> str:
+# Attributes of a NIC that belong to the network it was defined on: its name, its owner and the address inside it
+_NETWORK_BOUND_NIC_ATTRIBUTES: typing.Final[frozenset[str]] = frozenset(
+    {"NETWORK", "NETWORK_ID", "NETWORK_UNAME", "NETWORK_UID", "NETWORK_GID", "AR_ID", "IP", "IP6", "MAC"}
+)
+
+
+def _element(name: str, value: str) -> str:
+    return f"<{name}>{escape(value)}</{name}>"
+
+
+def _nics(network_id: str, template_xml: str) -> list[str]:
+    template = ElementTree.fromstring(template_xml).find("TEMPLATE")
+    nics: list[dict[str, str]] = (
+        [{attr.tag: attr.text or "" for attr in nic} for nic in template.findall("NIC")]
+        if template is not None
+        else []
+    )
+
+    # Only the first interface changes network. The others, and what the first one has that is not tied to
+    # its network (model, security groups...), are kept
+    first = {k: v for k, v in (nics[0] if nics else {}).items() if k not in _NETWORK_BOUND_NIC_ATTRIBUTES}
+    interfaces = [{"NETWORK_ID": network_id, **first}, *nics[1:]]
+    return [
+        "<NIC>" + "".join(_element(name, value) for name, value in nic.items()) + "</NIC>" for nic in interfaces
+    ]
+
+
+def machine_template(options: types.MachineOptions, template_xml: str) -> str:
+    """
+    Builds the extra template merged on instantiation so the machine gets the cores, memory and network
+    chosen for the service. Returns an empty string if nothing is overridden.
+
+    OpenNebula replaces every attribute of the template that the extra one also has, and that includes all the NIC,
+    so when the network changes the interfaces of the template travel along.
+    """
+    if options.is_empty():
+        return ""
+
+    attributes: list[str] = []
+    if options.cores:
+        attributes.append(_element("VCPU", str(options.cores)))
+    if options.memory_mb:
+        attributes.append(_element("MEMORY", str(options.memory_mb)))
+    if options.network:
+        attributes.extend(_nics(options.network, template_xml))
+
+    return "<TEMPLATE>" + "".join(attributes) + "</TEMPLATE>"
+
+
+def deploy_from(
+    api: "client.OpenNebulaClient",
+    template_id: str,
+    name: str,
+    options: types.MachineOptions,
+) -> str:
     """
     Deploys a virtual machine on selected cluster from selected template
 
     Args:
         name: Name (sanitized) of the machine
-        comments: Comments for machine
         templateId: Id of the template to deploy from
+        options: cores, memory and network to use instead of the ones of the template
 
     Returns:
         Id of the machine being created form template
     """
+    extra_template = ""
+    if not options.is_empty():
+        extra_template = machine_template(options, api.template_info(template_id).xml or "")
+
     vmid = api.instantiate_template(
-        template_id, name, False, "", False
-    )  # api.call('template.instantiate', int(templateId), name, False, '')
+        template_id, name, False, extra_template, False
+    )  # api.call('template.instantiate', int(templateId), name, False, extra_template)
     return vmid
 
 

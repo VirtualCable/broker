@@ -172,6 +172,9 @@ class OpenNebulaProvider(ServiceProvider):  # pylint: disable=too-many-public-me
     def get_datastores(self, datastore_type: int = 0) -> collections.abc.Iterable[on.types.StorageType]:
         yield from on.storage.enumerate_datastores(self.api, datastore_type)
 
+    def get_networks(self) -> collections.abc.Iterable[on.types.NetworkType]:
+        yield from self.api.enum_networks()
+
     def get_templates(self, force: bool = False) -> collections.abc.Iterable[on.types.TemplateType]:
         yield from on.template.enumerate_templates(self.api, force)
 
@@ -184,8 +187,8 @@ class OpenNebulaProvider(ServiceProvider):  # pylint: disable=too-many-public-me
     def remove_template(self, template_id: str) -> None:
         on.template.remove(self.api, template_id)
 
-    def deply_from_template(self, name: str, template_id: str) -> str:
-        return on.template.deploy_from(self.api, template_id, name)
+    def deply_from_template(self, name: str, template_id: str, options: on.types.MachineOptions) -> str:
+        return on.template.deploy_from(self.api, template_id, name, options)
 
     def get_machine_state(self, machine_id: str) -> on.types.VmState:
         """
