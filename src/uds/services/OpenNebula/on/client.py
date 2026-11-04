@@ -127,7 +127,8 @@ class OpenNebulaClient:  # pylint: disable=too-many-public-methods
         Invoke virtual networks pool info, with the same parameters as the templates one
         """
         result, _ = check_result(self.connection.one.vnpool.info(self.session_string, -1, -1, -1))
-        pool = result["VNET_POOL"]
+        # With no networks the pool is an empty element and the parser gives no key at all
+        pool = result.get("VNET_POOL")
         for net in as_iterable(pool["VNET"] if pool else None):
             yield types.NetworkType(net["ID"], net["NAME"])
 

@@ -107,6 +107,34 @@ class TestMachineTemplate(UDSTransactionTestCase):
         self.assertEqual(extra, {"NIC": [{"NETWORK_ID": "3", "MODEL": "a<b&c"}]})
 
 
+class TestEnumNetworks(UDSTransactionTestCase):
+    def _networks(self, pool_xml: str) -> list[on.types.NetworkType]:
+        api = on.client.OpenNebulaClient("user", "password", "http://localhost:2633/RPC2")
+        with mock.patch.object(api, "connection") as connection:
+            connection.one.vnpool.info.return_value = [True, pool_xml, 0]
+            return list(api.enum_networks())
+
+    def test_server_without_networks(self) -> None:
+        self.assertEqual(self._networks("<VNET_POOL></VNET_POOL>"), [])
+
+    def test_one_network(self) -> None:
+        self.assertEqual(
+            self._networks("<VNET_POOL><VNET><ID>0</ID><NAME>vnet</NAME></VNET></VNET_POOL>"),
+            [on.types.NetworkType("0", "vnet")],
+        )
+
+    def test_several_networks(self) -> None:
+        self.assertEqual(
+            self._networks(
+                "<VNET_POOL>"
+                "<VNET><ID>0</ID><NAME>vnet</NAME></VNET>"
+                "<VNET><ID>3</ID><NAME>dmz</NAME></VNET>"
+                "</VNET_POOL>"
+            ),
+            [on.types.NetworkType("0", "vnet"), on.types.NetworkType("3", "dmz")],
+        )
+
+
 class TestDeployWithMachineOptions(UDSTransactionTestCase):
     def test_deploy_without_overrides_does_not_read_the_template(self) -> None:
         api = mock.Mock()
