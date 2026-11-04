@@ -28,6 +28,7 @@
 """
 Author: Adolfo Gómez, dkmaster at dkmon dot com
 Author: Andres Schumann, aschumann at virtualcable dot es
+Author: Janier Rodríguez, jrodriguez at virtualcable dot es
 """
 
 import logging
@@ -35,12 +36,23 @@ import typing
 
 from uds.core import types
 from uds.core.services.generics.dynamic.publication import DynamicPublication
+from uds.core.util import autoserializable
 
 # Not imported at runtime, just for type checking
 if typing.TYPE_CHECKING:
     from .service import OpenNebulaLiveService
 
 logger: logging.Logger = logging.getLogger(__name__)
+
+
+class OldPublicationData(autoserializable.AutoSerializable):
+    """
+    Fields stored by the 4.0 publication that do not exist on the dynamic one
+    """
+
+    _template_id = autoserializable.StringField(default="")
+    _state = autoserializable.StringField(default="r")
+    _destroy_after = autoserializable.BoolField(default=False)
 
 
 class OpenNebulaLivePublication(DynamicPublication):
@@ -52,9 +64,43 @@ class OpenNebulaLivePublication(DynamicPublication):
 
     suggested_delay = 2  # : Suggested recheck time if publication is unfinished in seconds
 
+    # 4.0 stored the template id and a state string under version 0
+    serialization_version = 1
+
     @typing.override
     def service(self) -> "OpenNebulaLiveService":
         return typing.cast("OpenNebulaLiveService", super().service())
+
+    @typing.override
+    def unmarshal(self, data: bytes) -> None:
+        if autoserializable.is_autoserializable_data(data):
+            super().unmarshal(data)
+            if self._serialization_version == 0:
+                self._unmarshal_old_fields(data)
+            return
+
+        vals = data.decode("utf8").split("\t")
+        if vals[0] == "v1":
+            self._name, self._reason, self._vmid, state = vals[1:]
+            self._queue = self._queue_from_old_state(state)
+
+        self.mark_for_upgrade()  # Flag so manager can save it again with new format
+
+    def _unmarshal_old_fields(self, data: bytes) -> None:
+        old_data = OldPublicationData()
+        old_data.unmarshal(data)
+        self._vmid = old_data._template_id
+        self._queue = self._queue_from_old_state(old_data._state)
+        self._is_flagged_for_destroy = old_data._destroy_after
+        self.mark_for_upgrade()
+
+    @staticmethod
+    def _queue_from_old_state(state: str) -> list[types.services.Operation]:
+        # "running" means the template was already requested, so only its check is pending
+        return {
+            "ok": [types.services.Operation.FINISH],
+            "error": [types.services.Operation.ERROR],
+        }.get(state, [types.services.Operation.CREATE, types.services.Operation.FINISH])
 
     @typing.override
     def op_create(self) -> None:

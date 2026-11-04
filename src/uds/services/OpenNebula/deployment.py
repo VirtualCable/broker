@@ -28,13 +28,17 @@
 """
 Author: Adolfo Gómez, dkmaster at dkmon dot com
 Author: Andres Schumann, aschumann at virtualcable dot es
+Author: Janier Rodríguez, jrodriguez at virtualcable dot es
 """
 
+import enum
 import logging
+import pickle  # nosec: not insecure, we are loading our own data
 import typing
 
 from uds.core import consts, types
 from uds.core.services.generics.dynamic.userservice import DynamicUserService
+from uds.core.util import autoserializable
 
 from . import on
 
@@ -46,6 +50,50 @@ if typing.TYPE_CHECKING:
 logger: logging.Logger = logging.getLogger(__name__)
 
 
+class OldOperation(enum.IntEnum):
+    """
+    Operation values used by the 4.0 OpenNebula deployment queue
+    """
+
+    CREATE = 0
+    START = 1
+    SHUTDOWN = 2
+    REMOVE = 3
+    WAIT = 4
+    ERROR = 5
+    FINISH = 6
+    RETRY = 7
+
+    UNKNOWN = 99
+
+    @staticmethod
+    def from_int(value: int) -> "OldOperation":
+        try:
+            return OldOperation(value)
+        except ValueError:
+            return OldOperation.UNKNOWN
+
+    def to_operation(self) -> types.services.Operation:
+        return {
+            OldOperation.CREATE: types.services.Operation.CREATE,
+            OldOperation.START: types.services.Operation.START,
+            OldOperation.SHUTDOWN: types.services.Operation.SHUTDOWN,
+            OldOperation.REMOVE: types.services.Operation.DELETE,
+            OldOperation.WAIT: types.services.Operation.WAIT,
+            OldOperation.ERROR: types.services.Operation.ERROR,
+            OldOperation.FINISH: types.services.Operation.FINISH,
+            OldOperation.RETRY: types.services.Operation.RETRY,
+        }.get(self, types.services.Operation.UNKNOWN)
+
+
+class OldDeploymentData(autoserializable.AutoSerializable):
+    """
+    Reads the queue as stored by the 4.0 deployment, before casting its values to OldOperation
+    """
+
+    _queue = autoserializable.ListField[int]()
+
+
 class OpenNebulaLiveDeployment(DynamicUserService):
     """
     This class generates the user consumable elements of the service tree.
@@ -54,6 +102,9 @@ class OpenNebulaLiveDeployment(DynamicUserService):
     """
 
     suggested_delay = 6
+
+    # 4.0 stored the queue with OldOperation values under version 0
+    serialization_version = 1
 
     # OpenNebula removes the machines whatever their power state is, so there is no need to stop them first
     _destroy_queue: typing.ClassVar[list[types.services.Operation]] = [
@@ -71,6 +122,31 @@ class OpenNebulaLiveDeployment(DynamicUserService):
     @typing.override
     def publication(self) -> "OpenNebulaLivePublication":
         return typing.cast("OpenNebulaLivePublication", super().publication())
+
+    @typing.override
+    def unmarshal(self, data: bytes) -> None:
+        if autoserializable.is_autoserializable_data(data):
+            super().unmarshal(data)
+            if self._serialization_version == 0:
+                self._unmarshal_old_queue(data)
+            return
+
+        vals = data.split(b"\1")
+        if vals[0] == b"v1":
+            self._name = vals[1].decode("utf8")
+            self._ip = vals[2].decode("utf8")
+            self._mac = vals[3].decode("utf8")
+            self._vmid = vals[4].decode("utf8")
+            self._reason = vals[5].decode("utf8")
+            self._queue = [OldOperation.from_int(i).to_operation() for i in pickle.loads(vals[6])]  # nosec
+
+        self.mark_for_upgrade()  # Flag so manager can save it again with new format
+
+    def _unmarshal_old_queue(self, data: bytes) -> None:
+        old_data = OldDeploymentData()
+        old_data.unmarshal(data)
+        self._queue = [OldOperation.from_int(i).to_operation() for i in old_data._queue]
+        self.mark_for_upgrade()
 
     @typing.override
     def get_vmname(self) -> str:
