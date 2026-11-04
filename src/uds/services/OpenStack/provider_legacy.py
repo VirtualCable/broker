@@ -96,6 +96,7 @@ class OpenStackProviderLegacy(ServiceProvider):
     # : BEFORE sending it to administration interface, so don't forget to
     # : mark it as _ (using gettext_noop)
     icon_file = "provider.png"
+    group = types.services.ProviderGrouping.PRIVATE_CLOUD
 
     # now comes the form fields
     # There is always two fields that are requested to the admin, that are:

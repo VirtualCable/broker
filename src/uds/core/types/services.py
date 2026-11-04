@@ -33,6 +33,8 @@ import dataclasses
 import enum
 import typing
 
+from django.utils.translation import gettext_noop as _
+
 if typing.TYPE_CHECKING:
     from uds import models
 
@@ -44,6 +46,14 @@ class ServiceType(enum.StrEnum):
     def from_str(self, value: str) -> "ServiceType":
         """Returns the service type from a string"""
         return ServiceType(value.upper())
+
+
+class ProviderGrouping(enum.StrEnum):
+    PUBLIC_CLOUD = _("Public cloud")
+    VIRTUALIZATION = _("Virtualization")
+    PRIVATE_CLOUD = _("Private cloud")
+    PHYSICAL_AND_SESSIONS = _("Physical and sessions")
+    OTHER = _("Other")
 
 
 class ServicesCountingType(enum.IntEnum):

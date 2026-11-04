@@ -71,6 +71,7 @@ class ProxmoxProvider(services.ServiceProvider):
     type_type = "ProxmoxPlatform"
     type_description = _("Proxmox platform service provider")
     icon_file = "provider.png"
+    group = types.services.ProviderGrouping.VIRTUALIZATION
 
     offers: typing.ClassVar[list[type["Service"]]] = [ProxmoxService, ProxmoxServiceFixed]
 

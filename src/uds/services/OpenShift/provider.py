@@ -68,6 +68,7 @@ class OpenshiftProvider(ServiceProvider):
     type_type = "OpenshiftProvider"
     type_description = _("Openshift based VMs provider")
     icon_file = "provider.png"
+    group = core_types.services.ProviderGrouping.PRIVATE_CLOUD
 
     # Gui
     cluster_url = gui.TextField(

@@ -109,6 +109,9 @@ class ServiceProvider(module.Module):
     # : your own py:meth:`uds.core.module.BaseModule.icon` method.
     icon_file = "provider.png"
 
+    # : Group used to cluster this provider type in the administration "New" menu.
+    group: typing.ClassVar[types.services.ProviderGrouping] = types.services.ProviderGrouping.OTHER
+
     # : This defines the maximum number of concurrent services that should be in state "in preparation" for this provider
     # : Default is return the GlobalConfig value of GlobalConfig.MAX_PREPARING_SERVICES
     # : Note: this variable can be either a fixed value (integer, string) or a Gui text field (with a .value property)
