@@ -92,7 +92,7 @@ class XenProvider(ServiceProvider):  # pylint: disable=too-many-public-methods
     # : BEFORE sending it to administration interface, so don't forget to
     # : mark it as _ (using gettext_noop)
     icon_file = "provider.png"
-    group = types.services.ProviderGrouping.VIRTUALIZATION
+    group = types.services.ProviderGrouping.HYPERVISORS
 
     # now comes the form fields
     # There is always two fields that are requested to the admin, that are:

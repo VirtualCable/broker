@@ -50,15 +50,15 @@ from ....utils import rest
 Grouping = types.services.ProviderGrouping
 
 OPEN_PROVIDER_GROUPS: typing.Final[dict[type[services.ServiceProvider], Grouping]] = {
-    ProxmoxProvider: Grouping.VIRTUALIZATION,
-    XenProvider: Grouping.VIRTUALIZATION,
-    OVirtProvider: Grouping.VIRTUALIZATION,
-    OpenStackProvider: Grouping.PRIVATE_CLOUD,
-    OpenStackProviderLegacy: Grouping.PRIVATE_CLOUD,
-    OpenNebulaProvider: Grouping.PRIVATE_CLOUD,
-    OpenshiftProvider: Grouping.PRIVATE_CLOUD,
-    PhysicalMachinesProvider: Grouping.PHYSICAL_AND_SESSIONS,
-    OGProvider: Grouping.PHYSICAL_AND_SESSIONS,
+    ProxmoxProvider: Grouping.HYPERVISORS,
+    XenProvider: Grouping.HYPERVISORS,
+    OVirtProvider: Grouping.HYPERVISORS,
+    OpenStackProvider: Grouping.CLOUD_PROVIDERS,
+    OpenStackProviderLegacy: Grouping.CLOUD_PROVIDERS,
+    OpenNebulaProvider: Grouping.CLOUD_PROVIDERS,
+    OpenshiftProvider: Grouping.CLOUD_PROVIDERS,
+    PhysicalMachinesProvider: Grouping.EXISTING_MACHINES,
+    OGProvider: Grouping.EXISTING_MACHINES,
 }
 
 
@@ -89,9 +89,26 @@ class ProviderGroupingTest(rest.test.RESTTestCase):
             with self.subTest(provider=provider_type.__name__):
                 self.assertEqual(exposed[provider_type.mod_type()], provider_type.group.value)
 
+    def test_rest_types_come_in_the_order_of_their_groups(self) -> None:
+        # The administration builds its "New" menu in the order the types arrive
+        group_order = list(Grouping)
+        providers = {
+            provider_type.mod_type(): provider_type for provider_type in services.factory().providers().values()
+        }
+
+        response = self.client.rest_get("providers/types")
+        self.assertEqual(response.status_code, 200)
+        positions = [group_order.index(providers[item["type"]].group) for item in response.json()]
+
+        self.assertEqual(positions, sorted(positions))
+        self.assertGreater(len(set(positions)), 1)
+
     def test_rest_types_translate_the_group(self) -> None:
-        with mock.patch("uds.REST.model.base._", side_effect=lambda text: f"translated:{text}"):
+        def translated(text: str) -> str:
+            return f"translated:{text}"
+
+        with mock.patch("uds.REST.model.base._", side_effect=translated):
             response = self.client.rest_get("providers/types")
         self.assertEqual(response.status_code, 200)
         exposed = {item["type"]: item["group"] for item in response.json()}
-        self.assertEqual(exposed[ProxmoxProvider.mod_type()], f"translated:{Grouping.VIRTUALIZATION.value}")
+        self.assertEqual(exposed[ProxmoxProvider.mod_type()], f"translated:{Grouping.HYPERVISORS.value}")

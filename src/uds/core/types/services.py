@@ -49,10 +49,10 @@ class ServiceType(enum.StrEnum):
 
 
 class ProviderGrouping(enum.StrEnum):
-    PUBLIC_CLOUD = _("Public cloud")
-    VIRTUALIZATION = _("Virtualization")
-    PRIVATE_CLOUD = _("Private cloud")
-    PHYSICAL_AND_SESSIONS = _("Physical and sessions")
+    # Declaration order is the order of the groups in the administration "New" menu
+    HYPERVISORS = _("Hypervisors")
+    CLOUD_PROVIDERS = _("Cloud providers")
+    EXISTING_MACHINES = _("Existing machines")
     OTHER = _("Other")
 
 

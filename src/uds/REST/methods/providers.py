@@ -187,7 +187,12 @@ class Providers(ModelHandler[ProviderItem]):
     @classmethod
     @typing.override
     def possible_types(cls: type[typing.Self]) -> collections.abc.Iterable[type[services.ServiceProvider]]:
-        return services.factory().providers().values()
+        # The administration shows the groups of its "New" menu in the order the types arrive
+        group_order = list(types.services.ProviderGrouping)
+        return sorted(
+            services.factory().providers().values(),
+            key=lambda provider_type: group_order.index(provider_type.group),
+        )
 
     # Gui related
     @typing.override

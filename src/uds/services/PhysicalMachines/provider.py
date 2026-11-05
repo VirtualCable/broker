@@ -61,7 +61,7 @@ class PhysicalMachinesProvider(services.ServiceProvider):
     type_type = "PhysicalMachinesServiceProvider"
     type_description = _("Provides connection to machines by IP")
     icon_file = "provider.png"
-    group = types.services.ProviderGrouping.PHYSICAL_AND_SESSIONS
+    group = types.services.ProviderGrouping.EXISTING_MACHINES
 
     offers: typing.ClassVar[list[type["Service"]]] = [IPMachinesService, IPSingleMachineService]
 
