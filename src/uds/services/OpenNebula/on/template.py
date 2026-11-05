@@ -49,7 +49,8 @@ def enumerate_templates(
     api: "client.OpenNebulaClient", force: bool = False
 ) -> collections.abc.Iterable[types.TemplateType]:
     for t in api.enum_templates():
-        if t.name[:4] != "UDSP":
+        # "UDSP" is the prefix used by publications of previous versions, that may still exist
+        if not t.name.startswith(("UDSP", "UDS-Pub-")):
             yield t
 
 
