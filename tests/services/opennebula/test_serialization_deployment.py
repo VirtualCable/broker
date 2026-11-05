@@ -27,7 +27,6 @@
 Author: Janier Rodríguez, jrodriguez at virtualcable dot es
 """
 import pickle
-import typing
 
 from uds.core import types
 from uds.core.environment import Environment
