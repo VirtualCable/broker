@@ -100,6 +100,27 @@ class TestMachineTemplate(UDSTransactionTestCase):
 
         self.assertEqual(extra, {"VCPU": "2"})
 
+    def test_cpu_is_left_alone_when_the_template_values_are_not_numbers(self) -> None:
+        # A template can take its capacity from USER_INPUTS, or have values that cannot give a ratio
+        for base_cpu, base_vcpu in (
+            ("$CPU", "1"),
+            ("1", "$VCPU"),
+            ("1", "0"),
+            ("0", "1"),
+            ("-1", "1"),
+            ("NaN", "1"),
+            ("sNaN", "1"),
+            ("Infinity", "1"),
+            ("1e400", "1"),
+            ("1e999999", "1"),
+        ):
+            with self.subTest(base_cpu=base_cpu, base_vcpu=base_vcpu):
+                template_xml = f"<VMTEMPLATE><TEMPLATE><CPU>{base_cpu}</CPU><VCPU>{base_vcpu}</VCPU></TEMPLATE></VMTEMPLATE>"
+
+                extra = _parsed(on.template.machine_template(on.types.MachineOptions(cores=999), template_xml))
+
+                self.assertEqual(extra, {"VCPU": "999"})
+
     def test_cpu_is_left_alone_when_only_memory_changes(self) -> None:
         extra = _parsed(on.template.machine_template(on.types.MachineOptions(memory_mb=512), TEMPLATE_XML))
 

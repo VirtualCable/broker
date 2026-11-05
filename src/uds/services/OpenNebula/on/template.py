@@ -207,15 +207,21 @@ def _cpu_for(cores: int, template_xml: str) -> str | None:
     """
     CPU is the share of physical processor that OpenNebula reserves for the machine, not its virtual processors.
     It keeps the CPU per VCPU of the base template, so changing the cores does not change how much host the
-    template asked for each of them. None if the template sets no CPU.
+    template asked for each of them. None if the template gives no ratio: no CPU, or values that are not positive
+    numbers, as when the template takes them from USER_INPUTS.
     """
     template = ElementTree.fromstring(template_xml).find("TEMPLATE")
-    base_cpu = template.findtext("CPU") if template is not None else None
-    if template is None or not base_cpu:
+    if template is None or not template.findtext("CPU"):
         return None
-    base_vcpu = template.findtext("VCPU") or "1"  # OpenNebula default
-    cpu = max(Decimal(base_cpu) * cores / Decimal(base_vcpu), _MIN_CPU)
-    return format(cpu.quantize(_MIN_CPU, rounding=ROUND_HALF_UP).normalize(), "f")
+    try:
+        base_cpu = Decimal(template.findtext("CPU") or "")
+        base_vcpu = Decimal(template.findtext("VCPU") or "1")  # OpenNebula default
+        if not (base_cpu.is_finite() and base_vcpu.is_finite() and base_cpu > 0 and base_vcpu > 0):
+            return None
+        cpu = max(base_cpu * cores / base_vcpu, _MIN_CPU)
+        return format(cpu.quantize(_MIN_CPU, rounding=ROUND_HALF_UP).normalize(), "f")
+    except ArithmeticError:  # decimal signals: InvalidOperation, Overflow...
+        return None
 
 
 def machine_template(options: types.MachineOptions, template_xml: str) -> str:
