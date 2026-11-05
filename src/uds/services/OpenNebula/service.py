@@ -33,6 +33,7 @@ Author: Andres Schumann, aschumann at virtualcable dot es
 import logging
 import typing
 
+from django.utils.translation import gettext
 from django.utils.translation import gettext_noop as _
 
 from uds.core import exceptions, types
@@ -125,6 +126,39 @@ class OpenNebulaLiveService(DynamicService):
         required=True,
     )
 
+    cores = gui.NumericField(
+        label=_("Cores"),
+        order=111,
+        length=3,
+        default=0,
+        min_value=0,
+        tooltip=_('Number of cores of the new machines. (Zero value means "keep template cores")'),
+        tab=types.ui.Tab.MACHINE,
+        required=True,
+    )
+
+    memory = gui.NumericField(
+        label=_("Memory (Mb)"),
+        order=112,
+        length=7,
+        default=0,
+        min_value=0,
+        tooltip=_('Memory of the new machines. (Zero value means "keep template memory")'),
+        tab=types.ui.Tab.MACHINE,
+        required=True,
+    )
+
+    network = gui.ChoiceField(
+        label=_("Network"),
+        order=113,
+        default="",
+        tooltip=_(
+            "Virtual network of the first interface of the new machines. Empty keeps the template network."
+        ),
+        tab=types.ui.Tab.MACHINE,
+        required=False,
+    )
+
     basename = DynamicService.basename
     lenname = DynamicService.lenname
 
@@ -155,6 +189,19 @@ class OpenNebulaLiveService(DynamicService):
 
         self.datastore.set_choices([gui.choice_item(d.id, d.name) for d in self.provider().get_datastores()])
 
+        self.network.set_choices(
+            [gui.choice_item("", gettext("Same as template"))]
+            + [gui.choice_item(n.id, n.name) for n in self.provider().get_networks()]
+        )
+
+    def machine_options(self) -> on.types.MachineOptions:
+        """Overrides chosen by the administrator for the machines of this service."""
+        return on.types.MachineOptions(
+            cores=self.cores.as_int(),
+            memory_mb=self.memory.as_int(),
+            network=self.network.value or "",
+        )
+
     @typing.override
     def sanitized_name(self, name: str) -> str:
         return self.provider().sanitized_name(name)
@@ -177,7 +224,7 @@ class OpenNebulaLiveService(DynamicService):
             Id of the machine being created form template
         """
         logger.debug("Deploying from template %s machine %s", template_id, name)
-        return self.provider().deply_from_template(name, template_id)
+        return self.provider().deply_from_template(name, template_id, self.machine_options())
 
     def get_machine_state(self, machine_id: str) -> "on.types.VmState":
         """

@@ -2,6 +2,7 @@
 Author: Andres Schumann, aschumann at virtualcable dot es
 """
 
+import collections.abc
 import contextlib
 import dataclasses
 import typing
@@ -53,6 +54,7 @@ class FakeOpenNebula:
     vms: dict[str, FakeVm]
     templates: dict[str, bool]  # id -> published
     names: dict[str, str]  # id -> name
+    deploy_options: dict[str, on.types.MachineOptions]  # machine id -> options it was deployed with
     calls: list[tuple[str, str]]
     _next_id: int
 
@@ -60,6 +62,7 @@ class FakeOpenNebula:
         self.vms = {}
         self.templates = {}
         self.names = {}
+        self.deploy_options = {}
         self.calls = []
         self._next_id = 100
 
@@ -118,16 +121,23 @@ class FakeOpenNebula:
         self.calls.append(("remove_template", template_id))
         del self.templates[template_id]
 
-    def template_deploy_from(self, api: typing.Any, template_id: str, name: str) -> str:
+    def template_deploy_from(
+        self,
+        api: typing.Any,
+        template_id: str,
+        name: str,
+        options: on.types.MachineOptions,
+    ) -> str:
         vmid = self._new_id()
         self.vms[vmid] = FakeVm()
         self.names[vmid] = name
+        self.deploy_options[vmid] = options
         self.calls.append(("deploy", vmid))
         return vmid
 
 
 @contextlib.contextmanager
-def patched_opennebula() -> typing.Iterator[FakeOpenNebula]:
+def patched_opennebula() -> collections.abc.Generator[FakeOpenNebula]:
     fake = FakeOpenNebula()
     with contextlib.ExitStack() as stack:
         for module, name, method in (

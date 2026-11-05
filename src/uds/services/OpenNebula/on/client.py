@@ -122,6 +122,17 @@ class OpenNebulaClient:  # pylint: disable=too-many-public-methods
                 yield types.StorageType(ds["ID"], ds["NAME"], int(ds["TOTAL_MB"]), int(ds["FREE_MB"]), None)
 
     @ensure_connected
+    def enum_networks(self) -> collections.abc.Iterable[types.NetworkType]:
+        """
+        Invoke virtual networks pool info, with the same parameters as the templates one
+        """
+        result, _ = check_result(self.connection.one.vnpool.info(self.session_string, -1, -1, -1))
+        # With no networks the pool is an empty element and the parser gives no key at all
+        pool = result.get("VNET_POOL")
+        for net in as_iterable(pool["VNET"] if pool else None):
+            yield types.NetworkType(net["ID"], net["NAME"])
+
+    @ensure_connected
     def enum_templates(self) -> collections.abc.Iterable[types.TemplateType]:
         """
         Invoke templates pools info, with this parameters:
