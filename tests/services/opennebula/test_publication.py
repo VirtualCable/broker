@@ -33,6 +33,20 @@ class TestOpenNebulaPublication(UDSTransactionTestCase):
             self.assertEqual(one.names[template_id], pub._name)
             self.assertNotIn(" ", pub._name)
 
+    def test_longest_names_fit_in_opennebula(self) -> None:
+        # OpenNebula rejects names longer than 128 characters (PoolObjectSQL::name_is_valid)
+        opennebula_max_name_length = 128
+        # Base name plus name length cannot exceed 15 (validators.validate_basename)
+        srvc = fixtures.create_service(fixtures.create_provider(), basename="B" * 14, lenname=1)
+        pub = fixtures.create_publication(srvc)
+
+        with mock.patch.object(pub, "revision", return_value=999_999):
+            template_name = pub.generate_name()
+        disk_image_name = srvc.sanitized_name(f"{template_name} DSK 99")
+
+        self.assertLessEqual(len(template_name), opennebula_max_name_length)
+        self.assertLessEqual(len(disk_image_name), opennebula_max_name_length)
+
     def test_publish_error_is_reported(self) -> None:
         with fixtures.patched_opennebula():
             srvc = fixtures.create_service(fixtures.create_provider())
