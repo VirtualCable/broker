@@ -1,6 +1,4 @@
-
-#
-# Copyright (c) 2024 Virtual Cable S.L.
+# Copyright (c) 2026 Virtual Cable S.L.U.
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without modification,
@@ -11,85 +9,103 @@
 #    * Redistributions in binary form must reproduce the above copyright notice,
 #      this list of conditions and the following disclaimer in the documentation
 #      and/or other materials provided with the distribution.
-#    * Neither the name of Virtual Cable S.L. nor the names of its contributors
+#    * Neither the name of Virtual Cable S.L.U. nor the names of its contributors
 #      may be used to endorse or promote products derived from this software
 #      without specific prior written permission.
 #
-# THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
-# AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
-# IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
-# DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE
-# FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
-# DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
-# SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
-# CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
-# OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
-# OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-
+# THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
+# ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
+# WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+# DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR
+# ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
+# (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+# LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON
+# ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+# (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
+# SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 """
-Author: Adolfo Gómez, dkmaster at dkmon dot com
+Author: Janier Rodríguez, jrodriguez at virtualcable dot es
 """
-
-import typing
-
-# We use commit/rollback
-from tests.utils.test import UDSTestCase
+from uds.core import types
 from uds.core.environment import Environment
-from uds.services.OpenNebula import publication
+from uds.core.util import autoserializable
 
-# if not data.startswith(b'v'):
-#     return super().unmarshal(data)
+from uds.services.OpenNebula.publication import OpenNebulaLivePublication
 
-# vals = data.decode('utf8').split('\t')
-# if vals[0] == 'v1':
-#     self._name, self._reason, self._template_id, self._state = vals[1:]
+from ...utils.test import UDSTestCase
 
-# self.flag_for_upgrade()  # Flag so manager can save it again with new format
-EXPECTED_FIELDS: typing.Final[set[str]] = {
-    "_name",
-    "_reason",
-    "_template_id",
-    "_state",
-    "_destroy_after",  # Newly added field
-}
-
-SERIALIZED_PUBLICATION_DATA: typing.Final[bytes] = b"v1\tname\treason\ttemplate_id\tstate"
+Operation = types.services.Operation
 
 
-class OpenGnsysPublicationSerializationTest(UDSTestCase):
-    def check(self, instance: publication.OpenNebulaLivePublication) -> None:
+class Publication40(autoserializable.AutoSerializable):
+    """
+    Same fields and version as the 4.0 publication, used to produce its serialized bytes
+    """
+
+    _name = autoserializable.StringField(default="")
+    _reason = autoserializable.StringField(default="")
+    _template_id = autoserializable.StringField(default="")
+    _state = autoserializable.StringField(default="r")
+    _destroy_after = autoserializable.BoolField(default=False)
+
+
+def serialized_by_40(state: str, destroy_after: bool = False) -> bytes:
+    old = Publication40()
+    old._name = "name"
+    old._reason = "reason"
+    old._template_id = "template_id"
+    old._state = state
+    old._destroy_after = destroy_after
+    return old.marshal()
+
+
+class OpenNebulaPublicationSerializationTest(UDSTestCase):
+    def publication_from(self, data: bytes) -> OpenNebulaLivePublication:
+        instance = OpenNebulaLivePublication(environment=Environment.testing_environment(), service=None)  # type: ignore
+        instance.unmarshal(data)
+        return instance
+
+    def assert_fields_restored(self, instance: OpenNebulaLivePublication) -> None:
         self.assertEqual(instance._name, "name")
         self.assertEqual(instance._reason, "reason")
-        self.assertEqual(instance._template_id, "template_id")
-        self.assertEqual(instance._state, "state")
-        self.assertEqual(instance._destroy_after, False)
+        self.assertEqual(instance._vmid, "template_id")
+        self.assertEqual(instance.get_template_id(), "template_id")
 
-    def test_marshaling(self) -> None:
-        environment = Environment.testing_environment()
+    def test_unmarshal_v1_keeps_template_as_vmid(self) -> None:
+        instance = self.publication_from(b"v1\tname\treason\ttemplate_id\tok")
 
-        instance = publication.OpenNebulaLivePublication(environment=environment, service=None)  # type: ignore
-        instance.unmarshal(SERIALIZED_PUBLICATION_DATA)
-        self.check(instance)
-        # Ensure remarshalled flag is set
+        self.assert_fields_restored(instance)
+        self.assertEqual(instance._queue, [Operation.FINISH])
+        self.assertFalse(instance._is_flagged_for_destroy)
         self.assertTrue(instance.needs_upgrade())
-        instance.mark_for_upgrade(False)  # reset flag
 
-        marshaled_data = instance.marshal()
+    def test_unmarshal_40_data_maps_state_to_queue(self) -> None:
+        expected = {
+            "ok": [Operation.FINISH],
+            "error": [Operation.ERROR],
+            "running": [Operation.CREATE, Operation.FINISH],
+        }
+        for state, queue in expected.items():
+            with self.subTest(state=state):
+                instance = self.publication_from(serialized_by_40(state))
 
-        # Ensure fields has been marshalled using new format
-        self.assertFalse(marshaled_data.startswith(b"\1"))
-        # Reunmarshall again and check that remarshalled flag is not set
-        instance = publication.OpenNebulaLivePublication(environment=environment, service=None)  # type: ignore
-        instance.unmarshal(marshaled_data)
-        self.assertFalse(instance.needs_upgrade())
+                self.assert_fields_restored(instance)
+                self.assertEqual(instance._queue, queue)
+                self.assertTrue(instance.needs_upgrade())
 
-        # Check that data is correct
-        self.check(instance)
+    def test_unmarshal_40_data_keeps_destroy_flag(self) -> None:
+        instance = self.publication_from(serialized_by_40("ok", destroy_after=True))
 
-    def test_autoserialization_fields(self) -> None:
-        # This test is designed to ensure that all fields are autoserializable
-        # If some field is added or removed, this tests will warn us about it to fix the rest of the related tests
-        with Environment.temporary_environment() as env:
-            instance = publication.OpenNebulaLivePublication(environment=env, service=None)  # type: ignore
+        self.assertTrue(instance._is_flagged_for_destroy)
 
-            self.assertSetEqual({f[0] for f in instance._autoserializable_fields()}, EXPECTED_FIELDS)
+    def test_remarshal_uses_current_version(self) -> None:
+        instance = self.publication_from(serialized_by_40("ok", destroy_after=True))
+        instance.mark_for_upgrade(False)
+
+        reloaded = self.publication_from(instance.marshal())
+
+        self.assertEqual(reloaded._serialization_version, 1)
+        self.assert_fields_restored(reloaded)
+        self.assertEqual(reloaded._queue, [Operation.FINISH])
+        self.assertTrue(reloaded._is_flagged_for_destroy)
+        self.assertFalse(reloaded.needs_upgrade())

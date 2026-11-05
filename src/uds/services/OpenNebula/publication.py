@@ -27,13 +27,15 @@
 
 """
 Author: Adolfo Gómez, dkmaster at dkmon dot com
+Author: Andres Schumann, aschumann at virtualcable dot es
+Author: Janier Rodríguez, jrodriguez at virtualcable dot es
 """
 
 import logging
 import typing
 
 from uds.core import types
-from uds.core.services import Publication
+from uds.core.services.generics.dynamic.publication import DynamicPublication
 from uds.core.util import autoserializable
 
 # Not imported at runtime, just for type checking
@@ -43,23 +45,27 @@ if typing.TYPE_CHECKING:
 logger: logging.Logger = logging.getLogger(__name__)
 
 
-class OpenNebulaLivePublication(Publication, autoserializable.AutoSerializable):
+class OldPublicationData(autoserializable.AutoSerializable):
     """
-    This class provides the publication of a service for OpenNebula
+    Fields stored by the 4.0 publication that do not exist on the dynamic one
     """
 
-    suggested_delay = 2  # : Suggested recheck time if publication is unfinished in seconds
-
-    _name = autoserializable.StringField(default="")
-    _reason = autoserializable.StringField(default="")
     _template_id = autoserializable.StringField(default="")
     _state = autoserializable.StringField(default="r")
     _destroy_after = autoserializable.BoolField(default=False)
 
-    # _name: str = ''
-    # _reason: str = ''
-    # _templateId: str = ''
-    # _state: str = 'r'
+
+class OpenNebulaLivePublication(DynamicPublication):
+    """
+    This class provides the publication of a service for OpenNebula
+
+    The publication is a template cloned from the base one, its id is kept as the "vmid" of the publication
+    """
+
+    suggested_delay = 2  # : Suggested recheck time if publication is unfinished in seconds
+
+    # 4.0 stored the template id and a state string under version 0
+    serialization_version = 1
 
     @typing.override
     def service(self) -> "OpenNebulaLiveService":
@@ -67,118 +73,55 @@ class OpenNebulaLivePublication(Publication, autoserializable.AutoSerializable):
 
     @typing.override
     def unmarshal(self, data: bytes) -> None:
-        """
-        deserializes the data and loads it inside instance.
-        """
-        if not data.startswith(b"v"):
-            return super().unmarshal(data)
+        if autoserializable.is_autoserializable_data(data):
+            super().unmarshal(data)
+            if self._serialization_version == 0:
+                self._unmarshal_old_fields(data)
+            return
 
         vals = data.decode("utf8").split("\t")
         if vals[0] == "v1":
-            self._name, self._reason, self._template_id, self._state = vals[1:]
-
-        self._destroy_after = False
+            self._name, self._reason, self._vmid, state = vals[1:]
+            self._queue = self._queue_from_old_state(state)
 
         self.mark_for_upgrade()  # Flag so manager can save it again with new format
 
+    def _unmarshal_old_fields(self, data: bytes) -> None:
+        old_data = OldPublicationData()
+        old_data.unmarshal(data)
+        self._vmid = old_data._template_id
+        self._queue = self._queue_from_old_state(old_data._state)
+        self._is_flagged_for_destroy = old_data._destroy_after
+        self.mark_for_upgrade()
+
+    @staticmethod
+    def _queue_from_old_state(state: str) -> list[types.services.Operation]:
+        # "running" means the template was already requested, so only its check is pending
+        return {
+            "ok": [types.services.Operation.FINISH],
+            "error": [types.services.Operation.ERROR],
+        }.get(state, [types.services.Operation.CREATE, types.services.Operation.FINISH])
+
     @typing.override
-    def publish(self) -> types.states.TaskState:
+    def op_create(self) -> None:
         """
         Realizes the publication of the service
         """
-        self._name = self.service().sanitized_name("UDSP " + self.servicepool_name() + "-" + str(self.revision()))
-        self._reason = ""  # No error, no reason for it
-        self._state = "running"
-
-        try:
-            self._template_id = self.service().make_template(self._name)
-        except Exception as e:
-            self._state = "error"
-            self._reason = str(e)
-            return types.states.TaskState.ERROR
-
-        return types.states.TaskState.RUNNING
+        self._vmid = self.service().make_template(self._name)
 
     @typing.override
-    def check_state(self) -> types.states.TaskState:
+    def op_create_checker(self) -> types.states.TaskState:
         """
         Checks state of publication creation
         """
-        if self._state == "running":
-            try:
-                if self.service().check_template_published(self._template_id) is False:
-                    return types.states.TaskState.RUNNING
-                self._state = "ok"
-            except Exception as e:
-                self._state = "error"
-                self._reason = str(e)
-
-        if self._state == "error":
-            return types.states.TaskState.ERROR
-
-        if self._state == "ok":
-            if self._destroy_after:  # If we must destroy after publication, do it now
-                self._destroy_after = False
-                return self.destroy()
-
-            return types.states.TaskState.FINISHED
-
-        self._state = "ok"
-        return types.states.TaskState.FINISHED
-
-    @typing.override
-    def error_reason(self) -> str:
-        """
-        If a publication produces an error, here we must notify the reason why
-        it happened. This will be called just after publish or check_state
-        if they return types.states.TaskState.ERROR
-
-        Returns an string, in our case, set at check_state
-        """
-        return self._reason
-
-    @typing.override
-    def destroy(self) -> types.states.TaskState:
-        """
-        This is called once a publication is no more needed.
-
-        This method do whatever needed to clean up things, such as
-        removing created "external" data (environment gets cleaned by core),
-        etc..
-
-        The retunred value is the same as when publishing, types.states.TaskState.RUNNING,
-        types.states.TaskState.FINISHED or types.states.TaskState.ERROR.
-        """
-        if self._state == "error":
-            return types.states.TaskState.ERROR
-
-        if self._state == "running":
-            self._destroy_after = True
+        if self.service().check_template_published(self._vmid) is False:
             return types.states.TaskState.RUNNING
 
-        # We do not do anything else to destroy this instance of publication
-        try:
-            self.service().remove_template(self._template_id)
-        except Exception as e:
-            self._state = "error"
-            self._reason = str(e)
-            return types.states.TaskState.ERROR
-
         return types.states.TaskState.FINISHED
 
     @typing.override
-    def cancel(self) -> types.states.TaskState:
-        """
-        Do same thing as destroy
-        """
-        return self.destroy()
-
-    # Here ends the publication needed methods.
-    # Methods provided below are specific for this publication
-    # and will be used by user deployments that uses this kind of publication
-
     def get_template_id(self) -> str:
         """
         Returns the template id associated with the publication
         """
-        return self._template_id
+        return self._vmid

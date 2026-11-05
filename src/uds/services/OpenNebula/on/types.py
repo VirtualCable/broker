@@ -29,6 +29,7 @@
 Author: Adolfo Gómez, dkmaster at dkmon dot com
 """
 
+import dataclasses
 import enum
 import typing
 
@@ -91,6 +92,26 @@ class TemplateType(typing.NamedTuple):
     name: str
     memory: int
     xml: str | None
+
+
+class NetworkType(typing.NamedTuple):
+    id: str
+    name: str
+
+
+@dataclasses.dataclass(frozen=True)
+class MachineOptions:
+    """
+    Per-service overrides for the machines deployed from the template.
+    Empty or zero values keep what the template has.
+    """
+
+    cores: int = 0
+    memory_mb: int = 0
+    network: str = ""  # Id of the virtual network of the first interface
+
+    def is_empty(self) -> bool:
+        return not (self.cores or self.memory_mb or self.network)
 
 
 class ImageType(typing.NamedTuple):

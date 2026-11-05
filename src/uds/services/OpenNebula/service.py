@@ -27,30 +27,39 @@
 
 """
 Author: Adolfo Gómez, dkmaster at dkmon dot com
+Author: Andres Schumann, aschumann at virtualcable dot es
 """
 
 import logging
 import typing
 
+from django.utils.translation import gettext
 from django.utils.translation import gettext_noop as _
 
-from uds.core import services
-from uds.core import types
+from uds.core import exceptions, types
+from uds.core.services.generics.dynamic.service import DynamicService
 from uds.core.ui import gui
 from uds.core.util import validators
 
+from . import on
 from .deployment import OpenNebulaLiveDeployment
 from .publication import OpenNebulaLivePublication
 
 # Not imported at runtime, just for type checking
 if typing.TYPE_CHECKING:
-    from . import on
+    from uds.core.services.generics.dynamic.publication import DynamicPublication
+    from uds.core.services.generics.dynamic.userservice import DynamicUserService
+
     from .provider import OpenNebulaProvider
 
 logger: logging.Logger = logging.getLogger(__name__)
 
+# Kinds of items that can be removed by a deferred deletion, stored as "<kind>:<id>"
+VM_KIND: typing.Final[str] = "VM"
+TEMPLATE_KIND: typing.Final[str] = "TP"
 
-class OpenNebulaLiveService(services.Service):
+
+class OpenNebulaLiveService(DynamicService):
     """
     Opennebula Live Service
     """
@@ -89,6 +98,9 @@ class OpenNebulaLiveService(services.Service):
     needs_osmanager = True
     can_reset = True
 
+    # OpenNebula removes the machines by itself, whatever their power state is
+    must_stop_before_deletion = False
+
     # : Types of publications (preparated data for deploys)
     # : In our case, we do no need a publication, so this is None
     publication_type = OpenNebulaLivePublication
@@ -114,24 +126,41 @@ class OpenNebulaLiveService(services.Service):
         required=True,
     )
 
-    baseName = gui.TextField(
-        label=_("Machine Names"),
-        readonly=False,
+    cores = gui.NumericField(
+        label=_("Cores"),
         order=111,
-        tooltip=_("Base name for clones from this machine"),
+        length=3,
+        default=0,
+        min_value=0,
+        tooltip=_('Number of cores of the new machines. (Zero value means "keep template cores")'),
         tab=types.ui.Tab.MACHINE,
         required=True,
     )
 
-    lenName = gui.NumericField(
-        length=1,
-        label=_("Name Length"),
-        default=5,
+    memory = gui.NumericField(
+        label=_("Memory (Mb)"),
         order=112,
-        tooltip=_("Size of numeric part for the names of these machines"),
+        length=7,
+        default=0,
+        min_value=0,
+        tooltip=_('Memory of the new machines. (Zero value means "keep template memory")'),
         tab=types.ui.Tab.MACHINE,
         required=True,
     )
+
+    network = gui.ChoiceField(
+        label=_("Network"),
+        order=113,
+        default="",
+        tooltip=_(
+            "Virtual network of the first interface of the new machines. Empty keeps the template network."
+        ),
+        tab=types.ui.Tab.MACHINE,
+        required=False,
+    )
+
+    basename = DynamicService.basename
+    lenname = DynamicService.lenname
 
     @typing.override
     def initialize(self, values: "types.core.ValuesType") -> None:
@@ -144,7 +173,7 @@ class OpenNebulaLiveService(services.Service):
         if not values:
             return
 
-        self.baseName.value = validators.validate_basename(self.baseName.value, length=self.lenName.as_int())
+        self.basename.value = validators.validate_basename(self.basename.value, length=self.lenname.as_int())
 
     @typing.override
     def provider(self) -> "OpenNebulaProvider":
@@ -160,6 +189,20 @@ class OpenNebulaLiveService(services.Service):
 
         self.datastore.set_choices([gui.choice_item(d.id, d.name) for d in self.provider().get_datastores()])
 
+        self.network.set_choices(
+            [gui.choice_item("", gettext("Same as template"))]
+            + [gui.choice_item(n.id, n.name) for n in self.provider().get_networks()]
+        )
+
+    def machine_options(self) -> on.types.MachineOptions:
+        """Overrides chosen by the administrator for the machines of this service."""
+        return on.types.MachineOptions(
+            cores=self.cores.as_int(),
+            memory_mb=self.memory.as_int(),
+            network=self.network.value or "",
+        )
+
+    @typing.override
     def sanitized_name(self, name: str) -> str:
         return self.provider().sanitized_name(name)
 
@@ -175,37 +218,18 @@ class OpenNebulaLiveService(services.Service):
 
         Args:
             name: Name (sanitized) of the machine
-            comments: Comments for machine
             template_id: Id of the template to deploy from
 
         Returns:
             Id of the machine being created form template
         """
         logger.debug("Deploying from template %s machine %s", template_id, name)
-        # self.datastoreHasSpace()
-        return self.provider().deply_from_template(name, template_id)
-
-    def remove_template(self, template_id: str) -> None:
-        """
-        invokes template_id from parent provider
-        """
-        self.provider().remove_template(template_id)
+        return self.provider().deply_from_template(name, template_id, self.machine_options())
 
     def get_machine_state(self, machine_id: str) -> "on.types.VmState":
         """
         Invokes getMachineState from parent provider
-        (returns if machine is "active" or "inactive"
-
-        Args:
-            machine_id: If of the machine to get state
-
-        Returns:
-            one of this values:
-             unassigned, down, up, powering_up, powered_down,
-             paused, migrating_from, migrating_to, unknown, not_responding,
-             wait_for_launch, reboot_in_progress, saving_state, restoring_state,
-             suspended, image_illegal, image_locked or powering_down
-             Also can return'unknown' if Machine is not known
+        Returns UNKNOWN if the machine is not known
         """
         return self.provider().get_machine_state(machine_id)
 
@@ -216,83 +240,75 @@ class OpenNebulaLiveService(services.Service):
         """
         return self.provider().get_machine_substate(machine_id)
 
-    def start_machine(self, machine_id: str) -> None:
-        """
-        Tries to start a machine. No check is done, it is simply requested to OpenNebula.
-
-        This start also "resume" suspended/paused machines
-
-        Args:
-            machine_id: Id of the machine
-
-        Returns:
-        """
-        self.provider().start_machine(machine_id)
-
-    def stop_machine(self, machine_id: str) -> None:
-        """
-        Tries to stop a machine. No check is done, it is simply requested to OpenNebula
-
-        Args:
-            machine_id: Id of the machine
-
-        Returns:
-        """
-        self.provider().stop_machine(machine_id)
-
-    def suspend_machine(self, machine_id: str) -> None:
-        """
-        Tries to suspend machine. No check is done, it is simply requested to OpenNebula
-
-        Args:
-            machine_id: Id of the machine
-
-        Returns:
-        """
-        self.provider().suspend_machine(machine_id)
-
-    def shutdown_machine(self, machine_id: str) -> None:
-        """
-        Tries to "gracefully" shutdown machine. No check is done, it is simply requested to OpenNebula
-
-        Args:
-            machine_id: Id of the machine
-
-        Returns:
-        """
-        self.provider().shutdown_machine(machine_id)
-
-    def reset_machine(self, machine_id: str) -> None:
-        self.provider().reset_machine(machine_id)
-
-    def remove_machine(self, machine_id: str) -> None:
-        """
-        Tries to delete a machine. No check is done, it is simply requested to OpenNebula
-
-        Args:
-            machine_id: Id of the machine
-
-        Returns:
-        """
-        self.provider().remove_machine(machine_id)
-
     def get_network_info(self, machine_id: str, network_id: str | None = None) -> tuple[str, str]:
         """
-        Gets the network info for a machine
+        Gets the (mac, ip) of a machine
         """
-        return self.provider().get_network_info(machine_id, network_id=None)
+        return self.provider().get_network_info(machine_id, network_id=network_id)
 
-    def get_basename(self) -> str:
-        """
-        Returns the base name
-        """
-        return self.baseName.value
+    @typing.override
+    def get_ip(self, caller_instance: "DynamicUserService | DynamicPublication | None", vmid: str) -> str:
+        return self.get_network_info(vmid)[1]
 
-    def get_lenname(self) -> int:
-        """
-        Returns the length of numbers part
-        """
-        return self.lenName.as_int()
+    @typing.override
+    def get_mac(
+        self,
+        caller_instance: "DynamicUserService | DynamicPublication | None",
+        vmid: str,
+        *,
+        for_unique_id: bool = False,
+    ) -> str:
+        # The mac is assigned by OpenNebula, so there is nothing to give before the machine exists
+        if for_unique_id or not vmid:
+            return ""
+        return self.get_network_info(vmid)[0].upper()
+
+    @typing.override
+    def is_running(self, caller_instance: "DynamicUserService | DynamicPublication | None", vmid: str) -> bool:
+        return self.get_machine_state(vmid) == on.types.VmState.ACTIVE
+
+    @typing.override
+    def start(self, caller_instance: "DynamicUserService | DynamicPublication | None", vmid: str) -> None:
+        # This start also "resumes" suspended/paused machines
+        self.provider().start_machine(vmid)
+
+    @typing.override
+    def stop(self, caller_instance: "DynamicUserService | DynamicPublication | None", vmid: str) -> None:
+        self.provider().stop_machine(vmid)
+
+    @typing.override
+    def shutdown(self, caller_instance: "DynamicUserService | DynamicPublication | None", vmid: str) -> None:
+        self.provider().shutdown_machine(vmid)
+
+    @typing.override
+    def reset(self, caller_instance: "DynamicUserService | DynamicPublication | None", vmid: str) -> None:
+        self.provider().reset_machine(vmid)
+
+    @typing.override
+    def delete(self, caller_instance: "DynamicUserService | DynamicPublication | None", vmid: str) -> None:
+        # Publications are templates and user services are machines, so the deletion differs
+        kind = TEMPLATE_KIND if isinstance(caller_instance, OpenNebulaLivePublication) else VM_KIND
+        super().delete(caller_instance, f"{kind}:{vmid}")
+
+    @typing.override
+    def execute_delete(self, vmid: str) -> None:
+        kind, _sep, item_id = vmid.partition(":")
+        if kind == TEMPLATE_KIND:
+            self.provider().remove_template(item_id)
+            return
+
+        state = self.get_machine_state(item_id)
+        if state == on.types.VmState.UNKNOWN:
+            raise exceptions.services.generics.NotFoundError(f"Machine {item_id} not found")
+
+        if state == on.types.VmState.ACTIVE:
+            sub_state = self.get_machine_substate(item_id)
+            if sub_state < 3:  # Less than running
+                raise exceptions.services.generics.RetryableError(
+                    f"Machine {item_id} must be running before removing it (substate {sub_state})"
+                )
+
+        self.provider().remove_machine(item_id)
 
     def get_console_connection(self, vmid: str) -> types.services.ConsoleConnectionInfo | None:
         return self.provider().get_console_connection(vmid)
