@@ -68,7 +68,42 @@ class TestMachineTemplate(UDSTransactionTestCase):
             on.template.machine_template(on.types.MachineOptions(cores=4, memory_mb=2048), TEMPLATE_XML)
         )
 
-        self.assertEqual(extra, {"VCPU": "4", "MEMORY": "2048"})
+        # The base template reserves CPU 0.1 for 1 VCPU, so 4 VCPU reserve 0.4
+        self.assertEqual(extra, {"VCPU": "4", "CPU": "0.4", "MEMORY": "2048"})
+
+    def test_cpu_keeps_the_ratio_of_the_base_template(self) -> None:
+        for base_cpu, base_vcpu, cores, expected in (
+            ("1", "1", 4, "4"),
+            ("0.5", "2", 8, "2"),
+            ("2", "4", 1, "0.5"),
+            ("1", "3", 2, "0.67"),
+            ("0.01", "4", 1, "0.01"),
+        ):
+            with self.subTest(base_cpu=base_cpu, base_vcpu=base_vcpu, cores=cores):
+                template_xml = f"<VMTEMPLATE><TEMPLATE><CPU>{base_cpu}</CPU><VCPU>{base_vcpu}</VCPU></TEMPLATE></VMTEMPLATE>"
+
+                extra = _parsed(
+                    on.template.machine_template(on.types.MachineOptions(cores=cores), template_xml)
+                )
+
+                self.assertEqual(extra, {"VCPU": str(cores), "CPU": expected})
+
+    def test_cpu_of_a_template_without_vcpu_is_for_one_vcpu(self) -> None:
+        extra = _parsed(on.template.machine_template(on.types.MachineOptions(cores=2), NO_NIC_TEMPLATE_XML))
+
+        self.assertEqual(extra, {"VCPU": "2", "CPU": "0.2"})
+
+    def test_cpu_is_left_alone_when_the_template_has_none(self) -> None:
+        template_xml = "<VMTEMPLATE><TEMPLATE><VCPU>1</VCPU></TEMPLATE></VMTEMPLATE>"
+
+        extra = _parsed(on.template.machine_template(on.types.MachineOptions(cores=2), template_xml))
+
+        self.assertEqual(extra, {"VCPU": "2"})
+
+    def test_cpu_is_left_alone_when_only_memory_changes(self) -> None:
+        extra = _parsed(on.template.machine_template(on.types.MachineOptions(memory_mb=512), TEMPLATE_XML))
+
+        self.assertNotIn("CPU", extra)
 
     def test_only_the_set_values_are_overridden(self) -> None:
         extra = _parsed(on.template.machine_template(on.types.MachineOptions(memory_mb=512), TEMPLATE_XML))
@@ -157,7 +192,11 @@ class TestDeployWithMachineOptions(UDSTransactionTestCase):
         self.assertEqual(args[:3], ("10", "vm-name", False))
         self.assertEqual(
             _parsed(args[3]),
-            {"VCPU": "2", "NIC": [{"NETWORK_ID": "7", "MODEL": "virtio"}, {"NETWORK": "management"}]},
+            {
+                "VCPU": "2",
+                "CPU": "0.2",
+                "NIC": [{"NETWORK_ID": "7", "MODEL": "virtio"}, {"NETWORK": "management"}],
+            },
         )
 
 
