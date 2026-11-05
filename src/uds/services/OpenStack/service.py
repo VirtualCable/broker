@@ -201,6 +201,7 @@ class OpenStackLiveService(DynamicService):
         """
         if values:
             validators.validate_basename(self.basename.value, self.lenname.as_int())
+            self.ensure_remove_duplicates_is_safe()
 
     @typing.override
     def provider(self) -> "AnyOpenStackProvider":

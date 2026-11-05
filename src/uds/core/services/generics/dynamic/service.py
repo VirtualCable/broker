@@ -105,6 +105,7 @@ class DynamicService(services.Service, abc.ABC):  # pylint: disable=too-many-pub
         """
         if values:
             validators.validate_basename(self.basename.value, self.lenname.value)
+            self.ensure_remove_duplicates_is_safe()
             if self.has_field("put_back_to_cache") and self.put_back_to_cache.value == "snapshot":
                 if not self.has_field("try_soft_shutdown"):
                     raise exceptions.ui.ValidationError(_("Snapshot on back to cache is not supported"))
@@ -112,6 +113,22 @@ class DynamicService(services.Service, abc.ABC):  # pylint: disable=too-many-pub
                     raise exceptions.ui.ValidationError(
                         _("Snapshot on back to cache is not supported if try soft shutdown is not enabled")
                     )
+
+    def ensure_remove_duplicates_is_safe(self) -> None:
+        """
+        Must be called only when values come from the administration interface (values not empty),
+        so services already stored with both flags keep loading after an upgrade.
+        With both flags, an errored machine is kept and later removed as a duplicate.
+        """
+        if (
+            self.has_field("remove_duplicates")
+            and self.has_field("maintain_on_error")
+            and self.remove_duplicates.value
+            and self.maintain_on_error.value
+        ):
+            raise exceptions.ui.ValidationError(
+                _("Remove found duplicates and Keep on error cannot be enabled at the same time")
+            )
 
     @typing.override
     def allow_putting_back_to_cache(self) -> bool:

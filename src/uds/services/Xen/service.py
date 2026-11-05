@@ -179,6 +179,7 @@ class XenLinkedService(DynamicService):  # pylint: disable=too-many-public-metho
         """
         if values:
             validators.validate_basename(self.basename.value, self.lenname.as_int())
+            self.ensure_remove_duplicates_is_safe()
 
             if int(self.memory.value) < 256:
                 raise exceptions.ui.ValidationError(_("The minimum allowed memory is 256 Mb"))

@@ -183,6 +183,7 @@ class ProxmoxService(DynamicService):
             self.basename.value = validators.validate_basename(
                 self.basename.value, length=self.lenname.as_int()
             )
+            self.ensure_remove_duplicates_is_safe()
             # Do not allow linked clones on lvm-thin
             try:
                 storage = next(
