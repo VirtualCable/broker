@@ -401,6 +401,9 @@ class UserService(UUIDModel, properties.PropertiesMixin):
     def allow_putting_back_to_cache(self) -> bool:
         return self.deployed_service.service.get_instance().allow_putting_back_to_cache()
 
+    def is_removable_on_logout(self) -> bool:
+        return self.get_instance().is_removable_on_logout()
+
     def restore_snapshot_on_back_to_cache(self) -> bool:
         return self.deployed_service.service.get_instance().restore_snapshot_on_back_to_cache()
 

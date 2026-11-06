@@ -764,7 +764,9 @@ class Logout(ActorV3Action):
         if userservice.in_use:  # If already logged out, do not add a second logout (windows does this i.e.)
             osmanagers.OSManager.logged_out(userservice, username)
             # If does not have osmanager, or has osmanager and is removable, release it
-            if not osmanager or osmanager.is_removable_on_logout(userservice):
+            if (
+                osmanager and osmanager.is_removable_on_logout(userservice)
+            ) or userservice.is_removable_on_logout():
                 UserServiceManager.manager().release_from_logout(userservice)
 
     @typing.override
