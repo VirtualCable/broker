@@ -1,5 +1,6 @@
 """
 Author: Andres Schumann, aschumann at virtualcable dot es
+Author: Janier Rodríguez, jrodriguez at virtualcable dot es
 """
 
 from unittest import mock
@@ -9,6 +10,10 @@ from uds.core import types
 from ...utils.helpers import limited_iterator
 from ...utils.test import UDSTransactionTestCase
 from . import fixtures
+
+# From PoolObjectSQL::name_is_valid in the OpenNebula core
+ONE_MAX_NAME_LENGTH = 128
+ONE_INVALID_NAME_CHARS = "&|:\\\";/'#{}$<>\t\n\v\f\r"
 
 
 class TestOpenNebulaPublication(UDSTransactionTestCase):
@@ -34,8 +39,6 @@ class TestOpenNebulaPublication(UDSTransactionTestCase):
             self.assertNotIn(" ", pub._name)
 
     def test_longest_names_fit_in_opennebula(self) -> None:
-        # OpenNebula rejects names longer than 128 characters (PoolObjectSQL::name_is_valid)
-        opennebula_max_name_length = 128
         # Base name plus name length cannot exceed 15 (validators.validate_basename)
         srvc = fixtures.create_service(fixtures.create_provider(), basename="B" * 14, lenname=1)
         pub = fixtures.create_publication(srvc)
@@ -44,8 +47,27 @@ class TestOpenNebulaPublication(UDSTransactionTestCase):
             template_name = pub.generate_name()
         disk_image_name = srvc.sanitized_name(f"{template_name} DSK 99")
 
-        self.assertLessEqual(len(template_name), opennebula_max_name_length)
-        self.assertLessEqual(len(disk_image_name), opennebula_max_name_length)
+        self.assertLessEqual(len(template_name), ONE_MAX_NAME_LENGTH)
+        self.assertLessEqual(len(disk_image_name), ONE_MAX_NAME_LENGTH)
+
+    def test_published_template_name_has_no_chars_rejected_by_opennebula(self) -> None:
+        with fixtures.patched_opennebula() as one:
+            srvc = fixtures.create_service(fixtures.create_provider(), basename="a" * 14, lenname=1)
+            pub = fixtures.create_publication(srvc)
+
+            state = pub.publish()
+            for _ in limited_iterator(lambda: state == types.states.TaskState.RUNNING, limit=64):
+                state = pub.check_state()
+
+            self.assertEqual(state, types.states.TaskState.FINISHED, pub._error_debug_info)
+            name = one.names[pub.get_template_id()]
+            self.assertTrue(name.startswith("UDS-Pub-" + "a" * 14 + "-"))
+            self.assertFalse(set(name) & set(ONE_INVALID_NAME_CHARS), name)
+
+    def test_servicepool_name_is_sanitized_for_opennebula(self) -> None:
+        srvc = fixtures.create_service(fixtures.create_provider())
+
+        self.assertEqual(srvc.sanitized_name("UDS-Pub-pool:a/b|c-v1"), "UDS-Pub-pool_a_b_c-v1")
 
     def test_publish_error_is_reported(self) -> None:
         with fixtures.patched_opennebula():
