@@ -190,9 +190,10 @@ class ActorTokenTest(rest.test.RESTActorTestCase):
 
         self.assertEqual(response.status_code, 403)
 
-    def test_initialize_accepts_rotated_token(self) -> None:
+    def test_initialize_keeps_own_token(self) -> None:
         """
         Test that a second initialize authenticates with the token returned by the first one
+        and gives it back unchanged, so a machine restored from a snapshot still holds a valid token
         """
         user_service = self.user_service_managed
         actor_token = self.login_and_register()
@@ -214,12 +215,40 @@ class ActorTokenTest(rest.test.RESTActorTestCase):
 
         first_token = initialize(actor_token)["token"]
         second_token = initialize(first_token)["token"]
+        third_token = initialize(first_token)["token"]
 
-        self.assertIsNotNone(second_token)
-        self.assertNotEqual(first_token, second_token)
+        self.assertEqual(first_token, second_token)
+        self.assertEqual(first_token, third_token)
 
         user_service.refresh_from_db()
-        self.assertEqual(models.user_service.hash_actor_token(second_token), user_service.token_hash)
+        self.assertEqual(models.user_service.hash_actor_token(first_token), user_service.token_hash)
+
+    def test_initialize_with_registration_token_rotates_own_token(self) -> None:
+        """
+        Test that presenting the registration token again issues a new own token and invalidates the previous one
+        """
+        user_service = self.user_service_managed
+        actor_token = self.login_and_register()
+        unique_id = user_service.get_unique_id()
+
+        def initialize(token: str) -> typing.Any:
+            return self.client.post(
+                "/uds/rest/actor/v3/initialize",
+                data={
+                    "type": "managed",
+                    "version": consts.system.VERSION,
+                    "token": token,
+                    "id": [{"mac": unique_id, "ip": "1.2.3.4"}],
+                },
+                content_type="application/json",
+            )
+
+        first_token = initialize(actor_token).json()["result"]["token"]
+        second_token = initialize(actor_token).json()["result"]["token"]
+
+        self.assertNotEqual(first_token, second_token)
+        self.assertEqual(initialize(first_token).status_code, 403)
+        self.assertEqual(initialize(second_token).json()["result"]["token"], second_token)
 
     def test_initialize_rejects_unknown_token(self) -> None:
         """
