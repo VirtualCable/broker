@@ -142,6 +142,24 @@ class HTML5RDPTest(UDSTestCase):
                 extra["allow_download"], expect_down, f"allow_download wrong for '{sharing_value}'"
             )
 
+    def test_extra_carries_user_id(self) -> None:
+        # The gateway keys the per-user shared folder on user_id; without it every
+        # session shares the same folder.
+        transport = HTML5RDPTransport(self.create_environment(), None)
+        userservice, user, transport_model = _make_mocks()
+        _, extra = self._get_link_extra(transport, userservice, user, transport_model)
+        self.assertEqual(extra["user_id"], "user-uuid")
+
+    def test_extra_carries_shared_folder_quota(self) -> None:
+        transport = HTML5RDPTransport(self.create_environment(), None)
+        userservice, user, transport_model = _make_mocks()
+        _, extra = self._get_link_extra(transport, userservice, user, transport_model)
+        self.assertEqual(extra["max_shared_size"], 100)
+
+        transport.max_shared_size.value = 25
+        _, extra = self._get_link_extra(transport, userservice, user, transport_model)
+        self.assertEqual(extra["max_shared_size"], 25)
+
     def test_nla_direct(self) -> None:
         """Test nla field maps directly to extra."""
         transport = HTML5RDPTransport(self.create_environment(), None)

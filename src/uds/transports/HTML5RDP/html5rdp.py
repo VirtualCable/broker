@@ -283,6 +283,16 @@ class HTML5RDPTransport(transports.Transport):
         tab=types.ui.Tab.ADVANCED,
     )
 
+    max_shared_size = ui.gui.NumericField(
+        label=_("Shared folder quota (MB)"),
+        order=97,
+        length=6,
+        default=100,
+        min_value=1,
+        tooltip=_("Maximum total size, in MB, of the files a user can have in the shared folder at the same time"),
+        tab=types.ui.Tab.ADVANCED,
+    )
+
     @typing.override
     def initialize(self, values: "types.core.ValuesType") -> None:
         if not values:
@@ -390,6 +400,7 @@ class HTML5RDPTransport(transports.Transport):
 
         # Build extra params dict for rdphtml5 gateway (matches Rust ConnectionData)
         extra: dict[str, typing.Any] = {
+            "user_id": user.uuid,
             "user": creds_info.username or None,
             "password": creds_info.password or None,
             "domain": creds_info.domain or None,
@@ -405,6 +416,7 @@ class HTML5RDPTransport(transports.Transport):
             },
             "allow_upload": self.enable_file_sharing.value in ("up", "true"),
             "allow_download": self.enable_file_sharing.value in ("down", "true"),
+            "max_shared_size": self.max_shared_size.as_int(),
             "session_quality": self.session_quality.as_int(),
             "allow_quality_switch": self.allow_quality_switch.as_bool(),
             "title": f"RDP {ip}",
