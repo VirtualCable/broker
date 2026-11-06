@@ -19,6 +19,7 @@ The existing :class:`FakeLDAPConnection` covers ``add``/``modify`` error
 mapping and lives alongside these tests so the surface stays small.
 """
 
+import collections.abc
 import typing
 import unittest
 from unittest import mock
@@ -415,7 +416,9 @@ class ConnectionBindMessageTest(UDSTestCase):
             result={
                 "result": 49,
                 "description": "invalidCredentials",
-                "message": ("80090308: LdapErr: DSID-0C0903A9, comment: AcceptSecurityContext error, data 773, v3830"),
+                "message": (
+                    "80090308: LdapErr: DSID-0C0903A9, comment: AcceptSecurityContext error, data 773, v3830"
+                ),
             },
         )
         server_patch, conn_patch = self._patch_connection_factory(fake)
@@ -548,6 +551,91 @@ class GetRootDseTest(UDSTestCase):
 
     def test_returns_none_when_the_server_answers_nothing(self) -> None:
         self.assertIsNone(ldaputil.get_root_dse(_RootDseFakeConn()))  # type: ignore[arg-type]
+
+
+class _DirectorySchema(typing.NamedTuple):
+    name: str
+    info: typing.Any
+
+
+# Real connections load the server schema (get_info=ALL) and ldap3 checks requested attribute names against it
+DIRECTORY_SCHEMAS: typing.Final[tuple[_DirectorySchema, ...]] = (
+    _DirectorySchema("Active Directory", ldap3.OFFLINE_AD_2012_R2),
+    _DirectorySchema("OpenLDAP", ldap3.OFFLINE_SLAPD_2_4),
+    _DirectorySchema("eDirectory", ldap3.OFFLINE_EDIR_9_1_4),
+    _DirectorySchema("389 Directory Server", ldap3.OFFLINE_DS389_1_3_3),
+)
+
+ENTRY_DN: typing.Final[str] = "cn=udspqv001,ou=vdi,dc=example,dc=local"
+CHILD_DN: typing.Final[str] = f"cn=child,{ENTRY_DN}"
+GRANDCHILD_DN: typing.Final[str] = f"cn=grandchild,{CHILD_DN}"
+SIBLING_DN: typing.Final[str] = "cn=sibling,ou=vdi,dc=example,dc=local"
+
+
+def _schema_connection(schema: _DirectorySchema) -> tuple[typing.Any, list[str]]:
+    connection: typing.Any = ldap3.Connection(
+        ldap3.Server("fake", get_info=schema.info), client_strategy=ldap3.MOCK_SYNC
+    )
+    for dn in (ENTRY_DN, CHILD_DN, GRANDCHILD_DN, SIBLING_DN):
+        connection.strategy.add_entry(dn, {"objectClass": ["top"], "cn": dn.split(",")[0][3:]})
+    connection.bind()
+
+    # The mock strategy returns the base entry on one-level searches; a real directory does not
+    mock_search: collections.abc.Callable[..., bool] = connection.search
+
+    def search(*args: typing.Any, **kwargs: typing.Any) -> bool:
+        result = mock_search(*args, **kwargs)
+        if kwargs.get("search_scope") == ldap3.LEVEL:
+            base = kwargs.get("search_base", args[0] if args else None)
+            response = typing.cast(list[dict[str, typing.Any]], connection.response or [])
+            connection.response = [item for item in response if item.get("dn") != base]
+        return result
+
+    deleted: list[str] = []
+    mock_delete: collections.abc.Callable[..., bool] = connection.delete
+
+    def delete(dn: str, *args: typing.Any, **kwargs: typing.Any) -> bool:
+        deleted.append(dn)
+        return mock_delete(dn, *args, **kwargs)
+
+    connection.search = search
+    connection.delete = delete
+    return connection, deleted
+
+
+class SchemaCheckedDirectoryTest(UDSTestCase):
+    def test_as_dict_without_attributes_returns_the_entry_dn(self) -> None:
+        for schema in DIRECTORY_SCHEMAS:
+            with self.subTest(directory=schema.name):
+                connection, _ = _schema_connection(schema)
+                found = next(
+                    ldaputil.as_dict(
+                        connection,
+                        "dc=example,dc=local",
+                        "(cn=udspqv001)",
+                        attributes=[ldaputil.NO_ATTRIBUTES],
+                    )
+                )
+                self.assertEqual(found["dn"], ENTRY_DN)
+
+    def test_recursive_delete_removes_the_subtree_deepest_first(self) -> None:
+        # Directories refuse to delete an entry that still has children
+        for schema in DIRECTORY_SCHEMAS:
+            with self.subTest(directory=schema.name):
+                connection, deleted = _schema_connection(schema)
+
+                ldaputil.recursive_delete(connection, ENTRY_DN)
+
+                self.assertEqual(deleted, [GRANDCHILD_DN, CHILD_DN, ENTRY_DN])
+
+    def test_recursive_delete_of_a_leaf_only_deletes_the_entry(self) -> None:
+        for schema in DIRECTORY_SCHEMAS:
+            with self.subTest(directory=schema.name):
+                connection, deleted = _schema_connection(schema)
+
+                ldaputil.recursive_delete(connection, SIBLING_DN)
+
+                self.assertEqual(deleted, [SIBLING_DN])
 
 
 if __name__ == "__main__":
