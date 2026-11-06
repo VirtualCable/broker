@@ -95,6 +95,7 @@ class OpenStackProvider(ServiceProvider):
     # : BEFORE sending it to administration interface, so don't forget to
     # : mark it as _ (using gettext_noop)
     icon_file = "openstack.png"
+    group = types.services.ProviderGrouping.CLOUD_PROVIDERS
 
     # now comes the form fields
     # There is always two fields that are requested to the admin, that are:
