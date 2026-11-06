@@ -239,7 +239,7 @@ class WinDomainOsManager(WindowsOsManager):
                     ldap_connection,
                     base,
                     f"(&(objectClass=group)(|(cn={group})(sAMAccountName={group})))",
-                    attributes=["dn"],
+                    attributes=[ldaputil.NO_ATTRIBUTES],
                     limit=50,
                 )
             )
@@ -265,7 +265,7 @@ class WinDomainOsManager(WindowsOsManager):
                     ldap_connection,
                     base,
                     fltr,
-                    attributes=["dn"],
+                    attributes=[ldaputil.NO_ATTRIBUTES],
                     limit=50,
                 )
             )

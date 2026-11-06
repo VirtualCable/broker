@@ -27,6 +27,7 @@
 """
 Author: Adolfo Gómez, dkmaster at dkmon dot com
 Author: Janier Rodríguez, jrodriguez at virtualcable dot es
+Author: Andres Schumann, aschumann at virtualcable dot es
 """
 # pyright: reportUnknownMemberType=false
 
@@ -52,6 +53,7 @@ from ldap3 import MODIFY_ADD as LDAP_MODIFY_ADD
 from ldap3 import MODIFY_DELETE as LDAP_MODIFY_DELETE
 from ldap3 import MODIFY_INCREMENT as LDAP_MODIFY_INCREMENT
 from ldap3 import MODIFY_REPLACE as LDAP_MODIFY_REPLACE
+from ldap3 import NO_ATTRIBUTES as LDAP_NO_ATTRIBUTES
 from ldap3 import SIMPLE
 from ldap3 import SUBTREE
 from ldap3 import Connection
@@ -73,6 +75,9 @@ logger = logging.getLogger(__name__)
 SCOPE_BASE = BASE
 SCOPE_SUBTREE = SUBTREE
 SCOPE_ONELEVEL = LEVEL
+
+# Asks the server for no attributes: only the entry, with its DN
+NO_ATTRIBUTES = LDAP_NO_ATTRIBUTES
 
 # Also for modify operations
 MODIFY_ADD = LDAP_MODIFY_ADD
@@ -436,13 +441,10 @@ def delete(con: Connection, dn: str, *, depth: int = 1) -> None:
         None. Raises LDAPError on failure.
     """
     try:
-        con.search(dn, "(objectClass=*)", search_scope=SCOPE_ONELEVEL, attributes=["dn"])
+        con.search(dn, "(objectClass=*)", search_scope=SCOPE_ONELEVEL)
         for entry in typing.cast(list[typing.Any], con.entries):
             child_dn: str = entry.entry_dn
             delete(con, child_dn, depth=depth - 1)
-            result = typing.cast(typing.Any, con.delete(child_dn))
-            if not result:
-                raise LDAPError(f"Delete operation failed: {con.result}")
         result = typing.cast(typing.Any, con.delete(dn))
         if not result:
             raise LDAPError(f"Delete operation failed: {con.result}")
