@@ -115,9 +115,15 @@ def check_ip_is_blocked(request: "ExtendedHttpRequest") -> None:
         raise exceptions.rest.BlockAccess()
 
 
-def get_managed_userservices_for_token(token: str) -> "QuerySet[models.UserService]":
+def get_managed_userservices_for_token(token: str) -> tuple["QuerySet[models.UserService]", bool]:
+    """
+    Returns the list of managed userservices for the given token and a boolean indicating
+    if the token is a master token (True) or an alias token (False).
+
+    Raises exceptions.rest.BlockAccess if no userservices are found for the given token.
+    """
     if models.Server.validate_token(token, server_type=types.servers.ServerType.ACTOR):
-        return models.UserService.objects.all()
+        return models.UserService.objects.all(), True
 
     # Managed actors clear the registration token after their first initialize, so from then
     # on they can only present the own_token we returned to them
@@ -125,7 +131,7 @@ def get_managed_userservices_for_token(token: str) -> "QuerySet[models.UserServi
     if not userservices.exists():
         raise exceptions.rest.BlockAccess()
 
-    return userservices
+    return userservices, False
 
 
 def increase_failed_ip_count(request: "ExtendedHttpRequest") -> None:
@@ -496,9 +502,9 @@ class Initialize(ActorV3Action):
 
                 # Locate an userService that belongs to this service and which
                 # Build the possible ids and make initial filter to match service
-                dbfilter = models.UserService.objects.filter(deployed_service__service=service)
+                dbfilter, is_master = models.UserService.objects.filter(deployed_service__service=service), True
             else:
-                dbfilter = get_managed_userservices_for_token(token)
+                dbfilter, is_master = get_managed_userservices_for_token(token)
 
             # Valid actor token, now validate access allowed. That is, look for a valid mac from the ones provided.
             try:
@@ -528,9 +534,12 @@ class Initialize(ActorV3Action):
             if osmanager:
                 os_data = osmanager.actor_data(userservice).as_dict()
 
-            actor_token_raw = create_actor_token()
-            userservice.token_hash = hash_actor_token(actor_token_raw)
-            userservice.save(update_fields=["token_hash"])
+            if is_master:
+                actor_token_raw = create_actor_token()
+                userservice.token_hash = hash_actor_token(actor_token_raw)
+                userservice.save(update_fields=["token_hash"])
+            else:
+                actor_token_raw = token  # No new token, will use alias token
 
             return _initialization_result(actor_token_raw, userservice.unique_id, os_data, alias_token)
         except models.Service.DoesNotExist:
