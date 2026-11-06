@@ -80,7 +80,7 @@ def get_serialized_from_managed_object(
         # Append type_name to list
         values["id"] = mod.id
         values["uuid"] = mod.uuid
-        values["type_name"] = obj.type_name
+        values["type_name"] = str(obj.type_name)
         values["comments"] = mod.comments
 
         # May alter values with callback
@@ -186,8 +186,8 @@ class Command(BaseCommand):
                                     "id": item.uuid,
                                     "unique_id": item.unique_id,
                                     "friendly_name": item.friendly_name,
-                                    "state": types.states.State.from_str(item.state).localized,
-                                    "os_state": types.states.State.from_str(item.os_state).localized,
+                                    "state": str(types.states.State.from_str(item.state).localized),
+                                    "os_state": str(types.states.State.from_str(item.os_state).localized),
                                     "state_date": item.state_date,
                                     "creation_date": item.creation_date,
                                     "revision": item.publication and item.publication.revision or "",
