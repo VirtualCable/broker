@@ -506,6 +506,16 @@ class Service(Module):
     ) -> None:
         return super().do_log(level, message, source)
 
+    def is_removable_on_logout(self) -> bool:
+        """
+        This method is invoked by the core to know if the user deployment must be
+        released when the user logs out of the service.
+
+        Default implementation returns True, so if you are going to do nothing,
+        you don't need to implement it.
+        """
+        return True
+
     @classmethod
     def can_assign(cls) -> bool:
         """

@@ -530,16 +530,6 @@ class UserService(Environmentable, Serializable, abc.ABC):
         The user provided is just an string, that is provided by actor.
         """
 
-    def is_removable_on_logout(self) -> bool:
-        """
-        This method is invoked by the core to know if the user deployment must be
-        released when the user logs out of the service.
-
-        Default implementation returns True, so if you are going to do nothing,
-        you don't need to implement it.
-        """
-        return True
-
     def actor_initialization(self, request_params: dict[str, typing.Any]) -> bool:
         """
         This method is invoked by the actor REST API when the actor initialize
