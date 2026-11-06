@@ -32,6 +32,7 @@ Author: Adolfo Gómez, dkmaster at dkmon dot com
 import collections.abc
 import logging
 import typing
+from decimal import ROUND_HALF_UP, Decimal
 from xml.sax.saxutils import escape
 
 from defusedxml import ElementTree, minidom
@@ -172,6 +173,9 @@ def remove(api: "client.OpenNebulaClient", template_id: str) -> None:
         logger.error("Removing template on OpenNebula")
 
 
+# OpenNebula rejects a CPU that is not greater than zero; rounding to hundredths keeps it readable
+_MIN_CPU: typing.Final[Decimal] = Decimal("0.01")
+
 # Attributes of a NIC that belong to the network it was defined on: its name, its owner and the address inside it
 _NETWORK_BOUND_NIC_ATTRIBUTES: typing.Final[frozenset[str]] = frozenset(
     {"NETWORK", "NETWORK_ID", "NETWORK_UNAME", "NETWORK_UID", "NETWORK_GID", "AR_ID", "IP", "IP6", "MAC"}
@@ -199,6 +203,27 @@ def _nics(network_id: str, template_xml: str) -> list[str]:
     ]
 
 
+def _cpu_for(cores: int, template_xml: str) -> str | None:
+    """
+    CPU is the share of physical processor that OpenNebula reserves for the machine, not its virtual processors.
+    It keeps the CPU per VCPU of the base template, so changing the cores does not change how much host the
+    template asked for each of them. None if the template gives no ratio: no CPU, or values that are not positive
+    numbers, as when the template takes them from USER_INPUTS.
+    """
+    template = ElementTree.fromstring(template_xml).find("TEMPLATE")
+    if template is None or not template.findtext("CPU"):
+        return None
+    try:
+        base_cpu = Decimal(template.findtext("CPU") or "")
+        base_vcpu = Decimal(template.findtext("VCPU") or "1")  # OpenNebula default
+        if not (base_cpu.is_finite() and base_vcpu.is_finite() and base_cpu > 0 and base_vcpu > 0):
+            return None
+        cpu = max(base_cpu * cores / base_vcpu, _MIN_CPU)
+        return format(cpu.quantize(_MIN_CPU, rounding=ROUND_HALF_UP).normalize(), "f")
+    except ArithmeticError:  # decimal signals: InvalidOperation, Overflow...
+        return None
+
+
 def machine_template(options: types.MachineOptions, template_xml: str) -> str:
     """
     Builds the extra template merged on instantiation so the machine gets the cores, memory and network
@@ -213,6 +238,9 @@ def machine_template(options: types.MachineOptions, template_xml: str) -> str:
     attributes: list[str] = []
     if options.cores:
         attributes.append(_element("VCPU", str(options.cores)))
+        cpu = _cpu_for(options.cores, template_xml)
+        if cpu is not None:
+            attributes.append(_element("CPU", cpu))
     if options.memory_mb:
         attributes.append(_element("MEMORY", str(options.memory_mb)))
     if options.network:
