@@ -460,6 +460,10 @@ def enable_service(
     # Maybe we could even protect this even more by limiting referer to own server /? (just a meditation..)
     logger.debug("idService: %s, idTransport: %s", service_id, transport_id)
     url = ""
+    # A "service not ready" can be retried: the user interface keeps polling
+    # the launch dialog instead of showing a dead-end error.
+    retryable = False
+    percent = 0
     try:
         info = UserServiceManager.manager().get_user_service_info(
             request.user, request.os, request.ip, service_id, transport_id, test_userservice_status=False
@@ -489,6 +493,9 @@ def enable_service(
         logger.debug("Service not ready")
         # Not ready, show message and return to this page in a while
         # error += ' (code {0:04X})'.format(e.code)
+        # An invalid UUID does not recover by waiting, so it is not retryable
+        retryable = e.code != types.services.ReadyStatus.USERSERVICE_INVALID_UUID
+        percent = e.code.as_percent()
         error = (
             gettext("Your service is being created, please, wait for a few seconds while we complete it.)")
             + f"({e.code.as_percent()}%)"
@@ -506,4 +513,4 @@ def enable_service(
         logger.exception("Error")
         error = str(e)
 
-    return {"url": url, "error": error}
+    return {"url": url, "error": error, "retryable": retryable, "percent": percent}
