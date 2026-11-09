@@ -493,9 +493,10 @@ def enable_service(
         logger.debug("Service not ready")
         # Not ready, show message and return to this page in a while
         # error += ' (code {0:04X})'.format(e.code)
-        # An invalid UUID does not recover by waiting, so it is not retryable
+        # An invalid UUID does not recover by waiting, so it is not retryable;
+        # and it must not report percent 100 (readiness) on the progress bar
         retryable = e.code != types.services.ReadyStatus.USERSERVICE_INVALID_UUID
-        percent = e.code.as_percent()
+        percent = 0 if e.code == types.services.ReadyStatus.USERSERVICE_INVALID_UUID else e.code.as_percent()
         error = (
             gettext("Your service is being created, please, wait for a few seconds while we complete it.)")
             + f"({e.code.as_percent()}%)"

@@ -104,6 +104,8 @@ class TestEnableServiceRetryable(UDSTransactionTestCase):
             )
             data = services_util.enable_service(_make_request(), "A00000000", "T00000000")
             self.assertFalse(data["retryable"])
+            # Must not report percent 100 (readiness) on an error state either
+            self.assertEqual(data["percent"], 0)
 
     def test_other_errors_are_not_retryable(self) -> None:
         with mock.patch("uds.web.util.services.UserServiceManager") as manager:

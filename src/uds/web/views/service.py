@@ -61,19 +61,16 @@ if typing.TYPE_CHECKING:
 
 logger: logging.Logger = logging.getLogger(__name__)
 
-# Percent (0-100) and user-facing message for each stage of a launch that is
-# still being prepared. Returned by the launching endpoints so the user
-# interface can draw a progress bar instead of a static "please wait" message.
+# Raw msgids; translated per request in _service_not_ready_percent because
+# gettext() evaluated at import time would pin the strings to the server
+# default language instead of the active one
 _LAUNCH_PROGRESS: typing.Final[dict[types.services.ReadyStatus, str]] = {
-    types.services.ReadyStatus.USERSERVICE_NOT_READY: gettext(
-        "Your service is being created, please, wait for a few seconds while we complete it."
-    ),
-    types.services.ReadyStatus.USERSERVICE_NO_IP: gettext(
-        "The assigned machine is ready, waiting for it to get its network address."
-    ),
-    types.services.ReadyStatus.TRANSPORT_NOT_READY: gettext(
-        "The machine is ready, establishing connection."
-    ),
+    types.services.ReadyStatus.USERSERVICE_NOT_READY:
+        "Your service is being created, please, wait for a few seconds while we complete it.",
+    types.services.ReadyStatus.USERSERVICE_NO_IP:
+        "The assigned machine is ready, waiting for it to get its network address.",
+    types.services.ReadyStatus.TRANSPORT_NOT_READY:
+        "The machine is ready, establishing connection.",
 }
 
 
@@ -81,9 +78,9 @@ def _service_not_ready_percent(code: types.services.ReadyStatus) -> tuple[int, s
     """Percent and message of a launch still being prepared for a ReadyStatus code"""
     # 25/50/75 come from the readiness stage; 0 covers any not-covered-yet stage
     param = code.as_percent()
-    message = _LAUNCH_PROGRESS.get(code) or _LAUNCH_PROGRESS[
+    message = gettext(_LAUNCH_PROGRESS.get(code) or _LAUNCH_PROGRESS[
         types.services.ReadyStatus.USERSERVICE_NOT_READY
-    ]
+    ])
     return (0 if param == 100 else param, message)
 
 
