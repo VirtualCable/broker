@@ -36,6 +36,7 @@ Uses synthetic WebAuthn payloads (see tests.utils.webauthn) to exercise:
 
 import dataclasses
 import json
+import re
 import typing
 
 from cryptography.hazmat.primitives.asymmetric import ec
@@ -134,8 +135,6 @@ class WebAuthnViewsTest(test.WEBTestCase):
         self.assertEqual(response.status_code, 403)
 
     def _uds_js_config(self) -> dict[str, typing.Any]:
-        import re
-
         body = self.client.get("/uds/utility/uds.js").content.decode("utf-8")
         match = re.search(r"var udsData\s*=\s*(\{.+\});", body)
         assert match is not None
