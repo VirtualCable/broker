@@ -34,7 +34,7 @@ import logging
 import typing
 import collections.abc
 
-from django.utils.translation import gettext
+from django.utils.translation import gettext, gettext_noop
 from django.http import HttpResponse, HttpResponseBadRequest, JsonResponse
 from django.views.decorators.cache import never_cache
 from django.views.decorators.csrf import csrf_exempt
@@ -61,12 +61,35 @@ if typing.TYPE_CHECKING:
 
 logger: logging.Logger = logging.getLogger(__name__)
 
+# Translated per request in _service_not_ready_percent: gettext() at import
+# time would pin the strings to the server default language
+_LAUNCH_PROGRESS: typing.Final[dict[types.services.ReadyStatus, str]] = {
+    types.services.ReadyStatus.USERSERVICE_NOT_READY:
+        gettext_noop("Your service is being created, please, wait for a few seconds while we complete it."),
+    types.services.ReadyStatus.USERSERVICE_NO_IP:
+        gettext_noop("The assigned machine is ready, waiting for it to get its network address."),
+    types.services.ReadyStatus.TRANSPORT_NOT_READY:
+        gettext_noop("The machine is ready, establishing connection."),
+}
+
+
+def _service_not_ready_percent(code: types.services.ReadyStatus) -> tuple[int, str]:
+    """Percent and message of a launch still being prepared for a ReadyStatus code"""
+    # 25/50/75 come from the readiness stage; 0 covers any not-covered-yet stage
+    param = code.as_percent()
+    message = gettext(_LAUNCH_PROGRESS.get(code) or _LAUNCH_PROGRESS[
+        types.services.ReadyStatus.USERSERVICE_NOT_READY
+    ])
+    return (0 if param == 100 else param, message)
+
 
 @weblogin_required()
 @require_POST
 def transport_own_link(request: "ExtendedHttpRequestWithUser", service_id: str, transport_id: str) -> HttpResponse:
-    def _response(url: str = "", percent: int = 100, error: typing.Any = "") -> dict[str, typing.Any]:
-        return {"running": percent, "url": url, "error": str(error)}
+    def _response(
+        url: str = "", percent: int = 100, error: typing.Any = "", message: str = ""
+    ) -> dict[str, typing.Any]:
+        return {"running": percent, "url": url, "error": str(error), "message": message}
 
     response: dict[str, typing.Any] = {}
 
@@ -92,7 +115,8 @@ def transport_own_link(request: "ExtendedHttpRequestWithUser", service_id: str, 
         logger.debug("Service not ready")
         # Not ready, show message and return to this page in a while
         # error += ' (code {0:04X})'.format(e.code)
-        response = _response(percent=e.code)
+        percent, message = _service_not_ready_percent(e.code)
+        response = _response(percent=percent, message=message)
     except MaxServicesReachedError:
         logger.info('Number of service reached MAX for service pool "%s"', service_id)
         response = _response(error=types.errors.Error.MAX_SERVICES_REACHED.message)
@@ -139,6 +163,8 @@ def user_service_status(request: "ExtendedHttpRequestWithUser", service_id: str,
     ip: str | None | bool
     userservice: UserService | None = None
     status = "running"
+    percent = 0
+    message = ""
     # If service exists (meta or not)
     if UserServiceManager.manager().is_meta_service(service_id):
         userservice = UserServiceManager.manager().locate_meta_service(user=request.user, id_metapool=service_id)
@@ -154,8 +180,9 @@ def user_service_status(request: "ExtendedHttpRequestWithUser", service_id: str,
             userservice.log_ip(userservice_ip)
             ip = userservice_ip
             # logger.debug('Res: %s %s %s %s %s', ip, userService, userServiceInstance, transport, transportInstance)
-        except ServiceNotReadyError:
+        except ServiceNotReadyError as e:
             ip = None
+            percent, message = _service_not_ready_percent(e.code)
         except Exception:
             ip = False
 
@@ -165,7 +192,16 @@ def user_service_status(request: "ExtendedHttpRequestWithUser", service_id: str,
 
         status = "running" if ip is None else "error" if ip is False else ready
 
-    return HttpResponse(json.dumps({"status": status}), content_type="application/json")
+    if status == "ready" or status == "accessed":
+        percent = 100
+    elif status == "running" and not message:
+        # No stage reported yet (machine being assigned or not even created):
+        percent, message = _service_not_ready_percent(types.services.ReadyStatus.ZERO)
+
+    return HttpResponse(
+        json.dumps({"status": status, "percent": percent, "message": message}),
+        content_type="application/json",
+    )
 
 
 @weblogin_required()
