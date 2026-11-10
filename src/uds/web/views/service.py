@@ -34,7 +34,7 @@ import logging
 import typing
 import collections.abc
 
-from django.utils.translation import gettext
+from django.utils.translation import gettext, gettext_noop
 from django.http import HttpResponse, HttpResponseBadRequest, JsonResponse
 from django.views.decorators.cache import never_cache
 from django.views.decorators.csrf import csrf_exempt
@@ -61,16 +61,15 @@ if typing.TYPE_CHECKING:
 
 logger: logging.Logger = logging.getLogger(__name__)
 
-# Raw msgids; translated per request in _service_not_ready_percent because
-# gettext() evaluated at import time would pin the strings to the server
-# default language instead of the active one
+# Translated per request in _service_not_ready_percent: gettext() at import
+# time would pin the strings to the server default language
 _LAUNCH_PROGRESS: typing.Final[dict[types.services.ReadyStatus, str]] = {
     types.services.ReadyStatus.USERSERVICE_NOT_READY:
-        "Your service is being created, please, wait for a few seconds while we complete it.",
+        gettext_noop("Your service is being created, please, wait for a few seconds while we complete it."),
     types.services.ReadyStatus.USERSERVICE_NO_IP:
-        "The assigned machine is ready, waiting for it to get its network address.",
+        gettext_noop("The assigned machine is ready, waiting for it to get its network address."),
     types.services.ReadyStatus.TRANSPORT_NOT_READY:
-        "The machine is ready, establishing connection.",
+        gettext_noop("The machine is ready, establishing connection."),
 }
 
 

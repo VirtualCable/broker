@@ -71,6 +71,15 @@ class TestNotReadyPercent(UDSTransactionTestCase):
             _percent, message = service_views._service_not_ready_percent(code)
             self.assertTrue(message, f"{code} must report a message")
 
+    def test_message_is_translated_on_each_call(self) -> None:
+        with mock.patch.object(service_views, "gettext", side_effect=lambda text: f"translated {text}"):
+            _percent, message = service_views._service_not_ready_percent(
+                types.services.ReadyStatus.USERSERVICE_NO_IP
+            )
+        self.assertEqual(
+            message, "translated The assigned machine is ready, waiting for it to get its network address."
+        )
+
     def test_invalid_uuid_is_not_reported_as_ready(self) -> None:
         # 100 would mean "service ready" to the progress bar, impossible for
         # a not-ready launch, so it must fall back to 0.
