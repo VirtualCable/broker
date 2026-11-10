@@ -37,6 +37,7 @@ import pickletools
 import typing
 
 from django.db.models import Model
+from django.utils.translation import gettext as _
 
 from uds import models
 from uds.core import consts
@@ -44,6 +45,7 @@ from uds.core import exceptions
 from uds.core import types
 from uds.core.types.states import State
 from uds.core.util import permissions
+from uds.core.checks import ChecksFactory
 from uds.core.checks import build_report
 from uds.core.checks import run_checks
 from uds.core.util.cache import Cache
@@ -131,6 +133,10 @@ class System(Handler):
             " (only filled for admins)",
             "/system/manual_checks/<category>", "Runs and returns the manual checks report for one category:"
             " security or health (only filled for admins)",
+            "/system/manual_checks/list", "Returns the list of registered manual checks, without running them:"
+            " id, category and description of each one (only filled for admins)",
+            "/system/manual_checks/run/<checkId>", "Runs and returns the manual checks report for a single check,"
+            " identified by its stable id (only filled for admins)",
             "/system/overview", "Returns a json object with the number of services, service pools, users, etc",
             "/system/stats/assigned", "Returns a chart of assigned services (all pools)",
             "/system/stats/inuse", "Returns a chart of in use services (all pools)",
@@ -207,6 +213,20 @@ class System(Handler):
                     "authenticators": auths,
                 }
 
+        if len(self._args) == 2 and self._args[0] == "manual_checks" and self._args[1] == "list":
+            # List of registered manual checks, without running them
+            if not self._user.is_admin:
+                raise exceptions.rest.AccessDenied()
+            return [
+                {
+                    "id": check_id,
+                    "category": check_class.category.value,
+                    "description": _(check_class.description),
+                }
+                for check_id, check_class in ChecksFactory().objects().items()
+                if check_class.kind is types.checks.CheckKind.MANUAL
+            ]
+
         if len(self._args) == 2 and self._args[0] in ("checks", "manual_checks"):
             # Self-assessment report for a single category (automatic or manual checks)
             if not self._user.is_admin:
@@ -222,6 +242,17 @@ class System(Handler):
                     f"{', '.join(c.value for c in types.checks.CheckCategory)}"
                 ) from None
             return build_report(run_checks(kind, category))
+
+        if len(self._args) == 3 and self._args[0] == "manual_checks" and self._args[1] == "run":
+            # Run a single manual check by its stable id
+            if not self._user.is_admin:
+                raise exceptions.rest.AccessDenied()
+            results = run_checks(types.checks.CheckKind.MANUAL, check_id=self._args[2])
+            if not results:
+                raise exceptions.rest.RequestError(
+                    f"Unknown manual check '{self._args[2]}', see /system/manual_checks/list"
+                )
+            return build_report(results)
 
         if len(self.args) in (2, 3):
             # Extract pool if provided

@@ -197,6 +197,41 @@ class ChecksEndpointTest(rest.test.RESTTestCase):
         response = self.client.rest_get("system/manual_checks/not-a-category")
         self.assertEqual(response.status_code, 400, response.content)
 
+    def test_manual_checks_list_contents(self) -> None:
+        self.login()
+        response = self.client.rest_get("system/manual_checks/list")
+        self.assertEqual(response.status_code, 200, response.content)
+        body = response.json()
+        self.assertEqual({entry["id"] for entry in body}, EXPECTED_MANUAL_IDS)
+        for entry in body:
+            self.assertIn(entry["category"], [category.value for category in types.checks.CheckCategory])
+            self.assertTrue(entry["description"])
+
+    def test_manual_checks_list_does_not_run(self) -> None:
+        # The list endpoint is metadata only: it works without a single result
+        self.login()
+        response = self.client.rest_get("system/manual_checks/list")
+        self.assertEqual(response.status_code, 200, response.content)
+        self.assertFalse(any(key == "checks" for key in response.json()[0]))
+
+    def test_manual_checks_run_single(self) -> None:
+        self.login()
+        body = self._get_report("system/manual_checks/run/authenticators-health")
+        self.assertEqual({check["id"] for check in body["checks"]}, {"authenticators-health"})
+        self.assertTrue(all(check["category"] == "health" for check in body["checks"]))
+
+    def test_manual_checks_run_unknown_id_is_rejected(self) -> None:
+        self.login()
+        response = self.client.rest_get("system/manual_checks/run/not-a-check")
+        self.assertEqual(response.status_code, 400, response.content)
+
+    def test_manual_checks_list_and_run_require_admin(self) -> None:
+        self.login(as_admin=False)
+        self.assertEqual(self.client.rest_get("system/manual_checks/list").status_code, 403)
+        self.assertEqual(
+            self.client.rest_get("system/manual_checks/run/authenticators-health").status_code, 403
+        )
+
     def test_admin_report_reflects_configuration_state(self) -> None:
         # Isolate this test from the other CRITICAL/HIGH findings the test
         # settings trigger (DEBUG=True, ALLOWED_HOSTS=['*'],

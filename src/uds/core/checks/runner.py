@@ -64,10 +64,12 @@ def _collect_checks() -> list[tuple[str, type[Check]]]:
 def run_checks(
     kind: types.checks.CheckKind,
     category: types.checks.CheckCategory | None = None,
+    check_id: str | None = None,
 ) -> list[types.checks.CheckResult]:
     """
     Runs all the registered checks of the given ``kind`` (optionally just the
-    ones belonging to ``category``) and returns their results.
+    ones belonging to ``category``, or a single one when ``check_id`` is
+    given) and returns their results.
 
     Automatic checks (those whose kind is ``AUTOMATIC``) run on every scan;
     manual ones only run on explicit request.
@@ -76,20 +78,22 @@ def run_checks(
     aborting the whole scan, so a single broken check never hides the rest.
     """
     results: list[types.checks.CheckResult] = []
-    for check_id, check_class in _collect_checks():
+    for check_id_of_class, check_class in _collect_checks():
         if check_class.kind is not kind:
             continue
         if category is not None and check_class.category is not category:
+            continue
+        if check_id is not None and check_id_of_class != check_id:
             continue
         description = ""
         try:
             description = _(check_class.description)
             severity, ok, message, *extra = check_class().run()
         except Exception as e:
-            logger.exception("Check %s could not be evaluated", check_id)
+            logger.exception("Check %s could not be evaluated", check_id_of_class)
             results.append(
                 types.checks.CheckResult(
-                    id=check_id,
+                    id=check_id_of_class,
                     severity=types.checks.CheckSeverity.INFO,
                     ok=False,
                     message=_("Check could not be evaluated: {error}").format(error=e),
@@ -100,7 +104,7 @@ def run_checks(
             continue
         results.append(
             types.checks.CheckResult(
-                id=check_id,
+                id=check_id_of_class,
                 severity=severity,
                 ok=ok,
                 message=message,

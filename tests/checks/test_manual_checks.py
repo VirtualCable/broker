@@ -97,6 +97,17 @@ class CheckKindFilterTest(UDSTransactionTestCase):
             )
         self.assertEqual(results, [])
 
+    def test_manual_respects_check_id_filter(self) -> None:
+        with mock.patch.object(runner_module, "_collect_checks", new=self._patched_collect):
+            results = runner_module.run_checks(types.checks.CheckKind.MANUAL, check_id="dummy-manual")
+        self.assertEqual([result.id for result in results], ["dummy-manual"])
+
+        with mock.patch.object(runner_module, "_collect_checks", new=self._patched_collect):
+            results = runner_module.run_checks(
+                types.checks.CheckKind.MANUAL, check_id="another-id-does-not-run"
+            )
+        self.assertEqual(results, [])
+
     def test_regular_checks_are_automatic(self) -> None:
         for check_id, check_class in runner_module._collect_checks():
             if check_id in _PRODUCTION_MANUAL_CHECKS:
