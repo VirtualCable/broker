@@ -39,6 +39,10 @@ from uds.web.util import services as services_util
 from uds.web.views import service as service_views
 
 
+def _fake_gettext(text: str) -> str:
+    return f"translated {text}"
+
+
 def _make_request() -> mock.Mock:
     request = mock.Mock()
     request.method = "POST"
@@ -72,7 +76,7 @@ class TestNotReadyPercent(UDSTransactionTestCase):
             self.assertTrue(message, f"{code} must report a message")
 
     def test_message_is_translated_on_each_call(self) -> None:
-        with mock.patch.object(service_views, "gettext", side_effect=lambda text: f"translated {text}"):
+        with mock.patch.object(service_views, "gettext", side_effect=_fake_gettext):
             _percent, message = service_views._service_not_ready_percent(
                 types.services.ReadyStatus.USERSERVICE_NO_IP
             )
@@ -133,7 +137,7 @@ class TestTransportOwnLinkProgress(UDSTransactionTestCase):
                 types.services.ReadyStatus.USERSERVICE_NO_IP
             )
             response = service_views.transport_own_link(_make_request(), "A00000000", "T00000000")
-        data = typing.cast(dict[str, typing.Any], json.loads(typing.cast(bytes, response.content)))
+        data = typing.cast(dict[str, typing.Any], json.loads(response.content))
         # Percent must be 0-100, not the raw ReadyStatus code (2)
         self.assertEqual(data["running"], 50)
         self.assertEqual(data["url"], "")
@@ -145,7 +149,7 @@ class TestTransportOwnLinkProgress(UDSTransactionTestCase):
             manager.manager.return_value.get_user_service_info.return_value.ip = "192.168.1.5"
             manager.manager.return_value.get_user_service_info.return_value.transport.get_instance.return_value.get_link.return_value = "https://www.example.net/some/link"
             response = service_views.transport_own_link(_make_request(), "A00000000", "T00000000")
-        data = typing.cast(dict[str, typing.Any], json.loads(typing.cast(bytes, response.content)))
+        data = typing.cast(dict[str, typing.Any], json.loads(response.content))
         self.assertEqual(data["running"], 100)
         self.assertEqual(data["url"], "https://www.example.net/some/link")
         self.assertEqual(data["error"], "")
@@ -163,7 +167,7 @@ class TestServiceStatusProgress(UDSTransactionTestCase):
             manager.manager.return_value.is_meta_service.return_value = False
             manager.manager.return_value.locate_user_service.return_value = userservice
             response = service_views.user_service_status(request, "A00000000", "T00000000")
-        return typing.cast(dict[str, typing.Any], json.loads(typing.cast(bytes, response.content)))
+        return typing.cast(dict[str, typing.Any], json.loads(response.content))
 
     def test_no_user_service_still_reports_being_created(self) -> None:
         data = self._view(None)
