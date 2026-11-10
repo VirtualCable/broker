@@ -232,7 +232,7 @@ class AssignedUserService(DetailHandler[UserServiceItem]):
             properties[id][key] = value
 
         return [
-            AssignedUserService.userservice_item(k, properties.get(k.uuid, {}))
+            AssignedUserService.userservice_item(k, properties.get(k.uuid, {}), is_cache=for_cached)
             for k in self.odata_filter(
                 get_qs().all().prefetch_related("deployed_service", "publication", "user")
             )
