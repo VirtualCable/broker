@@ -133,6 +133,19 @@ class WebAuthnViewsTest(test.WEBTestCase):
         )
         self.assertEqual(response.status_code, 403)
 
+    def _uds_js_config(self) -> dict[str, typing.Any]:
+        import re
+
+        body = self.client.get("/uds/utility/uds.js").content.decode("utf-8")
+        match = re.search(r"var udsData\s*=\s*(\{.+\});", body)
+        assert match is not None
+        return json.loads(match.group(1))["config"]
+
+    def test_uds_js_biometric_auto_launch_follows_config(self) -> None:
+        self.assertTrue(self._uds_js_config()["biometric_auto_launch"])
+        GlobalConfig.BIOMETRIC_AUTO_LAUNCH.set(False)
+        self.assertFalse(self._uds_js_config()["biometric_auto_launch"])
+
     def test_biometric_start_unknown_user(self) -> None:
         result = self.post_json(
             reverse("webapi.webauthn.biometric_start"),
