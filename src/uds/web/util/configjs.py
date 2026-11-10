@@ -228,6 +228,7 @@ def uds_js(request: "ExtendedHttpRequest") -> str:
         # client-encrypted form, but caching them nonetheless)
         "allow_biometric_auth": GlobalConfig.ALLOW_BIOMETRIC_AUTH.as_bool()
         and not GlobalConfig.ENFORCE_ZERO_TRUST.as_bool(False),
+        "biometric_auto_launch": GlobalConfig.BIOMETRIC_AUTO_LAUNCH.as_bool(),
         # CSRF token for the modern UI. The endpoint that serves this file
         # (uds.web.views.main.js) is ``@never_cache``, so the Angular app
         # always re-fetches it and gets a fresh token per session. The token

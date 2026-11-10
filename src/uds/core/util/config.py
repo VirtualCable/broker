@@ -1153,6 +1153,16 @@ class GlobalConfig:
         help=_("Allow biometric authentication"),
         group=Config.GroupType.ACCESS,
     )
+    BIOMETRIC_AUTO_LAUNCH: Config.Value = Config.section(Config.SectionType.SECURITY).value(
+        "Launch biometric login automatically",
+        "1",
+        type=Config.FieldType.BOOLEAN,
+        help=_(
+            "If enabled, the biometric login starts by itself when the login page opens. "
+            "If disabled, the user must press the biometric login button"
+        ),
+        group=Config.GroupType.ACCESS,
+    )
 
     # Immutable audit log configs
     TSA_PROVIDER_URL: Config.Value = Config.section(Config.SectionType.SECURITY).value(
