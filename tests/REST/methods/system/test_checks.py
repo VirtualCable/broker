@@ -14,6 +14,7 @@ Notes
 """
 
 import typing
+from unittest import mock
 
 from uds.core import types, consts
 from uds.core.util.config import GlobalConfig
@@ -208,11 +209,21 @@ class ChecksEndpointTest(rest.test.RESTTestCase):
             self.assertTrue(entry["description"])
 
     def test_manual_checks_list_does_not_run(self) -> None:
-        # The list endpoint is metadata only: it works without a single result
+        # The list endpoint is metadata only: assert run_checks is never called
         self.login()
-        response = self.client.rest_get("system/manual_checks/list")
-        self.assertEqual(response.status_code, 200, response.content)
-        self.assertFalse(any(key == "checks" for key in response.json()[0]))
+        with mock.patch("uds.REST.methods.system.run_checks") as run_checks:
+            response = self.client.rest_get("system/manual_checks/list")
+            self.assertEqual(response.status_code, 200, response.content)
+            run_checks.assert_not_called()
+
+    def test_manual_checks_run_single_uses_the_id_filter(self) -> None:
+        # The run-one endpoint must run exactly the requested check, nothing else
+        self.login()
+        with mock.patch("uds.REST.methods.system.run_checks") as run_checks:
+            self.client.rest_get("system/manual_checks/run/authenticators-health")
+            run_checks.assert_called_once_with(
+                types.checks.CheckKind.MANUAL, check_id="authenticators-health"
+            )
 
     def test_manual_checks_run_single(self) -> None:
         self.login()
