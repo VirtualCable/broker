@@ -46,7 +46,6 @@ Update package lists and install required packages:
       python3-virtualenv \
       python3.10-venv \
       build-essential \
-      default-libmysqlclient-dev \
       libldap2-dev \
       libsasl2-dev \
       libxml2 \
