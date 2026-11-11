@@ -27,6 +27,7 @@
 
 """
 Author: Adolfo Gómez, dkmaster at dkmon dot com
+Author: Andres Schumann, aschumann at virtualcable dot es
 """
 
 import logging
@@ -203,8 +204,6 @@ class EmailNotifier(messaging.Notifier):
 
         if self.security.value in ("tls", "ssl"):
             context = ssl.create_default_context()
-            context.check_hostname = False
-            context.verify_mode = ssl.CERT_NONE
             if self.security.value == "tls":
                 if port:
                     smtp = smtplib.SMTP(
