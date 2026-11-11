@@ -209,16 +209,16 @@ class UsersTest(rest.test.RESTActorTestCase):
         )
         self.login(user=manager)
 
-        admin = self.admins[0]
-        original_hash = admin.password
-        denied = self.client.rest_put(
-            f"{url}/{admin.uuid}",
-            rest_fixtures.createUser(id=admin.uuid, name=admin.name, password="Str0ng!Pass"),
-            content_type="application/json",
-        )
-        self.assertEqual(denied.status_code, 403, denied.content)
-        admin.refresh_from_db()
-        self.assertEqual(admin.password, original_hash)
+        for protected in (self.admins[0], self.staffs[1]):
+            original_hash = protected.password
+            denied = self.client.rest_put(
+                f"{url}/{protected.uuid}",
+                rest_fixtures.createUser(id=protected.uuid, name=protected.name, password="Str0ng!Pass"),
+                content_type="application/json",
+            )
+            self.assertEqual(denied.status_code, 403, denied.content)
+            protected.refresh_from_db()
+            self.assertEqual(protected.password, original_hash)
 
         plain = self.plain_users[0]
         allowed = self.client.rest_put(
