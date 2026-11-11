@@ -30,6 +30,7 @@ Provides useful functions for authenticating, used by web interface.
 
 
 Author: Adolfo Gómez, dkmaster at dkmon dot com
+Author: Andres Schumann, aschumann at virtualcable dot es
 """
 
 import base64
@@ -204,13 +205,15 @@ def needs_trusted_source(
         Wrapped function for decorator
         """
         try:
-            if not is_trusted_source(request.ip):
-                return HttpResponseForbidden()
+            trusted = is_trusted_source(request.ip)
         except Exception:
-            logger.warning(
-                'Error checking trusted source: "%s" does not seems to be a valid network string. Using Unrestricted access.',
+            logger.error(
+                'Error checking trusted source: "%s" is not a valid network list. Access denied.',
                 config.GlobalConfig.TRUSTED_SOURCES.get(),
             )
+            return HttpResponseForbidden()
+        if not trusted:
+            return HttpResponseForbidden()
         return view_func(request, *args, **kwargs)
 
     return _wrapped_view
