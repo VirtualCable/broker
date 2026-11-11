@@ -352,7 +352,7 @@ class Users(DetailHandler[UserItem]):
                     )  # this throws an exception if there is an error (for example, this auth can't create users)
                     user = parent.users.create(**fields)
                 else:
-                    user = parent.users.get(uuid=process_uuid(item))
+                    user = parent.users.select_for_update().get(uuid=process_uuid(item))
                     if "password" in fields and not self._user.is_admin and (user.is_admin or user.staff_member):
                         raise exceptions.rest.AccessDenied(
                             _("Only administrators can change the password of administrators and staff users")
