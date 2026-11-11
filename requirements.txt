@@ -34,7 +34,7 @@ dnspython
 ovirt-engine-sdk-python
 pycurl
 matplotlib
-mysqlclient
+PyMySQL==1.2.4
 paramiko
 pyOpenSSL
 pyrad

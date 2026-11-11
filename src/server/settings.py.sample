@@ -6,6 +6,15 @@ import os
 import sys
 import django
 
+# Django's mysql backend imports MySQLdb. UDS uses PyMySQL (MIT) instead of
+# mysqlclient (GPL-2.0), so alias it before any database backend is loaded.
+try:
+    import pymysql
+
+    pymysql.install_as_MySQLdb()
+except ImportError:  # sqlite-only setups do not need a MySQL driver
+    pass
+
 # calculated paths for django and the site
 # used as starting points for various other paths
 DJANGO_ROOT = os.path.dirname(os.path.realpath(django.__file__))
