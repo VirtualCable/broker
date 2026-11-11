@@ -67,4 +67,4 @@ def update_authorized_keys(username, public_key):
 
 # __USER__ and __KEY__ will be replaced by the real values,
 # # they are placeholders for the real values so keep them.
-update_authorized_keys('__USER__', '__KEY__')
+update_authorized_keys(__USER__, '__KEY__')
