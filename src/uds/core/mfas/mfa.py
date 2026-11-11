@@ -29,6 +29,7 @@
 
 """
 Author: Adolfo Gómez, dkmaster at dkmon dot com
+Author: Andres Schumann, aschumann at virtualcable dot es
 """
 
 import collections.abc
@@ -47,6 +48,7 @@ from uds.core import exceptions
 from uds.core import types
 from uds.core.module import Module
 from uds.core.ui import gui
+from uds.core.util import config
 from uds.core.util.model import sql_now
 
 if typing.TYPE_CHECKING:
@@ -266,12 +268,16 @@ class MFA(Module):
         logger.error("MFA.sendCode not implemented")
         raise exceptions.auth.MFAError("MFA.sendCode not implemented")
 
-    def _get_data(self, request: "ExtendedHttpRequest", userid: str) -> tuple[datetime.datetime, str] | None:
+    def _get_data(self, request: "ExtendedHttpRequest", userid: str) -> tuple[datetime.datetime, str, int] | None:
         """
-        Internal method to get the data from storage
+        Internal method to get the data from storage: (issued_at, code, failed_attempts)
         """
         storage_key = request.ip + userid
-        return self.storage.read_pickled(storage_key)
+        data = self.storage.read_pickled(storage_key)
+        if not data:
+            return None
+        issued_at, code, *failures = data
+        return issued_at, code, int(failures[0]) if failures else 0
 
     def _remove_data(self, request: "ExtendedHttpRequest", userid: str) -> None:
         """
@@ -282,10 +288,23 @@ class MFA(Module):
 
     def _put_data(self, request: "ExtendedHttpRequest", userid: str, code: str) -> None:
         """
-        Internal method to put the data into storage
+        Internal method to put a freshly issued code into storage, with no failed attempts
         """
+        self._store_state(request, userid, sql_now(), code, 0)
+
+    def _store_state(
+        self,
+        request: "ExtendedHttpRequest",
+        userid: str,
+        issued_at: datetime.datetime,
+        code: str,
+        failed_attempts: int,
+    ) -> None:
         storage_key = request.ip + userid
-        self.storage.save_pickled(storage_key, (sql_now(), code))
+        # Storage creates first and updates on conflict, which breaks an outer transaction;
+        # removing the old record first keeps the write a plain insert.
+        self.storage.remove(storage_key)
+        self.storage.save_pickled(storage_key, (issued_at, code, failed_attempts))
 
     def process(
         self,
@@ -378,19 +397,27 @@ class MFA(Module):
             err = _("Invalid MFA code")
 
             data = self._get_data(request, userid)
-            if data and len(data) == 2:
+            if data:
+                issued_at, stored_code, failed_attempts = data
                 validity = validity if validity is not None else 0
-                if validity > 0 and data[0] + datetime.timedelta(seconds=validity) < sql_now():
+                if validity > 0 and issued_at + datetime.timedelta(seconds=validity) < sql_now():
                     # if it is no more valid, raise an error
                     # Remove stored code and raise error
                     self._remove_data(request, userid)
                     raise exceptions.auth.MFAError("MFA Code expired")
 
-                # Check if the code is valid
-                if data[1] == code:
+                # The attempt budget lives with the code, not with the HTTP session, so it survives
+                # session resets: once spent, the code is gone and a new one must be issued.
+                if failed_attempts >= config.GlobalConfig.MAX_LOGIN_TRIES.as_int():
+                    self._remove_data(request, userid)
+                    raise exceptions.auth.MFAError("Too many invalid MFA code attempts")
+
+                if stored_code == code:
                     # Code is valid, remove it from storage
                     self._remove_data(request, userid)
                     return
+
+                self._store_state(request, userid, issued_at, stored_code, failed_attempts + 1)
         except Exception as e:
             # Any error means invalid code
             err = str(e)
