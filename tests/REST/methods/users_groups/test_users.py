@@ -57,7 +57,7 @@ class UsersTest(rest.test.RESTActorTestCase):
 
     @typing.override
     def setUp(self) -> None:
-        timezone.activate(datetime.timezone.utc)
+        timezone.activate(datetime.UTC)
         super().setUp()
         self.login()
 
@@ -512,7 +512,7 @@ class UsersPasswordPolicyTest(rest.test.RESTActorTestCase):
 
     @typing.override
     def setUp(self) -> None:
-        timezone.activate(datetime.timezone.utc)
+        timezone.activate(datetime.UTC)
         super().setUp()
         self.login()
 
