@@ -26,6 +26,7 @@
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 """
 Author: Adolfo Gómez, dkmaster at dkmon dot com
+Author: Andres Schumann, aschumann at virtualcable dot es
 """
 
 from uds.core import consts, exceptions, mfas, types
@@ -181,7 +182,6 @@ def mfa(
             pass  # Will render again the page
     else:
         # Make MFA send a code
-        request.session["mfa_tries"] = 0  # Reset tries
         try:
             result = mfa_instance.process(
                 request,
