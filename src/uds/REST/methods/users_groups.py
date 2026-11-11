@@ -352,8 +352,12 @@ class Users(DetailHandler[UserItem]):
                     )  # this throws an exception if there is an error (for example, this auth can't create users)
                     user = parent.users.create(**fields)
                 else:
-                    auth.modify_user(fields)  # Notifies authenticator
                     user = parent.users.get(uuid=process_uuid(item))
+                    if "password" in fields and not self._user.is_admin and (user.is_admin or user.staff_member):
+                        raise exceptions.rest.AccessDenied(
+                            _("Only administrators can change the password of administrators and staff users")
+                        )
+                    auth.modify_user(fields)  # Notifies authenticator
                     typing.cast(dict[str, typing.Any], user.__dict__).update(  # pyrefly: ignore[redundant-cast]
                         fields
                     )
@@ -377,7 +381,7 @@ class Users(DetailHandler[UserItem]):
             raise exceptions.rest.RequestError(str(e.message)) from e
         except exceptions.auth.AuthenticatorException as e:
             raise exceptions.rest.RequestError(str(e)) from e
-        except exceptions.rest.RequestError:
+        except (exceptions.rest.RequestError, exceptions.rest.AccessDenied):
             raise  # Re-raise
         except Exception as e:
             logger.error("Error saving user %s: %s", item, e)

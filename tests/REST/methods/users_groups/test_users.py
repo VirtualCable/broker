@@ -198,6 +198,36 @@ class UsersTest(rest.test.RESTActorTestCase):
         self.login(as_admin=True)
         self.assertEqual(self.client.rest_post(token_url).status_code, 200)
 
+    def test_manager_cannot_reset_admin_or_staff_password(self) -> None:
+        """A manager without admin rights cannot set the password of admins or staff, but can of plain users."""
+        url = f"authenticators/{self.auth.uuid}/users"
+        manager = self.staffs[0]
+        models.Permissions.add_permission(
+            user=manager,
+            object_type=objtype.ObjectType.from_model(self.auth),
+            permission=types.permissions.PermissionType.MANAGEMENT,
+        )
+        self.login(user=manager)
+
+        admin = self.admins[0]
+        original_hash = admin.password
+        denied = self.client.rest_put(
+            f"{url}/{admin.uuid}",
+            rest_fixtures.createUser(id=admin.uuid, name=admin.name, password="Str0ng!Pass"),
+            content_type="application/json",
+        )
+        self.assertEqual(denied.status_code, 403, denied.content)
+        admin.refresh_from_db()
+        self.assertEqual(admin.password, original_hash)
+
+        plain = self.plain_users[0]
+        allowed = self.client.rest_put(
+            f"{url}/{plain.uuid}",
+            rest_fixtures.createUser(id=plain.uuid, name=plain.name, password="Str0ng!Pass"),
+            content_type="application/json",
+        )
+        self.assertEqual(allowed.status_code, 200, allowed.content)
+
     def test_users_token_column(self) -> None:
         """The list shows the hint of whoever has a token, and never the hash."""
         url = f"authenticators/{self.auth.uuid}/users"
