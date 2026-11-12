@@ -27,6 +27,7 @@
 """
 Author: Daniel Torregrosa
 Author: Adolfo Gómez, dkmaster at dkmon dot com
+Author: Andres Schumann, aschumann at virtualcable dot es
 """
 
 import logging

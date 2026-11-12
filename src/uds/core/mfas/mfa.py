@@ -151,7 +151,6 @@ class LoginAllowed(enum.StrEnum):
 
 
 # Seconds a spent MFA attempts budget blocks new codes, counted from the last failure.
-# Not fixed by the decision of 11-11: confirm the value with the product owner.
 _MFA_LOCK_SECONDS: typing.Final[int] = 300
 
 
