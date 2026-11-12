@@ -92,10 +92,12 @@ def _execute_actor_request(
                 f.write(cert.encode())  # Save cert
                 verify = f.name
         else:
-            # No cert stored (e.g. actor never completed "ready"): no
-            # pinning. In this case the uuid check in
+            # No cert stored (actor never completed "ready", or it is an
+            # older actor): no pinning. The uuid check in
             # check_user_service_uuid is the only identity verification
             # left, which is why we keep it (see its docstring).
+            # Requiring the stored cert would stop older actors (4.0) from
+            # connecting. Decided on 2026-11-11: keep this behaviour.
             verify = False
         session = secure_requests_session(verify=cert)
         if data is None:
