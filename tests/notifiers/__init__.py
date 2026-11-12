@@ -26,4 +26,5 @@
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 """
 Author: Janier Rodríguez, jrodriguez at virtualcable dot es
+Author: Andres Schumann, aschumann at virtualcable dot es
 """
