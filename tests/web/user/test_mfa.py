@@ -138,6 +138,21 @@ class WebMFATest(test.WEBTestCase):
             fetch_redirect_response=False,
         )
 
+    def test_mfa_get_while_locked_out(self) -> None:
+        self.do_login(self.user.name, self.user.name, self.auth.uuid)
+        self.client.get(reverse("page.mfa"))
+        for _ in range(GlobalConfig.MAX_LOGIN_TRIES.as_int()):
+            self.client.post(reverse("page.mfa"), {"code": "wrong"})
+
+        response = self.client.get(reverse("page.mfa"))
+
+        self.assertRedirects(
+            response,
+            reverse("page.error", kwargs={"err": types.errors.Error.INVALID_MFA_CODE}),
+            status_code=302,
+            fetch_redirect_response=False,
+        )
+
     def test_mfa_timeout(self) -> None:
         self.do_login(self.user.name, self.user.name, self.auth.uuid)
         # Set MFA start time far in the past

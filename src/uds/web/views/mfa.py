@@ -190,6 +190,9 @@ def mfa(
             # store on session the start time of the MFA process if not already stored
             if "mfa_start_time" not in request.session:
                 request.session["mfa_start_time"] = now
+        except exceptions.auth.MFAError as e:
+            logger.error("MFA error: %s", e)
+            return errors.error_view(request, types.errors.Error.INVALID_MFA_CODE)
         except Exception as e:
             logger.error("Error processing MFA: %s", e)
             return errors.error_view(request, types.errors.Error.UNKNOWN_ERROR)
