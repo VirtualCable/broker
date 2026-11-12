@@ -97,7 +97,7 @@ def _execute_actor_request(
             # check_user_service_uuid is the only identity verification
             # left, which is why we keep it (see its docstring).
             # Requiring the stored cert would stop older actors (4.0) from
-            # connecting. Decided on 2026-11-11: keep this behaviour.
+            # connecting.
             verify = False
         session = secure_requests_session(verify=cert)
         if data is None:
