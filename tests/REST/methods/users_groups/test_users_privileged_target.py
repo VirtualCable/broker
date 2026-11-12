@@ -27,6 +27,7 @@
 """
 Author: Janier Rodríguez, jrodriguez at virtualcable dot es
 """
+
 from uds import models
 from uds.core import types
 from uds.core.util import objtype
@@ -50,7 +51,9 @@ class StaffEditingPrivilegedUsersTest(rest.test.RESTActorTestCase):
 
     def put_new_password(self, target: models.User) -> int:
         user_dct = rest_fixtures.createUser(id=target.uuid, name=target.name, password=NEW_PASSWORD)
-        return self.client.rest_put(f"authenticators/{self.auth.uuid}/users/{target.uuid}", user_dct).status_code
+        return self.client.rest_put(
+            f"authenticators/{self.auth.uuid}/users/{target.uuid}", user_dct
+        ).status_code
 
     def assert_password_kept(self, target: models.User) -> None:
         old_hash = target.password
