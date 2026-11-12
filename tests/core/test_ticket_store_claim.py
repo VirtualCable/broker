@@ -1,4 +1,6 @@
 """
+Author: Andres Schumann, aschumann at virtualcable dot es
+
 A ticket read with invalidate=True is consumed once: a reader that lost the race to another
 consumer must not receive the data.
 """
