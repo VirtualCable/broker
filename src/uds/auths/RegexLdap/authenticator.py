@@ -240,7 +240,7 @@ class RegexLdap(auths.Authenticator):
             self.alternate_class.value = vals[12]
             self.mfa_attribute.value = vals[13]
             self.verify_ssl.value = gui.as_bool(vals[14])
-            self._certificate = vals[15]
+            self.certificate.value = vals[15]
 
         self.mark_for_upgrade()  # Old version, so flag for upgrade if possible
 

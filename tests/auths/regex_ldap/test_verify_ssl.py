@@ -35,6 +35,16 @@ class RegexLdapVerifySslTest(UDSTestCase):
             auth._stablish_connection()
         self.assertFalse(connection.call_args.kwargs["verify_ssl"])
 
+    def test_saved_v5_record_keeps_verify_ssl_and_certificate(self) -> None:
+        auth = RegexLdap(self.create_environment(), None)
+        record = (
+            "v5\tdc.example.test\t636\tTrue\tsvc\tDUMMY-PASSWORD\t10\tDC=example,DC=test"
+            "\tperson\tsAMAccountName\tmemberOf\tcn\t\t\tTrue\tDUMMY-CA"
+        )
+        auth.unmarshal(record.encode("utf8"))
+        self.assertTrue(auth.verify_ssl.as_bool())
+        self.assertEqual(auth.certificate.as_str(), "DUMMY-CA")
+
     def test_user_connection_honours_verify_ssl(self) -> None:
         auth = self._authenticator(verify_ssl=True)
         with mock.patch(CONNECTION) as connection:
