@@ -29,6 +29,7 @@
 Author: Adolfo Gómez, dkmaster at dkmon dot com
 """
 
+import json
 import logging
 import os
 import typing
@@ -286,7 +287,8 @@ class BaseX2GOTransport(transports.Transport):
         with open(os.path.join(os.path.dirname(__file__), "scripts/authorize.py"), encoding="utf8") as f:
             data = f.read()
 
-        return data.replace("__KEY__", public_key).replace("__USER__", repr(user))
+        # Quoted placeholders are replaced by escaped literals so the username can't inject code on the actor
+        return data.replace("'__USER__'", json.dumps(user)).replace("'__KEY__'", json.dumps(public_key))
 
     def get_and_push_key(self, username: str, userservice: "models.UserService") -> tuple[str, str]:
         private_ssh_key, public_ssh_key = self.gen_keypair_for_ssh()
