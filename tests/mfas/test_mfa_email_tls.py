@@ -1,4 +1,6 @@
 """
+Author: Andres Schumann, aschumann at virtualcable dot es
+
 The e-mail MFA must verify the SMTP server certificate when it logs in with TLS/SSL.
 """
 
