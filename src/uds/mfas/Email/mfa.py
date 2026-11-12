@@ -230,7 +230,9 @@ class EmailMFA(mfas.MFA):
                 username = request.user.name if request.user else ""
                 msg.attach(
                     MIMEText(
-                        text.format(ip=request.ip, code=code, username=username, justUsername=username.split("@")[0]),
+                        text.format(
+                            ip=request.ip, code=code, username=username, justUsername=username.split("@")[0]
+                        ),
                         "plain",
                     )
                 )

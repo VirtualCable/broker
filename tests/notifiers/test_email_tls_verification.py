@@ -50,9 +50,10 @@ class EmailTlsVerificationTest(UDSTestCase):
 
     def _captured_context(self, security: str) -> ssl.SSLContext:
         notifier = self._notifier(security)
-        with mock.patch("uds.notifiers.email.notifier.smtplib.SMTP_SSL") as smtp_ssl, mock.patch(
-            "uds.notifiers.email.notifier.smtplib.SMTP"
-        ) as smtp:
+        with (
+            mock.patch("uds.notifiers.email.notifier.smtplib.SMTP_SSL") as smtp_ssl,
+            mock.patch("uds.notifiers.email.notifier.smtplib.SMTP") as smtp,
+        ):
             notifier.login()
             client: typing.Any = smtp_ssl if security == "ssl" else smtp
             context = client.call_args.kwargs.get("context")
