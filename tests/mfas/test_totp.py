@@ -92,8 +92,9 @@ class TOTPValidateTest(UDSTestCase):
         mfa = self._mfa()
         code = self._current_code()
 
-        with mock.patch.object(TOTP_MFA, "ask_for_otp", return_value=True), mock.patch.object(
-            TOTP_MFA, "_user_data", return_value=(self.secret, True)
+        with (
+            mock.patch.object(TOTP_MFA, "ask_for_otp", return_value=True),
+            mock.patch.object(TOTP_MFA, "_user_data", return_value=(self.secret, True)),
         ):
             mfa.validate(self._request(), "user1", "user1", "ident", code)
 
