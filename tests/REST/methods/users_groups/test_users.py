@@ -214,7 +214,9 @@ class UsersTest(rest.test.RESTActorTestCase):
             original_hash = protected.password
             denied = self.client.rest_put(
                 f"{url}/{protected.uuid}",
-                rest_fixtures.createUser(id=protected.uuid, name=protected.name, password="Str0ng!Pass"),
+                rest_fixtures.createUser(
+                    id=protected.uuid, name=protected.name, password="DUMMY-Password-New1"
+                ),
                 content_type="application/json",
             )
             self.assertEqual(denied.status_code, 403, denied.content)
@@ -224,7 +226,7 @@ class UsersTest(rest.test.RESTActorTestCase):
         plain = self.plain_users[0]
         allowed = self.client.rest_put(
             f"{url}/{plain.uuid}",
-            rest_fixtures.createUser(id=plain.uuid, name=plain.name, password="Str0ng!Pass"),
+            rest_fixtures.createUser(id=plain.uuid, name=plain.name, password="DUMMY-Password-New1"),
             content_type="application/json",
         )
         self.assertEqual(allowed.status_code, 200, allowed.content)

@@ -26,6 +26,7 @@
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 """
 Author: Janier Rodríguez, jrodriguez at virtualcable dot es
+Author: Andres Schumann, aschumann at virtualcable dot es
 """
 
 from uds import models
@@ -35,7 +36,7 @@ from uds.core.util import objtype
 from ....fixtures import rest as rest_fixtures
 from ....utils import rest
 
-NEW_PASSWORD = "Str0ng!Pass-new"
+NEW_PASSWORD = "DUMMY-Password-New1"
 
 
 class StaffEditingPrivilegedUsersTest(rest.test.RESTActorTestCase):
