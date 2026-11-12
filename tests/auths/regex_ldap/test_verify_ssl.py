@@ -8,7 +8,9 @@ import typing
 from unittest import mock
 
 from uds.auths.RegexLdap.authenticator import RegexLdap
+from uds.core import exceptions
 
+from tests.auths.x509certificate import fixtures
 from tests.utils.test import UDSTestCase
 
 CONNECTION: typing.Final = "uds.auths.RegexLdap.authenticator.ldaputil.connection"
@@ -53,3 +55,20 @@ class RegexLdapVerifySslTest(UDSTestCase):
             auth._stablish_connection_as("user@example.test", "DUMMY-PASSWORD")
         self.assertTrue(connection.call_args.kwargs["verify_ssl"])
         self.assertEqual(connection.call_args.kwargs["certificate_data"], "DUMMY-CA")
+
+    def test_initialize_rejects_invalid_certificate(self) -> None:
+        auth = self._authenticator(verify_ssl=True)
+        with self.assertRaises(exceptions.ui.ValidationError):
+            auth.initialize({"name": "test"})
+
+    def test_initialize_accepts_valid_certificate(self) -> None:
+        auth = self._authenticator(verify_ssl=True)
+        auth.certificate.value = f"  {fixtures.make_rsa_fixture().ca_pem}\n"
+        auth.initialize({"name": "test"})
+        self.assertTrue(auth.certificate.as_str().startswith("-----BEGIN CERTIFICATE-----"))
+
+    def test_initialize_accepts_empty_certificate(self) -> None:
+        auth = self._authenticator(verify_ssl=True)
+        auth.certificate.value = "  "
+        auth.initialize({"name": "test"})
+        self.assertEqual(auth.certificate.as_str(), "")

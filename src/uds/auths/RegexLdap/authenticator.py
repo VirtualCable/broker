@@ -49,6 +49,7 @@ from uds.core.util import auth as auth_utils
 from uds.core.util import ensure
 from uds.core.util import fields
 from uds.core.util import ldaputil
+from uds.core.util import validators
 
 try:
     from . import extra  # pyright: ignore  # pyrefly: ignore
@@ -177,6 +178,9 @@ class RegexLdap(auths.Authenticator):
         if values:
             auth_utils.validate_regex_field(self.username_attr)
             auth_utils.validate_regex_field(self.groupname_attr)
+            self.certificate.value = self.certificate.value.strip()
+            if self.certificate.value:
+                validators.validate_certificate(self.certificate.value)
 
     def mfa_storage_key(self, username: str) -> str:
         return "mfa_" + self.db_obj().uuid + username
