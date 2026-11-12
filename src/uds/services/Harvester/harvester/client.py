@@ -29,6 +29,7 @@ Author: Andres Schumann, aschumann at virtualcable dot es
 """
 
 import copy
+import hashlib
 import logging
 import typing
 from dataclasses import dataclass
@@ -53,9 +54,12 @@ def _raise_for_status_code(response: requests.Response, what: str) -> None:
         return
     detail = ''
     try:
-        detail = response.json().get('message', '')
+        payload = response.json()
     except (requests.exceptions.JSONDecodeError, ValueError):
         detail = response.text[:200]
+    else:
+        if isinstance(payload, dict):
+            detail = str(payload.get('message', ''))
     if status == 401:
         raise hv_exceptions.HarvesterAuthError(f'{what}: authentication failed ({detail})')
     if status == 403:
@@ -86,7 +90,7 @@ class HarvesterClient:
     endpoint: str
     api_token: str
     namespace: str = 'default'
-    verify_ssl: bool = False
+    verify_ssl: bool = True
     timeout: int = 10
 
     _requests_session: requests.Session | None = None
@@ -105,7 +109,8 @@ class HarvesterClient:
         return self._requests_session
 
     def cache_key(self) -> str:
-        return f'{self.endpoint}|{self.api_token}|{self.namespace}'
+        token_digest = hashlib.sha256(self.api_token.encode()).hexdigest()
+        return f'{self.endpoint}|{token_digest}|{self.namespace}'
 
     def clear_cache(self) -> None:
         self._requests_session = None

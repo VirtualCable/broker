@@ -60,6 +60,10 @@ class TestHarvesterProvider(UDSTestCase):
         self.assertEqual(prov.timeout.as_int(), fixtures.PROVIDER_VALUES_DICT['timeout'])
         self.assertEqual(prov.verify_ssl.value, fixtures.PROVIDER_VALUES_DICT['verify_ssl'])
 
+    def test_provider_api_uses_verify_ssl_field(self) -> None:
+        prov = fixtures.create_provider()
+        self.assertIs(prov.api.verify_ssl, prov.verify_ssl.as_bool())
+
     def test_provider_test_connection(self) -> None:
         """
         Static test(): with api working -> ok result; without -> error result.

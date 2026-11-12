@@ -31,6 +31,7 @@ Author: Andres Schumann, aschumann at virtualcable dot es
 import contextlib
 import copy
 import functools
+import hashlib
 import random
 import typing
 import uuid
@@ -163,8 +164,9 @@ PROVIDER_VALUES_DICT: gui.ValuesDictType = {
 }
 
 # Connection identity matching PROVIDER_VALUES_DICT, as HarvesterClient.cache_key() would build it
+_API_TOKEN_DIGEST = hashlib.sha256(PROVIDER_VALUES_DICT['api_token'].encode()).hexdigest()
 CLIENT_CACHE_KEY = (
-    f'{PROVIDER_VALUES_DICT["api_url"]}|{PROVIDER_VALUES_DICT["api_token"]}|'
+    f'{PROVIDER_VALUES_DICT["api_url"]}|{_API_TOKEN_DIGEST}|'
     f'{PROVIDER_VALUES_DICT["namespace"]}'
 )
 

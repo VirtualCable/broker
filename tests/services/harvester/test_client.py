@@ -28,6 +28,7 @@
 Author: Andres Schumann, aschumann at virtualcable dot es
 """
 
+import hashlib
 import typing
 from unittest import mock
 
@@ -62,7 +63,14 @@ def response_mock(
 class TestHarvesterClient(UDSTestCase):
     def test_cache_key_composed(self) -> None:
         client = make_client()
-        self.assertEqual(client.cache_key(), 'https://10.1.99.99|tok|default')
+        token_digest = hashlib.sha256(b'tok').hexdigest()
+        self.assertEqual(client.cache_key(), f'https://10.1.99.99|{token_digest}|default')
+        self.assertNotIn('|tok|', client.cache_key())
+
+    def test_verify_ssl_defaults_to_true(self) -> None:
+        client = hv_client.HarvesterClient(endpoint='https://10.1.99.99', api_token='tok')
+        self.assertTrue(client.verify_ssl)
+        self.assertIs(client._session().verify, True)
 
     def test_do_request_headers_and_paths(self) -> None:
         client = make_client()
@@ -80,6 +88,14 @@ class TestHarvesterClient(UDSTestCase):
         session = client._session()
         self.assertTrue(session.verify is False, 'verify_ssl false must reach the requests session')
         self.assertEqual(session.headers.get('Authorization'), 'Bearer tok')
+
+    def test_error_body_not_an_object_is_still_mapped(self) -> None:
+        client = make_client()
+        session = mock.MagicMock()
+        client._requests_session = session  # type: ignore[attr-defined]
+        session.request.return_value = response_mock(503, [])
+        with self.assertRaises(hv_exceptions.HarvesterConnectionError):
+            client.do_request('GET', 'x/y')
 
     def test_error_mapping(self) -> None:
         client = make_client()
