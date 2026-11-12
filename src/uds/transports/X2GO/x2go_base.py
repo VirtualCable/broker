@@ -288,7 +288,7 @@ class BaseX2GOTransport(transports.Transport):
             data = f.read()
 
         # Quoted placeholders are replaced by escaped literals so the username can't inject code on the actor
-        return data.replace("'__USER__'", json.dumps(user)).replace("'__KEY__'", json.dumps(public_key))
+        return data.replace("'__KEY__'", json.dumps(public_key)).replace("'__USER__'", json.dumps(user))
 
     def get_and_push_key(self, username: str, userservice: "models.UserService") -> tuple[str, str]:
         private_ssh_key, public_ssh_key = self.gen_keypair_for_ssh()

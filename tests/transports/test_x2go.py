@@ -54,6 +54,9 @@ class X2GOAuthorizationScriptTest(UDSTestCase):
 
         self.assertEqual(self.authorize_call_args(user), [user, PUBLIC_KEY])
 
+    def test_username_containing_key_placeholder_stays_a_literal(self) -> None:
+        self.assertEqual(self.authorize_call_args("__KEY__"), ["__KEY__", PUBLIC_KEY])
+
     def test_username_with_non_ascii_and_backslash(self) -> None:
         user = "josé\\admin\n"
 
