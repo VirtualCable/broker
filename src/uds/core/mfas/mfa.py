@@ -273,53 +273,82 @@ class MFA(Module):
         logger.error("MFA.sendCode not implemented")
         raise exceptions.auth.MFAError("MFA.sendCode not implemented")
 
-    def _get_data(
-        self, userid: str
-    ) -> tuple[datetime.datetime | None, str, int, datetime.datetime | None] | None:
+    @staticmethod
+    def _new_code() -> str:
+        return "".join(random.SystemRandom().choices("0123456789", k=6))
+
+    def _get_data(self, userid: str) -> tuple[datetime.datetime, str] | None:
         """
-        Internal method to get the stored state: (issued_at, code, failed_attempts, last_failure).
-        issued_at and code are None/"" when no code is pending (voided or never issued).
+        Internal method to get the pending code: (issued_at, code)
         """
         data = self.storage.read_pickled(userid)
         if not data:
             return None
-        issued_at, code, *counters = data
-        failed_attempts = int(counters[0]) if counters else 0
-        last_failure = counters[1] if len(counters) > 1 else None
-        return issued_at, code, failed_attempts, last_failure
+        issued_at, code, *_rest = data
+        return issued_at, code
 
     def _remove_data(self, userid: str) -> None:
         """
-        Internal method to forget everything about the user (code and attempts)
+        Internal method to remove the pending code (the attempts budget is kept)
         """
         self.storage.remove(userid)
 
-    def _save_data(
-        self,
-        userid: str,
-        issued_at: datetime.datetime | None,
-        code: str,
-        failed_attempts: int,
-        last_failure: datetime.datetime | None,
-    ) -> None:
+    def _put_data(self, userid: str, code: str) -> None:
+        """
+        Internal method to store a freshly issued code
+        """
         # Storage creates first and updates on conflict, which breaks an outer transaction;
         # removing the old record first keeps the write a plain insert.
         self.storage.remove(userid)
-        self.storage.save_pickled(userid, (issued_at, code, failed_attempts, last_failure))
+        self.storage.save_pickled(userid, (sql_now(), code))
 
     @staticmethod
-    def _budget_spent(failed_attempts: int, last_failure: datetime.datetime | None) -> bool:
-        """
-        The attempts budget is per user and provider. Once spent, no code is accepted or issued
-        for _MFA_LOCK_SECONDS after the last failure; then the budget starts again.
-        """
-        if failed_attempts < config.GlobalConfig.MAX_LOGIN_TRIES.as_int() or last_failure is None:
-            return False
-        return last_failure + datetime.timedelta(seconds=_MFA_LOCK_SECONDS) > sql_now()
+    def _budget_key(userid: str) -> str:
+        return "mfa-attempts:" + userid
 
-    @staticmethod
-    def _new_code() -> str:
-        return "".join(random.SystemRandom().choices("0123456789", k=6))
+    def _budget(self, userid: str) -> int:
+        """
+        Failed attempts spent by the user on this provider.
+
+        The budget lives apart from the code and is per user and provider: a new code does not
+        reset it, and nothing else does except a success or the end of the lock. Once spent,
+        it blocks for _MFA_LOCK_SECONDS after the last failure, then it starts again.
+        """
+        data = self.storage.read_pickled(self._budget_key(userid))
+        if not data:
+            return 0
+        failed_attempts, last_failure = data
+        if int(failed_attempts) < config.GlobalConfig.MAX_LOGIN_TRIES.as_int():
+            return int(failed_attempts)
+        if last_failure is not None and last_failure + datetime.timedelta(seconds=_MFA_LOCK_SECONDS) > sql_now():
+            return int(failed_attempts)
+        return 0
+
+    def _check_budget(self, userid: str) -> None:
+        """
+        Raises if the budget is spent. The pending code, if any, is voided.
+        """
+        if self._budget(userid) >= config.GlobalConfig.MAX_LOGIN_TRIES.as_int():
+            self._remove_data(userid)
+            raise exceptions.auth.MFAError("Too many invalid MFA code attempts")
+
+    def _record_failure(self, userid: str) -> None:
+        """
+        Counts a failed code. When it spends the budget, the pending code is voided and this raises.
+        Providers that validate on their own (TOTP, RADIUS) call it on every rejected code.
+        """
+        failed_attempts = self._budget(userid) + 1
+        self.storage.remove(self._budget_key(userid))
+        self.storage.save_pickled(self._budget_key(userid), (failed_attempts, sql_now()))
+        if failed_attempts >= config.GlobalConfig.MAX_LOGIN_TRIES.as_int():
+            self._remove_data(userid)
+            raise exceptions.auth.MFAError("Too many invalid MFA code attempts")
+
+    def _forget_budget(self, userid: str) -> None:
+        """
+        Called on a valid code: the attempts start again from zero.
+        """
+        self.storage.remove(self._budget_key(userid))
 
     def process(
         self,
@@ -350,23 +379,18 @@ class MFA(Module):
             MFA.RESULT.ALLOW if the user does not need to enter the MFA code (i.e. fail to send the code)
             Raises an error if the code was not sent and was required to be sent
         """
-        state = self._get_data(userid)
-        failed_attempts, last_failure = (state[2], state[3]) if state else (0, None)
-        if self._budget_spent(failed_attempts, last_failure):
-            raise exceptions.auth.MFAError("Too many invalid MFA code attempts")
-        if failed_attempts >= config.GlobalConfig.MAX_LOGIN_TRIES.as_int():
-            # The lock has expired: the budget starts again
-            failed_attempts, last_failure = 0, None
+        self._check_budget(userid)
 
         validity = validity if validity is not None else 0
         try:
+            state = self._get_data(userid)
             if state and state[0] and state[1] and validity and state[0] + datetime.timedelta(seconds=validity) > sql_now():
                 # if we have a stored code, check if it's still valid;
                 # if it's still valid, just return without sending a new one
                 return MFA.RESULT.OK
         except Exception:
-            # Unreadable stored code: a new one is issued below, the attempts are kept
-            logger.warning("Unreadable MFA state for user, issuing a new code")
+            # Unreadable stored code: a new one is issued below
+            logger.warning("Unreadable MFA code for user, issuing a new one")
 
         # Generate a 6 digit code (0-9)
         code = self._new_code()
@@ -377,8 +401,8 @@ class MFA(Module):
         # pylint: disable=assignment-from-no-return
         result = self.send_code(request, userid, username, identifier, code)
 
-        # Store the code, keeping the attempts: a new code does not reset the budget
-        self._save_data(userid, sql_now(), code, failed_attempts, last_failure)
+        # Store the code. The attempts budget is not touched: a new code does not reset it
+        self._put_data(userid, code)
 
         return result
 
@@ -413,37 +437,30 @@ class MFA(Module):
             In case the user is removed from db an recreated, the user id will be different.
             (this is a desired behaviour, as the user is different, even if the name is the same)
         """
-        # Validate the code
+        self._check_budget(userid)
         try:
             err = _("Invalid MFA code")
 
             state = self._get_data(userid)
             if state is None or not state[1]:
+                self._record_failure(userid)
                 raise exceptions.auth.MFAError(err)
-            issued_at, stored_code, failed_attempts, last_failure = state
-
-            if self._budget_spent(failed_attempts, last_failure):
-                self._save_data(userid, None, "", failed_attempts, last_failure)
-                raise exceptions.auth.MFAError("Too many invalid MFA code attempts")
+            issued_at, stored_code = state
 
             validity = validity if validity is not None else 0
             if validity > 0 and issued_at + datetime.timedelta(seconds=validity) < sql_now():
-                # Void the code, keep the attempts
-                self._save_data(userid, None, "", failed_attempts, last_failure)
+                # Expired code: it is voided, the attempts are kept
+                self._remove_data(userid)
                 raise exceptions.auth.MFAError("MFA Code expired")
 
             if stored_code == code:
                 # Valid code: forget the code and the attempts
                 self._remove_data(userid)
+                self._forget_budget(userid)
                 return
 
-            failed_attempts += 1
-            last_failure = sql_now()
-            if failed_attempts >= config.GlobalConfig.MAX_LOGIN_TRIES.as_int():
-                # Budget spent: void the code, no new one until the lock expires
-                self._save_data(userid, None, "", failed_attempts, last_failure)
-                raise exceptions.auth.MFAError("Too many invalid MFA code attempts")
-            self._save_data(userid, issued_at, stored_code, failed_attempts, last_failure)
+            self._record_failure(userid)
+            raise exceptions.auth.MFAError(err)
         except Exception as e:
             # Any error means invalid code
             err = str(e)
