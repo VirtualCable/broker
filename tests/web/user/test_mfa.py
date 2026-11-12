@@ -114,8 +114,7 @@ class WebMFATest(test.WEBTestCase):
             status_code=302,
             fetch_redirect_response=False,
         )
-        self.assertIn("mfa_tries", self.client.session)
-        self.assertEqual(self.client.session["mfa_tries"], 1)
+        self.assertNotIn("mfa_tries", self.client.session)
 
     def test_mfa_too_many_tries(self) -> None:
         self.do_login(self.user.name, self.user.name, self.auth.uuid)
@@ -124,16 +123,20 @@ class WebMFATest(test.WEBTestCase):
         response: UDSHttpResponse = None  # type: ignore[assignment]
         for _ in range(max_tries):
             response = self.client.post(reverse("page.mfa"), {"code": "wrong"})
-
-        # Last attempt redirects to access denied
         self.assertRedirects(
             response,
-            reverse("page.error", kwargs={"err": types.errors.Error.ACCESS_DENIED}),
+            reverse("page.error", kwargs={"err": types.errors.Error.INVALID_MFA_CODE}),
             status_code=302,
             fetch_redirect_response=False,
         )
-        # Session should be flushed
-        self.assertNotIn("mfa_tries", self.client.session)
+        # The attempts are kept per user and provider: the right code is refused too
+        response = self.client.post(reverse("page.mfa"), {"code": "123456"})
+        self.assertRedirects(
+            response,
+            reverse("page.error", kwargs={"err": types.errors.Error.INVALID_MFA_CODE}),
+            status_code=302,
+            fetch_redirect_response=False,
+        )
 
     def test_mfa_timeout(self) -> None:
         self.do_login(self.user.name, self.user.name, self.auth.uuid)

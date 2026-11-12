@@ -125,7 +125,6 @@ def mfa(
             return errors.error_view(request, types.errors.Error.ACCESS_DENIED)
         # None, the authenticator will decide what to do if mfa_identifier is empty
 
-    tries = request.session.get("mfa_tries", 0)
     if request.method == "POST":  # User has provided MFA code
         form = MFAForm(request.POST)
         if form.is_valid():
@@ -167,13 +166,6 @@ def mfa(
                 return response
             except exceptions.auth.MFAError as e:
                 logger.error("MFA error: %s", e)
-                tries += 1
-                request.session["mfa_tries"] = tries
-                if tries >= config.GlobalConfig.MAX_LOGIN_TRIES.as_int():
-                    # Clean session
-                    request.session.flush()
-                    # Too many tries, redirect to login error page
-                    return errors.error_view(request, types.errors.Error.ACCESS_DENIED)
                 return errors.error_view(request, types.errors.Error.INVALID_MFA_CODE)
             except Exception as e:
                 logger.error("Error processing MFA: %s", e)
