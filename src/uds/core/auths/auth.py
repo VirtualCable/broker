@@ -207,10 +207,11 @@ def needs_trusted_source(
             if not is_trusted_source(request.ip):
                 return HttpResponseForbidden()
         except Exception:
-            logger.warning(
-                'Error checking trusted source: "%s" does not seems to be a valid network string. Using Unrestricted access.',
+            logger.error(
+                'Error checking trusted source: "%s" does not seem to be a valid network string. Denying access.',
                 config.GlobalConfig.TRUSTED_SOURCES.get(),
             )
+            return HttpResponseForbidden()
         return view_func(request, *args, **kwargs)
 
     return _wrapped_view
