@@ -259,6 +259,8 @@ class RegexLdap(auths.Authenticator):
                 use_ssl=self.use_ssl.as_bool(),
                 timeout=self.timeout.as_int(),
                 debug=False,
+                verify_ssl=self.verify_ssl.as_bool(),
+                certificate_data=self.certificate.as_str(),
             )
 
         return self._connection
@@ -272,6 +274,8 @@ class RegexLdap(auths.Authenticator):
             use_ssl=self.use_ssl.as_bool(),
             timeout=self.timeout.as_int(),
             debug=False,
+            verify_ssl=self.verify_ssl.as_bool(),
+            certificate_data=self.certificate.as_str(),
         )
 
     def _get_user(self, username: str) -> "ldaputil.LDAPResultType | None":
