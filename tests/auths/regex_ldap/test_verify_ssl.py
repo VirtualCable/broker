@@ -1,4 +1,6 @@
 """
+Author: Andres Schumann, aschumann at virtualcable dot es
+
 RegexLdap must use its verify_ssl and certificate settings when it connects over LDAPS.
 """
 
