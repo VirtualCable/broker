@@ -377,7 +377,9 @@ class RegexLdap(auths.Authenticator):
 
             try:
                 # Let's see first if it credentials are fine
-                self._stablish_connection_as(usr["dn"], credentials)  # Will raise an exception if it can't connect
+                self._stablish_connection_as(
+                    usr["dn"], credentials
+                )  # Will raise an exception if it can't connect
             except Exception:
                 log_login(request, self.db_obj(), username, "Invalid password", as_error=True)
                 return types.auth.FAILED_AUTH
