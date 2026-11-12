@@ -44,7 +44,9 @@ class X2GOAuthorizeScriptTest(UDSTestCase):
         injected_prints = [
             node
             for node in top_level_calls
-            if isinstance(node.value, ast.Call) and isinstance(node.value.func, ast.Name) and node.value.func.id == "print"
+            if isinstance(node.value, ast.Call)
+            and isinstance(node.value.func, ast.Name)
+            and node.value.func.id == "print"
         ]
         self.assertEqual(injected_prints, [])
         args = self._update_call_args(user)
