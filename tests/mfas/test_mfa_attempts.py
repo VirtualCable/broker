@@ -12,8 +12,7 @@ new codes do not reset it, a success resets it, and once spent it blocks new cod
 import datetime
 import typing
 
-from uds.core import exceptions, mfas
-from uds.core.mfas.mfa import _MFA_LOCK_SECONDS
+from uds.core import consts, exceptions, mfas
 from uds.core.util import config
 from uds.core.util.model import sql_now
 
@@ -104,7 +103,7 @@ class MFAAttemptsTest(UDSTestCase):
             self.mfa.process(self.request, USERID, "user", "id")  # type: ignore[arg-type]
 
     def test_budget_starts_again_after_the_lock(self) -> None:
-        old_failure = sql_now() - datetime.timedelta(seconds=_MFA_LOCK_SECONDS + 1)
+        old_failure = sql_now() - datetime.timedelta(seconds=consts.auth.MFA_LOCK_SECONDS + 1)
         self.mfa.storage.save_pickled(self.mfa._budget_key(USERID), (self.budget, old_failure))
         self._issue()
         self.assertEqual(self._attempts(), 0)
