@@ -1,4 +1,6 @@
 """
+Author: Andres Schumann, aschumann at virtualcable dot es
+
 The X2Go authorization script receives the username as a Python literal, so a
 username cannot close the string and add statements to the script.
 """
