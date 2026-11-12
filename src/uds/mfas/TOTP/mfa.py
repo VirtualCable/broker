@@ -202,10 +202,12 @@ class TOTP_MFA(mfas.MFA):
         if self.ask_for_otp(request) is False:
             return
 
+        self._check_budget(userid)
         if self.cache.get(userid + code) is not None:
             logger.warning(
                 "TOTP: Code already used by user [%s] from IP [%s], length [%d]", userid, request.ip, len(code)
             )
+            self._record_failure(userid)
             raise exceptions.auth.MFAError(gettext("Code is already used. Wait a minute and try again."))
 
         # Get data from storage related to this user
@@ -225,9 +227,11 @@ class TOTP_MFA(mfas.MFA):
                 self.valid_window.as_int(),
                 now.isoformat(),
             )
+            self._record_failure(userid)
             raise exceptions.auth.MFAError(gettext("Invalid code"))
 
         self.cache.put(userid + code, True, self.valid_window.as_int() * (TOTP_INTERVAL + 1))
+        self._forget_budget(userid)
 
         if qr_has_been_shown is False:
             self._save_user_data(userid, (secret, True))  # Update user data to show QR code only once

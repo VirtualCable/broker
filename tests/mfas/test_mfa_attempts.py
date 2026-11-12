@@ -52,9 +52,7 @@ class MFAAttemptsTest(UDSTestCase):
         self.mfa.validate(request or self.request, USERID, "user", "id", code)  # type: ignore[arg-type]
 
     def _attempts(self) -> int:
-        state = self.mfa._get_data(USERID)
-        assert state is not None
-        return state[2]
+        return self.mfa._budget(USERID)
 
     def test_correct_code_is_accepted_and_forgets_the_attempts(self) -> None:
         code = self._issue()
@@ -77,9 +75,7 @@ class MFAAttemptsTest(UDSTestCase):
                 self._validate(WRONG)
         with self.assertRaises(exceptions.auth.MFAError):
             self._validate(code)
-        state = self.mfa._get_data(USERID)
-        assert state is not None
-        self.assertEqual(state[1], "")
+        self.assertIsNone(self.mfa._get_data(USERID))
 
     def test_new_code_does_not_reset_the_budget(self) -> None:
         self._issue()
@@ -103,15 +99,13 @@ class MFAAttemptsTest(UDSTestCase):
         self.assertEqual(self._attempts(), self.budget)
 
     def test_no_new_code_while_the_budget_is_spent(self) -> None:
-        self.mfa.storage.save_pickled(
-            USERID, (None, "", self.budget, sql_now())
-        )
+        self.mfa.storage.save_pickled(self.mfa._budget_key(USERID), (self.budget, sql_now()))
         with self.assertRaises(exceptions.auth.MFAError):
             self.mfa.process(self.request, USERID, "user", "id")  # type: ignore[arg-type]
 
     def test_budget_starts_again_after_the_lock(self) -> None:
         old_failure = sql_now() - datetime.timedelta(seconds=_MFA_LOCK_SECONDS + 1)
-        self.mfa.storage.save_pickled(USERID, (None, "", self.budget, old_failure))
+        self.mfa.storage.save_pickled(self.mfa._budget_key(USERID), (self.budget, old_failure))
         self._issue()
         self.assertEqual(self._attempts(), 0)
 
@@ -125,19 +119,26 @@ class MFAAttemptsTest(UDSTestCase):
         self._validate(code)
 
     def test_record_written_before_this_change_is_still_read(self) -> None:
-        self.mfa.storage.save_pickled(USERID, (sql_now(), "123456"))
+        self.mfa.storage.save_pickled(USERID, (sql_now(), "123456", 2, sql_now()))
         state = self.mfa._get_data(USERID)
         assert state is not None
-        self.assertEqual(state[1:], ("123456", 0, None))
+        self.assertEqual(state[1], "123456")
 
     def test_expired_code_is_voided_and_the_attempts_are_kept(self) -> None:
-        self.mfa.storage.save_pickled(
-            USERID,
-            (sql_now() - datetime.timedelta(seconds=600), "123456", 2, None),
-        )
+        self.mfa.storage.save_pickled(USERID, (sql_now() - datetime.timedelta(seconds=600), "123456"))
+        self.mfa.storage.save_pickled(self.mfa._budget_key(USERID), (2, sql_now()))
         with self.assertRaises(exceptions.auth.MFAError):
             self.mfa.validate(self.request, USERID, "user", "id", "123456", validity=60)  # type: ignore[arg-type]
-        state = self.mfa._get_data(USERID)
-        assert state is not None
-        self.assertEqual(state[1], "")
-        self.assertEqual(state[2], 2)
+        self.assertIsNone(self.mfa._get_data(USERID))
+        self.assertEqual(self._attempts(), 2)
+
+    def test_failure_recorded_by_providers_that_validate_on_their_own(self) -> None:
+        # TOTP and RADIUS do not use the stored code: they count rejections through _record_failure
+        for _ in range(self.budget - 1):
+            self.mfa._record_failure(USERID)  # type: ignore[attr-defined]
+        self.assertEqual(self._attempts(), self.budget - 1)
+        with self.assertRaises(exceptions.auth.MFAError):
+            self.mfa._record_failure(USERID)  # type: ignore[attr-defined]
+        self.assertEqual(self._attempts(), self.budget)
+        with self.assertRaises(exceptions.auth.MFAError):
+            self.mfa._check_budget(USERID)  # type: ignore[attr-defined]
