@@ -53,6 +53,7 @@ import typing
 from unittest import mock
 
 from uds import models
+from uds.core import types
 
 from ....fixtures import services as services_fixtures
 from ....utils import rest
@@ -195,6 +196,20 @@ class PoolCapabilitiesGatesTest(rest.test.RESTTestCase):
         pool = self._pool(caching=True)
         response = self.client.rest_get(f"servicespools/{pool.uuid}/cache/overview")
         self.assertEqual(response.status_code, 200)
+
+    def test_cache_overview_items_carry_cache_level(self) -> None:
+        pool = self._pool(caching=True)
+        publication = services_fixtures.create_db_publication(pool)
+        cached = services_fixtures.create_db_userservice(pool, publication, None)
+        cached.cache_level = types.services.CacheLevel.L1
+        cached.save(update_fields=["cache_level"])
+
+        response = self.client.rest_get(f"servicespools/{pool.uuid}/cache/overview")
+        self.assertEqual(response.status_code, 200)
+        items = response.json()
+        item = next(i for i in items if i["id"] == cached.uuid)
+        self.assertEqual(item["cache_level"], types.services.CacheLevel.L1)
+        self.assertNotIn("owner", item)
 
     def test_publications_unsupported_answers_not_supported(self) -> None:
         pool = self._pool(caching=False)
