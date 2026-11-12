@@ -174,6 +174,39 @@ class ProxmoxService(DynamicService):
         required=True,
     )
 
+    cores = gui.NumericField(
+        label=_("Cores"),
+        order=114,
+        length=3,
+        default=0,
+        min_value=0,
+        tooltip=_('Number of cores of the new machines. (Zero value means "keep template cores")'),
+        tab=types.ui.Tab.MACHINE,
+        required=True,
+    )
+
+    memory = gui.NumericField(
+        label=_("Memory (Mb)"),
+        order=115,
+        length=7,
+        default=0,
+        min_value=0,
+        tooltip=_('Memory of the new machines. (Zero value means "keep template memory")'),
+        tab=types.ui.Tab.MACHINE,
+        required=True,
+    )
+
+    network = gui.ChoiceField(
+        label=_("Network"),
+        order=116,
+        default="",
+        tooltip=_(
+            "Bridge of the first interface of the new machines. It must exist on every node the machines can be placed on. Empty keeps the template network."
+        ),
+        tab=types.ui.Tab.MACHINE,
+        required=False,
+    )
+
     basename = DynamicService.basename
     lenname = DynamicService.lenname
 
@@ -227,6 +260,7 @@ class ProxmoxService(DynamicService):
             [gui.choice_item("", _("Enabled")), gui.choice_item("__", _("Disabled"))]
             + [gui.choice_item(group, group) for group in self.provider().api.list_ha_groups()]
         )
+        self.network.set_choices([gui.choice_item("", _("Same as template"))])
 
     @typing.override
     def provider(self) -> "ProxmoxProvider":
@@ -265,6 +299,15 @@ class ProxmoxService(DynamicService):
 
     def get_vm_info(self, vmid: int) -> "prox_types.VMInfo":
         return self.provider().api.get_vm_pool_info(vmid, self.pool.value.strip())
+
+    def set_vm_options(self, vmid: int, macaddr: str) -> None:
+        self.provider().api.set_vm_net_mac(
+            vmid,
+            macaddr,
+            cores=self.cores.as_int(),
+            memory=self.memory.as_int(),
+            bridge=self.network.value or None,
+        )
 
     def enable_vm_ha(self, vmid: int, started: bool = False) -> None:
         if self.ha.value == "__":
