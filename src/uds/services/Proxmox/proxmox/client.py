@@ -323,6 +323,7 @@ class ProxmoxClient:
         min_memory: int = 0,
         must_have_vgpus: bool | None = None,
         mdev_type: str | None = None,
+        storage: str | None = None,
     ) -> types.NodeStats | None:
         """
         Returns the best node to create a VM on
@@ -330,6 +331,7 @@ class ProxmoxClient:
         Args:
             minMemory (int, optional): Minimum memory required. Defaults to 0.
             mustHaveVGPUS (bool | None, optional): If the node must have VGPUS. True, False or None (don't care). Defaults to None.
+            storage (str | None, optional): Storage that must be active on the node. Defaults to None (don't care).
         """
         best = types.NodeStats.null()
         node: types.NodeStats
@@ -341,6 +343,14 @@ class ProxmoxClient:
         logger.debug("Selecting best node for VM : %s, %s, %s", min_memory, must_have_vgpus, mdev_type)
         # Offline nodes are not "the best"
         for node in filter(lambda x: x.status == "online", self.get_nodes_stats()):
+            # Checked before any per-node call: nodes whose stats the token cannot read must not reach the API
+            if node.maxmem <= 0 or node.maxcpu <= 0:
+                logger.warning("Skipping node %s: no usable resource stats", node.name)
+                continue
+            if storage and not any(
+                s.storage == storage and s.active for s in self.list_storages(node=node.name)
+            ):
+                continue
             logger.debug("Node %s: %s", node.name, self.list_node_gpu_devices(node.name))
             if min_memory and node.mem < min_memory + 512000000:  # 512 MB reserved
                 continue  # Skips nodes with not enouhg memory
@@ -399,7 +409,10 @@ class ProxmoxClient:
             # If storage is not shared, must be done on same as origin
             if target_storage and self.get_storage_info(storage=target_storage, node=vminfo.node).shared:
                 node = self.get_best_node_for_vm(
-                    min_memory=0, must_have_vgpus=must_have_vgpus, mdev_type=vminfo.vgpu_type
+                    min_memory=0,
+                    must_have_vgpus=must_have_vgpus,
+                    mdev_type=vminfo.vgpu_type,
+                    storage=target_storage,
                 )
                 if node is None:
                     raise exceptions.ProxmoxError(
