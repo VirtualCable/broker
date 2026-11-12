@@ -28,6 +28,7 @@
 """
 Author: Adolfo Gómez, dkmaster at dkmon dot com
         Andres Schumann, aschumann at virtualcable dot es
+        Janier Rodríguez, jrodriguez at virtualcable dot es
 """
 
 import collections.abc
@@ -352,8 +353,9 @@ class Users(DetailHandler[UserItem]):
                     )  # this throws an exception if there is an error (for example, this auth can't create users)
                     user = parent.users.create(**fields)
                 else:
+                    user = parent.users.select_for_update().get(uuid=process_uuid(item))
+                    self._ensure_can_modify(user)
                     auth.modify_user(fields)  # Notifies authenticator
-                    user = parent.users.get(uuid=process_uuid(item))
                     typing.cast(dict[str, typing.Any], user.__dict__).update(  # pyrefly: ignore[redundant-cast]
                         fields
                     )
@@ -377,11 +379,18 @@ class Users(DetailHandler[UserItem]):
             raise exceptions.rest.RequestError(str(e.message)) from e
         except exceptions.auth.AuthenticatorException as e:
             raise exceptions.rest.RequestError(str(e)) from e
-        except exceptions.rest.RequestError:
+        except (exceptions.rest.RequestError, exceptions.rest.AccessDenied):
             raise  # Re-raise
         except Exception as e:
             logger.error("Error saving user %s: %s", item, e)
             raise exceptions.rest.ResponseError(_("Error saving user")) from e
+
+    def _ensure_can_modify(self, user: "User") -> None:
+        if self._user.is_admin or user == self._user:
+            return
+        if user.is_admin or user.staff_member:
+            logger.warning("Modification of user %s denied due to insufficient rights", user.pretty_name)
+            raise exceptions.rest.AccessDenied(_("Modification of privileged users requires admin rights"))
 
     @typing.override
     def delete_item(self, parent: "Model", item: str) -> None:
