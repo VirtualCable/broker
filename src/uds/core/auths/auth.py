@@ -30,6 +30,7 @@ Provides useful functions for authenticating, used by web interface.
 
 
 Author: Adolfo Gómez, dkmaster at dkmon dot com
+Author: Andres Schumann, aschumann at virtualcable dot es
 """
 
 import base64
