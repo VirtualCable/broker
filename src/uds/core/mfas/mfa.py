@@ -97,7 +97,9 @@ class LoginAllowed(enum.StrEnum):
     DENIED_IF_IN_NETWORKS = "3"
 
     @staticmethod
-    def check_ip_allowed(request: "ExtendedHttpRequest", networks: collections.abc.Iterable[str] | None = None) -> bool:
+    def check_ip_allowed(
+        request: "ExtendedHttpRequest", networks: collections.abc.Iterable[str] | None = None
+    ) -> bool:
         if networks is None:
             return True  # No network restrictions, so we allow
         return any(i.contains(request.ip) for i in models.Network.objects.filter(uuid__in=list(networks)))
@@ -320,7 +322,10 @@ class MFA(Module):
         failed_attempts, last_failure = data
         if int(failed_attempts) < config.GlobalConfig.MAX_LOGIN_TRIES.as_int():
             return int(failed_attempts)
-        if last_failure is not None and last_failure + datetime.timedelta(seconds=_MFA_LOCK_SECONDS) > sql_now():
+        if (
+            last_failure is not None
+            and last_failure + datetime.timedelta(seconds=_MFA_LOCK_SECONDS) > sql_now()
+        ):
             return int(failed_attempts)
         return 0
 
@@ -384,7 +389,13 @@ class MFA(Module):
         validity = validity if validity is not None else 0
         try:
             state = self._get_data(userid)
-            if state and state[0] and state[1] and validity and state[0] + datetime.timedelta(seconds=validity) > sql_now():
+            if (
+                state
+                and state[0]
+                and state[1]
+                and validity
+                and state[0] + datetime.timedelta(seconds=validity) > sql_now()
+            ):
                 # if we have a stored code, check if it's still valid;
                 # if it's still valid, just return without sending a new one
                 return MFA.RESULT.OK
