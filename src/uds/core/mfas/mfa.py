@@ -44,7 +44,7 @@ from django.utils.translation import gettext
 from django.utils.translation import gettext_noop as _
 
 from uds import models
-from uds.core import exceptions
+from uds.core import consts, exceptions
 from uds.core import types
 from uds.core.module import Module
 from uds.core.ui import gui
@@ -148,10 +148,6 @@ class LoginAllowed(enum.StrEnum):
     @staticmethod
     def network_choices() -> list[types.ui.ChoiceItem]:
         return [gui.choice_item(v.uuid, v.name) for v in models.Network.objects.all().order_by("name")]
-
-
-# Seconds a spent MFA attempts budget blocks new codes, counted from the last failure.
-_MFA_LOCK_SECONDS: typing.Final[int] = 300
 
 
 class MFA(Module):
@@ -313,7 +309,7 @@ class MFA(Module):
 
         The budget lives apart from the code and is per user and provider: a new code does not
         reset it, and nothing else does except a success or the end of the lock. Once spent,
-        it blocks for _MFA_LOCK_SECONDS after the last failure, then it starts again.
+        it blocks for consts.auth.MFA_LOCK_SECONDS after the last failure, then it starts again.
         """
         data = self.storage.read_pickled(self._budget_key(userid))
         if not data:
@@ -323,7 +319,7 @@ class MFA(Module):
             return int(failed_attempts)
         if (
             last_failure is not None
-            and last_failure + datetime.timedelta(seconds=_MFA_LOCK_SECONDS) > sql_now()
+            and last_failure + datetime.timedelta(seconds=consts.auth.MFA_LOCK_SECONDS) > sql_now()
         ):
             return int(failed_attempts)
         return 0
