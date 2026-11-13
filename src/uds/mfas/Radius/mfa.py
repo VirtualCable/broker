@@ -27,6 +27,7 @@
 """
 Author: Daniel Torregrosa
 Author: Adolfo Gómez, dkmaster at dkmon dot com
+Author: Andres Schumann, aschumann at virtualcable dot es
 """
 
 import logging
@@ -258,6 +259,7 @@ class RadiusOTP(mfas.MFA):
         if self.send_just_username.value:
             username = username.strip().split("@")[0].split("\\")[-1]
 
+        self._check_budget(userid)
         try:
             err = _("Invalid OTP code")
 
@@ -292,6 +294,7 @@ class RadiusOTP(mfas.MFA):
                     username,
                     request.ip,
                 )
+                self._forget_budget(userid)
                 return
 
         except Exception as e:
@@ -303,4 +306,5 @@ class RadiusOTP(mfas.MFA):
             username,
             request.ip,
         )
+        self._record_failure(userid)
         raise exceptions.auth.MFAError(err)
