@@ -75,9 +75,6 @@ class UdsRPTransportTest(UDSTestCase):
         # Fixed default geometry travels explicitly.
         self.assertEqual(data["screen_width"], 1920)
         self.assertEqual(data["screen_height"], 1080)
-        self.assertEqual(data["max_fullscreen_width"], 1920)
-        self.assertEqual(data["max_fullscreen_height"], 1080)
-        self.assertFalse(data["allow_fullscreen_scaling"])
         # Redirections: audio/clipboard/storage on, the rest off by default.
         redirections = data["redirections"]
         self.assertTrue(redirections["audio"])

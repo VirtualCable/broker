@@ -81,9 +81,6 @@ class UdsRPTransport(BaseUdsRPTransport):
     screen_width = BaseUdsRPTransport.screen_width
     screen_height = BaseUdsRPTransport.screen_height
     session_fps = BaseUdsRPTransport.session_fps
-    allow_fullscreen_scaling = BaseUdsRPTransport.allow_fullscreen_scaling
-    max_fullscreen_width = BaseUdsRPTransport.max_fullscreen_width
-    max_fullscreen_height = BaseUdsRPTransport.max_fullscreen_height
 
     server_port = BaseUdsRPTransport.server_port
     preferred_codec = BaseUdsRPTransport.preferred_codec

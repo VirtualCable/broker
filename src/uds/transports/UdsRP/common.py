@@ -154,9 +154,6 @@ class UrpConnectionParams:
     has_credentials: bool = True
     screen_width: int | None = None
     screen_height: int | None = None
-    allow_fullscreen_scaling: bool | None = None
-    max_fullscreen_width: int | None = None
-    max_fullscreen_height: int | None = None
     redirections: UrpRedirections | None = None
     options: UrpOptions | None = None
 
@@ -304,41 +301,6 @@ class BaseUdsRPTransport(transports.Transport):
         tooltip=_("Capture frames per second of the remote session"),
         tab=types.ui.Tab.DISPLAY,
     )
-    allow_fullscreen_scaling = ui.gui.CheckBoxField(
-        label=_("Fullscreen scaling"),
-        order=33,
-        default=False,
-        tooltip=_(
-            "If checked, going fullscreen stretches the remote image locally. "
-            "The remote resolution is never renegotiated."
-        ),
-        tab=types.ui.Tab.DISPLAY,
-    )
-    max_fullscreen_width = ui.gui.NumericField(
-        label=_("Max fullscreen width"),
-        order=34,
-        length=5,
-        default=DEFAULT_SCREEN_WIDTH,
-        min_value=200,
-        max_value=7680,
-        tooltip=_(
-            "Cap for the remote width when the broker does not fix a size and the client goes fullscreen"
-        ),
-        tab=types.ui.Tab.DISPLAY,
-    )
-    max_fullscreen_height = ui.gui.NumericField(
-        label=_("Max fullscreen height"),
-        order=35,
-        length=5,
-        default=DEFAULT_SCREEN_HEIGHT,
-        min_value=200,
-        max_value=4320,
-        tooltip=_(
-            "Cap for the remote height when the broker does not fix a size and the client goes fullscreen"
-        ),
-        tab=types.ui.Tab.DISPLAY,
-    )
-
     server_port = ui.gui.NumericField(
         label=_("URP Port"),
         order=93,
@@ -504,9 +466,6 @@ class BaseUdsRPTransport(transports.Transport):
             has_credentials=bool(ci.username and ci.password),
             screen_width=width if width > 0 else None,
             screen_height=height if height > 0 else None,
-            allow_fullscreen_scaling=self.allow_fullscreen_scaling.as_bool(),
-            max_fullscreen_width=self.max_fullscreen_width.as_int(),
-            max_fullscreen_height=self.max_fullscreen_height.as_int(),
             redirections=UrpRedirections(
                 audio=self.enable_audio.as_bool(),
                 mic=self.enable_microphone.as_bool(),
