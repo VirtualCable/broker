@@ -218,7 +218,7 @@ class ServerStats:
         w = min(max(0.0, w), 1.0)
 
         if self.memtotal - self.memused < weights.min_memory or (
-            weights.users > 0 and self.current_users >= weights.max_expected_users
+            self.current_users >= weights.max_expected_users
         ):
             return 1000000 + w * 1000000  # At the end of the list
 
