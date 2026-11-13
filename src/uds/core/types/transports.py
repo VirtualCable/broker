@@ -1,4 +1,3 @@
-
 #
 # Copyright (c) 2012-2019 Virtual Cable S.L.
 # All rights reserved.
@@ -58,6 +57,7 @@ class Protocol(enum.StrEnum):
     NICEDCV = "nicedcv"
     SSH = "ssh"
     RGS = "rgs"
+    UDSRP = "udsrp"
     OTHER = "other"
 
     @staticmethod
@@ -71,6 +71,7 @@ class Protocol(enum.StrEnum):
             Protocol.PCOIP,
             Protocol.NICEDCV,
             Protocol.RGS,
+            Protocol.UDSRP,
             Protocol.SSH,
             Protocol.OTHER,
         ) + extra
@@ -110,7 +111,9 @@ class TransportScript:
     script_type: ScriptType
     signature_algorithm: SignatureAlgorithm
     signature_b64: str  # Signature of the script in base64
-    parameters: collections.abc.Mapping[str, typing.Any] = dataclasses.field(default_factory=dict[str, typing.Any])
+    parameters: collections.abc.Mapping[str, typing.Any] = dataclasses.field(
+        default_factory=dict[str, typing.Any]
+    )
     log: TransportLog = dataclasses.field(default_factory=TransportLog)
     associated_ticket: str | None = None  # Ticket associated with this script, if any
 
