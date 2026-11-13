@@ -54,7 +54,6 @@ from uds.core.exceptions.services import ServiceNotReadyError
 from uds.core.types.states import State
 from uds.core.util import log
 from uds.core.util import singleton
-from uds.core.util.decorators import cached
 from uds.core.util.model import generate_uuid
 from uds.core.util.model import sql_now
 from uds.core.util.stats import events
@@ -744,8 +743,6 @@ class UserServiceManager(metaclass=singleton.Singleton):
             deployed_service__service__provider=provider, state__in=states
         ).count()
 
-    # Avoids too many complex queries to database
-    @cached(prefix="max_srvs", timeout=30)  # Less than user service removal check time
     def is_userservice_removal_allowed(self, service_pool: ServicePool) -> bool:
         """
         checks if we can do a "remove" from a deployed service
