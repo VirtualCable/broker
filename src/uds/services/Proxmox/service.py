@@ -434,15 +434,17 @@ class ProxmoxService(DynamicService):
     def snapshot_creation(self, userservice_instance: DynamicUserService) -> None:
         userservice_instance = typing.cast(ProxmoxUserserviceLinked, userservice_instance)
         vmid = int(userservice_instance._vmid)
+        userservice_instance._task = ""
         logger.debug("Using snapshots")
-        # If no snapshot exists for this vm, try to create one for it on background
-        # Lauch an snapshot. We will not wait for it to finish, but instead let it run "as is"
+        # If no snapshot exists for this vm, try to create one for it
         try:
             if not self.provider().api.get_current_vm_snapshot(vmid):
                 logger.debug("No current snapshot")
-                self.provider().api.create_snapshot(
-                    vmid,
-                    name="UDS_Snapshot",
+                userservice_instance._store_task(
+                    self.provider().api.create_snapshot(
+                        vmid,
+                        name="UDS_Snapshot",
+                    )
                 )
         except Exception as e:
             self.do_log(types.log.LogLevel.WARNING, f"Could not create SNAPSHOT for this VM. ({e})")
@@ -451,6 +453,7 @@ class ProxmoxService(DynamicService):
     def snapshot_recovery(self, userservice_instance: DynamicUserService) -> None:
         userservice_instance = typing.cast(ProxmoxUserserviceLinked, userservice_instance)
         vmid = int(userservice_instance._vmid)
+        userservice_instance._task = ""
         try:
             # try to revert to snapshot
             snapshot = self.provider().api.get_current_vm_snapshot(vmid)
