@@ -27,6 +27,7 @@
 """
 Author: Janier Rodríguez, jrodriguez at virtualcable dot es
 """
+
 import datetime
 from unittest import mock
 
@@ -51,19 +52,21 @@ class UserServiceRemoverTest(UDSTestCase):
         super().setUp()
         # Keep destroyed userservices in REMOVING so they count against the limit
         self.enterContext(
-            mock.patch.object(TestUserService, 'destroy', return_value=types.states.TaskState.RUNNING)
+            mock.patch.object(TestUserService, "destroy", return_value=types.states.TaskState.RUNNING)
         )
         provider = services_fixtures.create_db_provider()
-        self.service_pool = services_fixtures.create_db_servicepool(services_fixtures.create_db_service(provider))
+        self.service_pool = services_fixtures.create_db_servicepool(
+            services_fixtures.create_db_service(provider)
+        )
         publication = services_fixtures.create_db_publication(self.service_pool)
         for _ in range(6):
             userservice = services_fixtures.create_db_userservice(self.service_pool, publication)
             userservice.state = State.REMOVABLE
             userservice.state_date = timezone.localtime() - datetime.timedelta(minutes=5)
-            userservice.save(update_fields=['state', 'state_date'])
+            userservice.save(update_fields=["state", "state_date"])
 
     def set_removal_limit(self, limit: int) -> None:
-        self.enterContext(mock.patch.object(TestProvider, 'concurrent_removal_limit', limit))
+        self.enterContext(mock.patch.object(TestProvider, "concurrent_removal_limit", limit))
 
     def run_remover(self) -> None:
         UserServiceRemover(Environment.testing_environment()).run()
