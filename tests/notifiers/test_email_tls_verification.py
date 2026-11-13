@@ -70,3 +70,24 @@ class EmailTlsVerificationTest(UDSTestCase):
         context = self._captured_context("tls")
         self.assertEqual(context.verify_mode, ssl.CERT_REQUIRED)
         self.assertTrue(context.check_hostname)
+
+    def test_verify_ssl_defaults_to_enabled(self) -> None:
+        self.assertTrue(self._notifier("ssl").verify_ssl.as_bool())
+
+    def test_ssl_can_disable_certificate_verification(self) -> None:
+        notifier = self._notifier("ssl")
+        notifier.verify_ssl.value = False
+        with mock.patch("uds.notifiers.email.notifier.smtplib.SMTP_SSL") as smtp_ssl:
+            notifier.login()
+        context = smtp_ssl.call_args.kwargs["context"]
+        self.assertEqual(context.verify_mode, ssl.CERT_NONE)
+        self.assertFalse(context.check_hostname)
+
+    def test_tls_can_disable_certificate_verification(self) -> None:
+        notifier = self._notifier("tls")
+        notifier.verify_ssl.value = False
+        with mock.patch("uds.notifiers.email.notifier.smtplib.SMTP") as smtp:
+            notifier.login()
+        context = smtp.return_value.starttls.call_args.kwargs["context"]
+        self.assertEqual(context.verify_mode, ssl.CERT_NONE)
+        self.assertFalse(context.check_hostname)

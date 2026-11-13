@@ -40,3 +40,19 @@ class EmailMfaTlsVerificationTest(UDSTestCase):
         context = self._captured_context("tls")
         self.assertEqual(context.verify_mode, ssl.CERT_REQUIRED)
         self.assertTrue(context.check_hostname)
+
+    def test_verify_ssl_defaults_to_enabled(self) -> None:
+        self.assertTrue(EmailMFA(self.create_environment(), None).verify_ssl.as_bool())
+
+    def test_ssl_can_disable_certificate_verification(self) -> None:
+        mfa = EmailMFA(self.create_environment(), None)
+        mfa.hostname.value = "smtp.example.test"
+        mfa.security.value = "ssl"
+        mfa.username.value = ""
+        mfa.password.value = ""
+        mfa.verify_ssl.value = False
+        with mock.patch("uds.mfas.Email.mfa.smtplib.SMTP_SSL") as smtp_ssl:
+            mfa.login()
+        context = smtp_ssl.call_args.kwargs["context"]
+        self.assertEqual(context.verify_mode, ssl.CERT_NONE)
+        self.assertFalse(context.check_hostname)

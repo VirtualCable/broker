@@ -31,7 +31,6 @@ Author: Andres Schumann, aschumann at virtualcable dot es
 
 import logging
 import smtplib
-import ssl
 import typing
 
 from email.mime.multipart import MIMEMultipart
@@ -48,6 +47,7 @@ from uds.core.ui import gui
 from uds.core.util import decorators
 from uds.core.util import fields
 from uds.core.util import validators
+from uds.core.util.security import create_client_sslcontext
 
 if typing.TYPE_CHECKING:
     from uds.core.types.requests import ExtendedHttpRequest
@@ -86,6 +86,7 @@ class EmailMFA(mfas.MFA):
         required=True,
         tab=_("SMTP Server"),
     )
+    verify_ssl = fields.verify_ssl_field(order=3, tab=types.ui.Tab.ADVANCED)
     username = gui.TextField(
         length=128,
         label=_("Username"),
@@ -280,7 +281,7 @@ class EmailMFA(mfas.MFA):
             port = None
 
         if self.security.value in ("tls", "ssl"):
-            context = ssl.create_default_context()
+            context = create_client_sslcontext(verify=self.verify_ssl.as_bool())
             if self.security.value == "tls":
                 if port:
                     smtp = smtplib.SMTP(
