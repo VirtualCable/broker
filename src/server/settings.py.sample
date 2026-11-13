@@ -6,15 +6,6 @@ import os
 import sys
 import django
 
-# Django only ships a MySQLdb backend; PyMySQL stands in for it and must be
-# aliased before any database backend is loaded.
-try:
-    import pymysql
-
-    pymysql.install_as_MySQLdb()
-except ImportError:  # tunnel/utility hosts do not ship a database driver
-    pass
-
 # calculated paths for django and the site
 # used as starting points for various other paths
 DJANGO_ROOT = os.path.dirname(os.path.realpath(django.__file__))
