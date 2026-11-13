@@ -27,11 +27,11 @@
 
 """
 Author: Adolfo Gómez, dkmaster at dkmon dot com
+Author: Andres Schumann, aschumann at virtualcable dot es
 """
 
 import logging
 import smtplib
-import ssl
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
 import typing
@@ -40,7 +40,8 @@ from django.utils.translation import gettext_noop as _
 
 from uds.core import messaging, exceptions, types
 from uds.core.ui import gui
-from uds.core.util import validators
+from uds.core.util import fields, validators
+from uds.core.util.security import create_client_sslcontext
 
 
 # Not imported at runtime, just for type checking
@@ -88,6 +89,7 @@ class EmailNotifier(messaging.Notifier):
         required=True,
         tab=_("SMTP Server"),
     )
+    verify_ssl = fields.verify_ssl_field(order=3, tab=types.ui.Tab.ADVANCED)
     username = gui.TextField(
         length=128,
         label=_("Username"),
@@ -202,9 +204,7 @@ class EmailNotifier(messaging.Notifier):
             port = None
 
         if self.security.value in ("tls", "ssl"):
-            context = ssl.create_default_context()
-            context.check_hostname = False
-            context.verify_mode = ssl.CERT_NONE
+            context = create_client_sslcontext(verify=self.verify_ssl.as_bool())
             if self.security.value == "tls":
                 if port:
                     smtp = smtplib.SMTP(
