@@ -5,6 +5,7 @@ const remoteViewerPaths = [
     '/Applications/RemoteViewer.app/Contents/MacOS/RemoteViewer',
     '/opt/homebrew/bin/remote-viewer',
     '/usr/local/bin/remote-viewer',
+    '/opt/local/bin/remote-viewer',
 ];
 
 let remoteViewer = null;
