@@ -197,11 +197,11 @@ class ProxmoxUserserviceLinked(DynamicUserService):
 
     @typing.override
     def op_create_completed(self) -> None:
+        # Options first: HA may start the vm as soon as it is enabled
+        self.service().set_vm_options(int(self._vmid), self.get_unique_id())
+
         # Note: service will only enable ha if it is configured to do so
         self.service().enable_vm_ha(int(self._vmid), True)  # Enable HA before continuing here
-
-        # Set vm mac address now on first interface
-        self.service().provider().api.set_vm_net_mac(int(self._vmid), self.get_unique_id())
 
     @typing.override
     def get_console_connection(

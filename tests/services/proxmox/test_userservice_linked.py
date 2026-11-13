@@ -93,7 +93,7 @@ class TestProxmoxLinkedUserService(UDSTransactionTestCase):
 
             api.enable_vm_ha.assert_called()
 
-            api.set_vm_net_mac.assert_called_with(vmid, userservice._mac)
+            api.set_vm_net_mac.assert_called_with(vmid, userservice._mac, cores=0, memory=0, bridge=None)
             api.get_vm_pool_info.assert_called_with(vmid, service.pool.value)
             api.start_vm.assert_called_with(vmid)
 
@@ -147,7 +147,7 @@ class TestProxmoxLinkedUserService(UDSTransactionTestCase):
             # Shoud not have been called since HA is disabled
             api.enable_vm_ha.assert_not_called()
 
-            api.set_vm_net_mac.assert_called_with(vmid, userservice._mac)
+            api.set_vm_net_mac.assert_called_with(vmid, userservice._mac, cores=0, memory=0, bridge=None)
             api.get_vm_pool_info.assert_called_with(vmid, service.pool.value)
             # Now, start should have been called
             api.start_vm.assert_called_with(vmid)
@@ -202,7 +202,7 @@ class TestProxmoxLinkedUserService(UDSTransactionTestCase):
 
             api.enable_vm_ha.assert_called()
 
-            api.set_vm_net_mac.assert_called_with(vmid, userservice._mac)
+            api.set_vm_net_mac.assert_called_with(vmid, userservice._mac, cores=0, memory=0, bridge=None)
             api.get_vm_pool_info.assert_called_with(vmid, service.pool.value)
             api.start_vm.assert_called_with(vmid)
 

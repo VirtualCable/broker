@@ -67,7 +67,16 @@ def get_storage(parameters: typing.Any) -> types.ui.CallbackResultType:
         extra = _(" shared") if storage.shared else _(" (bound to {})").format(vm_info.node)
         res.append(gui.choice_item(storage.storage, f"{storage.storage} ({space:4.2f} GB/{free:4.2f} GB){extra}"))
 
-    data: types.ui.CallbackResultType = [{"name": "datastore", "choices": res}]
+    networks = [gui.choice_item("", _("Same as template"))] + [
+        gui.choice_item(net["iface"], net["iface"])
+        for net in provider.api.get_node_networks(vm_info.node)
+        if net.get("type") == "bridge"
+    ]
+
+    data: types.ui.CallbackResultType = [
+        {"name": "datastore", "choices": res},
+        {"name": "network", "choices": networks},
+    ]
 
     logger.debug("return data: %s", data)
     return data

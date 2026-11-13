@@ -757,12 +757,16 @@ class ProxmoxClient:
         macaddr: str,
         netid: str | None = None,  # net0, net1, ...
         node: str | None = None,
+        *,
+        cores: int = 0,
+        memory: int = 0,
+        bridge: str | None = None,
     ) -> None:
         node = node or self.get_vm_info(vmid).node
 
         net: types.NetworkConfiguration = types.NetworkConfiguration.null()
 
-        cfg = self.get_vm_config(vmid, node)
+        cfg = self.get_vm_config(vmid, node, force=True)
 
         if netid is None:
             net = cfg.networks[0]
@@ -778,10 +782,18 @@ class ProxmoxClient:
 
         logger.debug("Updating mac address for VM %s: %s=%s", vmid, netid, net.macaddr)
         net.set_mac_address(macaddr)
+        if bridge:
+            net.set_bridge(bridge)
+
+        params: list[tuple[str, str]] = [(net.net, net.netdata)]
+        if cores > 0:
+            params.append(("cores", str(cores)))
+        if memory > 0:
+            params.append(("memory", str(memory)))
 
         self.do_post(
             f"nodes/{node}/qemu/{vmid}/config",
-            data=[(net.net, net.netdata)],
+            data=params,
             node=node,
         )
 
