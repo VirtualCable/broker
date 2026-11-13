@@ -29,6 +29,7 @@
 
 """
 Author: Adolfo Gómez, dkmaster at dkmon dot com
+Author: Andres Schumann, aschumann at virtualcable dot es
 """
 
 import collections.abc
@@ -43,10 +44,11 @@ from django.utils.translation import gettext
 from django.utils.translation import gettext_noop as _
 
 from uds import models
-from uds.core import exceptions
+from uds.core import consts, exceptions
 from uds.core import types
 from uds.core.module import Module
 from uds.core.ui import gui
+from uds.core.util import config
 from uds.core.util.model import sql_now
 
 if typing.TYPE_CHECKING:
@@ -95,7 +97,9 @@ class LoginAllowed(enum.StrEnum):
     DENIED_IF_IN_NETWORKS = "3"
 
     @staticmethod
-    def check_ip_allowed(request: "ExtendedHttpRequest", networks: collections.abc.Iterable[str] | None = None) -> bool:
+    def check_ip_allowed(
+        request: "ExtendedHttpRequest", networks: collections.abc.Iterable[str] | None = None
+    ) -> bool:
         if networks is None:
             return True  # No network restrictions, so we allow
         return any(i.contains(request.ip) for i in models.Network.objects.filter(uuid__in=list(networks)))
@@ -266,26 +270,85 @@ class MFA(Module):
         logger.error("MFA.sendCode not implemented")
         raise exceptions.auth.MFAError("MFA.sendCode not implemented")
 
-    def _get_data(self, request: "ExtendedHttpRequest", userid: str) -> tuple[datetime.datetime, str] | None:
-        """
-        Internal method to get the data from storage
-        """
-        storage_key = request.ip + userid
-        return self.storage.read_pickled(storage_key)
+    @staticmethod
+    def _new_code() -> str:
+        return "".join(random.SystemRandom().choices("0123456789", k=6))
 
-    def _remove_data(self, request: "ExtendedHttpRequest", userid: str) -> None:
+    def _get_data(self, userid: str) -> tuple[datetime.datetime, str] | None:
         """
-        Internal method to remove the data from storage
+        Internal method to get the pending code: (issued_at, code)
         """
-        storage_key = request.ip + userid
-        self.storage.remove(storage_key)
+        data = self.storage.read_pickled(userid)
+        if not data:
+            return None
+        issued_at, code, *_rest = data
+        return issued_at, code
 
-    def _put_data(self, request: "ExtendedHttpRequest", userid: str, code: str) -> None:
+    def _remove_data(self, userid: str) -> None:
         """
-        Internal method to put the data into storage
+        Internal method to remove the pending code (the attempts budget is kept)
         """
-        storage_key = request.ip + userid
-        self.storage.save_pickled(storage_key, (sql_now(), code))
+        self.storage.remove(userid)
+
+    def _put_data(self, userid: str, code: str) -> None:
+        """
+        Internal method to store a freshly issued code
+        """
+        # Storage creates first and updates on conflict, which breaks an outer transaction;
+        # removing the old record first keeps the write a plain insert.
+        self.storage.remove(userid)
+        self.storage.save_pickled(userid, (sql_now(), code))
+
+    @staticmethod
+    def _budget_key(userid: str) -> str:
+        return "mfa-attempts:" + userid
+
+    def _budget(self, userid: str) -> int:
+        """
+        Failed attempts spent by the user on this provider.
+
+        The budget lives apart from the code and is per user and provider: a new code does not
+        reset it, and nothing else does except a success or the end of the lock. Once spent,
+        it blocks for consts.auth.MFA_LOCK_SECONDS after the last failure, then it starts again.
+        """
+        data = self.storage.read_pickled(self._budget_key(userid))
+        if not data:
+            return 0
+        failed_attempts, last_failure = data
+        if int(failed_attempts) < config.GlobalConfig.MAX_LOGIN_TRIES.as_int():
+            return int(failed_attempts)
+        if (
+            last_failure is not None
+            and last_failure + datetime.timedelta(seconds=consts.auth.MFA_LOCK_SECONDS) > sql_now()
+        ):
+            return int(failed_attempts)
+        return 0
+
+    def _check_budget(self, userid: str) -> None:
+        """
+        Raises if the budget is spent. The pending code, if any, is voided.
+        """
+        if self._budget(userid) >= config.GlobalConfig.MAX_LOGIN_TRIES.as_int():
+            self._remove_data(userid)
+            raise exceptions.auth.MFAError("Too many invalid MFA code attempts")
+
+    def _record_failure(self, userid: str) -> None:
+        """
+        Counts a failed code. When it spends the budget, the pending code is voided and this raises.
+        Providers that validate on their own (TOTP, RADIUS) call it on every rejected code.
+        """
+        failed_attempts = self._budget(userid) + 1
+        self.storage.remove(self._budget_key(userid))
+        self.storage.save_pickled(self._budget_key(userid), (failed_attempts, sql_now()))
+        if failed_attempts >= config.GlobalConfig.MAX_LOGIN_TRIES.as_int():
+            self._remove_data(userid)
+            raise exceptions.auth.MFAError("Too many invalid MFA code attempts")
+
+    def _forget_budget(self, userid: str) -> None:
+        """
+        Called on a valid code: the attempts start again from zero.
+        """
+        self.storage.remove(self._budget_key(userid))
 
     def process(
         self,
@@ -316,20 +379,27 @@ class MFA(Module):
             MFA.RESULT.ALLOW if the user does not need to enter the MFA code (i.e. fail to send the code)
             Raises an error if the code was not sent and was required to be sent
         """
-        # try to get the stored code
-        data = self._get_data(request, userid)
+        self._check_budget(userid)
+
         validity = validity if validity is not None else 0
         try:
-            if data and validity and data[0] + datetime.timedelta(seconds=validity) > sql_now():
+            state = self._get_data(userid)
+            if (
+                state
+                and state[0]
+                and state[1]
+                and validity
+                and state[0] + datetime.timedelta(seconds=validity) > sql_now()
+            ):
                 # if we have a stored code, check if it's still valid;
                 # if it's still valid, just return without sending a new one
                 return MFA.RESULT.OK
         except Exception:
-            # if we have a problem, just remove the stored code
-            self._remove_data(request, userid)
+            # Unreadable stored code: a new one is issued below
+            logger.warning("Unreadable MFA code for user, issuing a new one")
 
         # Generate a 6 digit code (0-9)
-        code = "".join(random.SystemRandom().choices("0123456789", k=6))
+        code = self._new_code()
         logger.debug("Generated OTP is %s", code)
 
         # Send the code to the user
@@ -337,8 +407,8 @@ class MFA(Module):
         # pylint: disable=assignment-from-no-return
         result = self.send_code(request, userid, username, identifier, code)
 
-        # Store the code in the database, own storage space, if no exception was raised
-        self._put_data(request, userid, code)
+        # Store the code. The attempts budget is not touched: a new code does not reset it
+        self._put_data(userid, code)
 
         return result
 
@@ -373,24 +443,30 @@ class MFA(Module):
             In case the user is removed from db an recreated, the user id will be different.
             (this is a desired behaviour, as the user is different, even if the name is the same)
         """
-        # Validate the code
+        self._check_budget(userid)
         try:
             err = _("Invalid MFA code")
 
-            data = self._get_data(request, userid)
-            if data and len(data) == 2:
-                validity = validity if validity is not None else 0
-                if validity > 0 and data[0] + datetime.timedelta(seconds=validity) < sql_now():
-                    # if it is no more valid, raise an error
-                    # Remove stored code and raise error
-                    self._remove_data(request, userid)
-                    raise exceptions.auth.MFAError("MFA Code expired")
+            state = self._get_data(userid)
+            if state is None or not state[1]:
+                self._record_failure(userid)
+                raise exceptions.auth.MFAError(err)
+            issued_at, stored_code = state
 
-                # Check if the code is valid
-                if data[1] == code:
-                    # Code is valid, remove it from storage
-                    self._remove_data(request, userid)
-                    return
+            validity = validity if validity is not None else 0
+            if validity > 0 and issued_at + datetime.timedelta(seconds=validity) < sql_now():
+                # Expired code: it is voided, the attempts are kept
+                self._remove_data(userid)
+                raise exceptions.auth.MFAError("MFA Code expired")
+
+            if stored_code == code:
+                # Valid code: forget the code and the attempts
+                self._remove_data(userid)
+                self._forget_budget(userid)
+                return
+
+            self._record_failure(userid)
+            raise exceptions.auth.MFAError(err)
         except Exception as e:
             # Any error means invalid code
             err = str(e)
