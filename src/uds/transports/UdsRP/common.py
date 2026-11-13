@@ -112,6 +112,7 @@ class TicketPayloadData:
     credentials: TicketCredentials | None = None
     display: TicketDisplayPolicy | None = None
     wallpaper_off: bool = True
+    interactive_credentials: bool = False
     console_conflict: str = "take_over"
     console_takeover: str = "logoff"
     console_conflict_timeout_secs: int = 30
@@ -137,7 +138,6 @@ class UrpRedirections:
 
 @dataclasses.dataclass
 class UrpOptions:
-    privacy_screen: bool | None = None
     preferred_codec: str | None = None  # None = auto (ladder)
 
 
@@ -350,13 +350,6 @@ class BaseUdsRPTransport(transports.Transport):
         tooltip=_("Port where the URP service listens on the VM. Defaults to 14433."),
         tab=types.ui.Tab.ADVANCED,
     )
-    privacy_screen = ui.gui.CheckBoxField(
-        label=_("Privacy screen"),
-        order=94,
-        default=False,
-        tooltip=_("If checked, the physical console of the VM is blanked while the session is active"),
-        tab=types.ui.Tab.ADVANCED,
-    )
     preferred_codec = ui.gui.ChoiceField(
         label=_("Preferred codec"),
         order=95,
@@ -488,6 +481,9 @@ class BaseUdsRPTransport(transports.Transport):
                 lock=self.allow_lock.as_bool(),
             ),
             wallpaper_off=self.wallpaper_off.as_bool(),
+            # "Empty creds" means the client collects them interactively:
+            # allow the agent to accept them (SessionCredentials).
+            interactive_credentials=self.force_empty_creds.as_bool(),
             console_conflict=self.console_policy.value,
             console_takeover=self.console_takeover.value,
             console_conflict_timeout_secs=self.console_conflict_timeout.as_int(),
@@ -521,7 +517,6 @@ class BaseUdsRPTransport(transports.Transport):
                 storage=self.enable_storage.as_bool(),
             ),
             options=UrpOptions(
-                privacy_screen=self.privacy_screen.as_bool(),
                 preferred_codec=codec if codec != "auto" else None,
             ),
         )

@@ -86,7 +86,6 @@ class UdsRPTransport(BaseUdsRPTransport):
     max_fullscreen_height = BaseUdsRPTransport.max_fullscreen_height
 
     server_port = BaseUdsRPTransport.server_port
-    privacy_screen = BaseUdsRPTransport.privacy_screen
     preferred_codec = BaseUdsRPTransport.preferred_codec
     console_policy = BaseUdsRPTransport.console_policy
     console_takeover = BaseUdsRPTransport.console_takeover

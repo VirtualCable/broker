@@ -87,8 +87,8 @@ class UdsRPTransportTest(UDSTestCase):
         self.assertFalse(redirections["printing"])
         self.assertFalse(redirections["webcam"])
         self.assertFalse(redirections["smartcard"])
-        # Options: privacy off, codec auto → omitted.
-        self.assertFalse(data["options"]["privacy_screen"])
+        # Options: codec auto → omitted (privacy screen was dropped: the agent
+        # ignores the flag, it is incompatible with console-mirror capture).
         self.assertNotIn("preferred_codec", data["options"])
         # Credentials: username/domain travel for prefill, never the password.
         self.assertEqual(data["user"], "testuser")
@@ -174,6 +174,7 @@ class UdsRPTransportTest(UDSTestCase):
             },
         )
         self.assertTrue(payload["wallpaper_off"])
+        self.assertFalse(payload["interactive_credentials"])
         self.assertEqual(payload["console_conflict"], "take_over")
         self.assertEqual(payload["console_takeover"], "logoff")
         self.assertEqual(payload["console_conflict_timeout_secs"], 30)
@@ -194,8 +195,11 @@ class UdsRPTransportTest(UDSTestCase):
         transport = self._transport()
         transport.force_empty_creds.value = True
 
-        # Empty creds → no auto-logon credentials in the ticket.
-        self.assertNotIn("credentials", transport.build_ticket_payload(_connection_data("", "", "")).as_dict())
+        # Empty creds → no auto-logon credentials in the ticket, and the
+        # agent is told to accept the client's interactive credentials.
+        payload = transport.build_ticket_payload(_connection_data("", "", "")).as_dict()
+        self.assertNotIn("credentials", payload)
+        self.assertTrue(payload["interactive_credentials"])
 
     def test_payload_display_omitted_when_unset(self) -> None:
         transport = self._transport()
