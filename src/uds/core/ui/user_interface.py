@@ -1215,6 +1215,14 @@ class gui:
 
         @property
         def value(self) -> str:  # pyrefly: ignore[missing-override-decorator]
+            if self.value is None:
+                # Choices can be a callback, resolve
+                choices = (
+                    self._field_info.choices()
+                    if callable(self._field_info.choices)
+                    else self._field_info.choices
+                )
+                return gui.as_str(choices[0].id if choices else None)
             return gui.as_str(super().value)
 
         @value.setter
