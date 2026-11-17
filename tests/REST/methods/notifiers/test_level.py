@@ -34,6 +34,9 @@ from uds import models
 
 from ....utils import rest
 
+EMAIL_TYPE: typing.Final[str] = "emailNotifications"
+WEBHOOK_EVENT_TYPE: typing.Final[str] = "webhookNotifications"
+WEBHOOK_LOG_TYPE: typing.Final[str] = "webhookLogNotifications"
 
 
 class NotifiersLevelTest(rest.test.RESTTestCase):
@@ -44,11 +47,25 @@ class NotifiersLevelTest(rest.test.RESTTestCase):
         super().setUp()
         self.login()
 
+    def _gui_field_names(self, for_type: str) -> list[str]:
+        response = self.client.rest_get(f"messaging/notifiers/gui/{for_type}")
+        self.assertEqual(response.status_code, 200, response.content)
+        return [element["name"] for element in response.json()]
+
     def _table_field(self, name: str) -> dict[str, typing.Any]:
         response = self.client.rest_get("messaging/notifiers/tableinfo")
         self.assertEqual(response.status_code, 200, response.content)
         fields: list[dict[str, typing.Any]] = response.json()["fields"]
         return next(field[name] for field in fields if name in field)
+
+    def test_event_only_notifier_has_no_level_field(self) -> None:
+        self.assertNotIn("level", self._gui_field_names(WEBHOOK_EVENT_TYPE))
+
+    def test_log_notifiers_keep_the_level_field_before_enabled(self) -> None:
+        for for_type in (WEBHOOK_LOG_TYPE, EMAIL_TYPE):
+            with self.subTest(for_type=for_type):
+                names = self._gui_field_names(for_type)
+                self.assertLess(names.index("level"), names.index("enabled"))
 
     def test_table_level_column_maps_stored_values_to_level_names(self) -> None:
         level_column = self._table_field("level")
