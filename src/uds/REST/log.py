@@ -86,8 +86,8 @@ UUID_REPLACER: tuple[
     ("calendars", models.Calendar),
     ("accounts", models.Account),
     ("mfa", models.MFA),
-    ("gallery", models.Image),
-    ("messaging", models.Notifier),
+    ("gallery/images", models.Image),
+    ("messaging/notifiers", models.Notifier),
 )
 
 # (master, detail) routes whose detail items are user services: .../master/uuid/detail/uuid

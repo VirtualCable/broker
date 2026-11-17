@@ -2,6 +2,7 @@
 Author: Janier Rodríguez, jrodriguez at virtualcable dot es
 """
 
+from uds import models
 from uds.REST import log as rest_log
 
 from ..fixtures import services as services_fixtures
@@ -53,4 +54,20 @@ class ReplacePathTest(UDSTestCase):
         self.assertEqual(
             rest_log.replace_path(path),
             f'/uds/rest/servicespools/[{self.pool.name}]/services/{UNKNOWN_UUID}',
+        )
+
+    def test_notifier_is_named(self) -> None:
+        notifier = models.Notifier.objects.create(name='events webhook', data_type='webhook')
+        path = f'/uds/rest/messaging/notifiers/{notifier.uuid}'
+        self.assertEqual(
+            rest_log.replace_path(path),
+            f'/uds/rest/messaging/notifiers/[{notifier.name}]',
+        )
+
+    def test_gallery_image_is_named(self) -> None:
+        image = models.Image.objects.create(name='icon', data=b'', thumb=b'')
+        path = f'/uds/rest/gallery/images/{image.uuid}'
+        self.assertEqual(
+            rest_log.replace_path(path),
+            f'/uds/rest/gallery/images/[{image.name}]',
         )
