@@ -188,6 +188,14 @@ class UdsRPTransportTest(UDSTestCase):
 
         _assert_no_none(self._payload(self._transport()))
 
+    def test_window_mode_defaults_to_fullscreen(self) -> None:
+        self.assertEqual(self._params(self._transport())["window_mode"], "fullscreen")
+
+    def test_window_mode_follows_transport_setting(self) -> None:
+        transport = self._transport()
+        transport.window_mode.value = "minimized"
+        self.assertEqual(self._params(transport)["window_mode"], "minimized")
+
     def test_payload_without_credentials_when_empty(self) -> None:
         transport = self._transport()
         transport.force_empty_creds.value = True

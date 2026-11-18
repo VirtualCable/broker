@@ -154,6 +154,7 @@ class UrpConnectionParams:
     has_credentials: bool = True
     screen_width: int | None = None
     screen_height: int | None = None
+    window_mode: str | None = None
     redirections: UrpRedirections | None = None
     options: UrpOptions | None = None
 
@@ -299,6 +300,19 @@ class BaseUdsRPTransport(transports.Transport):
         min_value=1,
         max_value=60,
         tooltip=_("Capture frames per second of the remote session"),
+        tab=types.ui.Tab.DISPLAY,
+    )
+    window_mode = ui.gui.ChoiceField(
+        label=_("Window mode"),
+        order=33,
+        default="fullscreen",
+        choices=[
+            ui.gui.choice_item("fullscreen", _("Full screen")),
+            ui.gui.choice_item("maximized", _("Maximized")),
+            ui.gui.choice_item("windowed", _("Windowed")),
+            ui.gui.choice_item("minimized", _("Minimized")),
+        ],
+        tooltip=_("How the session window opens on the client"),
         tab=types.ui.Tab.DISPLAY,
     )
     server_port = ui.gui.NumericField(
@@ -466,6 +480,7 @@ class BaseUdsRPTransport(transports.Transport):
             has_credentials=bool(ci.username and ci.password),
             screen_width=width if width > 0 else None,
             screen_height=height if height > 0 else None,
+            window_mode=self.window_mode.value,
             redirections=UrpRedirections(
                 audio=self.enable_audio.as_bool(),
                 mic=self.enable_microphone.as_bool(),

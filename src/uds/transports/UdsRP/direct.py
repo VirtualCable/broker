@@ -81,6 +81,7 @@ class UdsRPTransport(BaseUdsRPTransport):
     screen_width = BaseUdsRPTransport.screen_width
     screen_height = BaseUdsRPTransport.screen_height
     session_fps = BaseUdsRPTransport.session_fps
+    window_mode = BaseUdsRPTransport.window_mode
 
     server_port = BaseUdsRPTransport.server_port
     preferred_codec = BaseUdsRPTransport.preferred_codec
