@@ -86,7 +86,7 @@ class Notifiers(ModelHandler[NotifierItem]):
         ui_utils.TableBuilder(_("Notifiers"))
         .icon(name="name", title=_("Name"))
         .text_column(name="type_name", title=_("Type"))
-        .text_column(name="level", title=_("Level"))
+        .dict_column(name="level", title=_("Level"), dct={str(level.value): level.name for level in LogLevel})
         .boolean(name="enabled", title=_("Enabled"))
         .text_column(name="comments", title=_("Comments"))
         .text_column(name="tags", title=_("Tags"), visible=False)
