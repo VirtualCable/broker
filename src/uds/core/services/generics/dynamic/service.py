@@ -133,7 +133,7 @@ class DynamicService(services.Service, abc.ABC):  # pylint: disable=too-many-pub
     @typing.override
     def allow_putting_back_to_cache(self) -> bool:
         if self.has_field("put_back_to_cache"):
-            return self.put_back_to_cache.value != "no"
+            return self.put_back_to_cache.value in ("yes", "snapshot")
         return False
 
     @typing.override

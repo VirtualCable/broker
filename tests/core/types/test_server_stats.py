@@ -97,3 +97,41 @@ class ServerStatsStorageTest(UDSTestCase):
         get.assert_not_called()
         assert stats is not None
         self.assertEqual(stats.current_users, 1)
+
+
+class ServerStatsLoadTest(UDSTestCase):
+    @staticmethod
+    def _stats(*, current_users: int) -> types.servers.ServerStats:
+        return types.servers.ServerStats(
+            memused=1024 * 1024 * 1024,
+            memtotal=4 * 1024 * 1024 * 1024,
+            cpuused=0.2,
+            current_users=current_users,
+        )
+
+    def test_one_user_gives_a_normal_load(self) -> None:
+        load = self._stats(current_users=1).load()
+
+        self.assertLessEqual(load, 1.0)
+
+    def test_load_is_unchanged_below_max_expected_users(self) -> None:
+        weights = types.servers.ServerStatsWeights()
+        load_one = self._stats(current_users=1).load(weights=weights)
+        load_two = self._stats(current_users=2).load(weights=weights)
+
+        self.assertLess(load_one, load_two)
+        self.assertLessEqual(load_two, 1.0)
+
+    def test_reaching_max_expected_users_moves_server_to_the_end(self) -> None:
+        weights = types.servers.ServerStatsWeights(max_expected_users=100)
+
+        load = self._stats(current_users=100).load(weights=weights)
+
+        self.assertGreaterEqual(load, 1_000_000)
+
+    def test_users_weight_zero_ignores_user_count(self) -> None:
+        weights = types.servers.ServerStatsWeights(users=0, max_expected_users=100)
+
+        load = self._stats(current_users=500).load(weights=weights)
+
+        self.assertLessEqual(load, 1.0)
