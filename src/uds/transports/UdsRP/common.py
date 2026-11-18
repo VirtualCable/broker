@@ -46,8 +46,14 @@ logger: logging.Logger = logging.getLogger(__name__)
 READY_CACHE_TIMEOUT = 30
 
 DEFAULT_SERVER_PORT = 14433
-DEFAULT_SCREEN_WIDTH = 1920
-DEFAULT_SCREEN_HEIGHT = 1080
+SCREEN_SIZES: typing.Final[tuple[tuple[int, int], ...]] = (
+    (800, 600),
+    (1024, 768),
+    (1600, 1200),
+    (1920, 1080),
+    (3840, 2160),
+)
+DEFAULT_SCREEN_SIZE = "1920x1080"
 DEFAULT_SESSION_FPS = 30
 
 # Payload schema version of the session ticket consumed by the URP agent
@@ -268,28 +274,14 @@ class BaseUdsRPTransport(transports.Transport):
         tab=types.ui.Tab.PARAMETERS,
     )
 
-    screen_width = ui.gui.NumericField(
-        label=_("Screen width"),
+    screen_size = ui.gui.ChoiceField(
+        label=_("Screen size"),
         order=30,
-        length=5,
-        default=DEFAULT_SCREEN_WIDTH,
-        min_value=0,
-        tooltip=_(
-            "Remote session width in pixels. 0 = not fixed by the broker "
-            "(the client uses its local monitor geometry, capped)"
-        ),
-        tab=types.ui.Tab.DISPLAY,
-    )
-    screen_height = ui.gui.NumericField(
-        label=_("Screen height"),
-        order=31,
-        length=5,
-        default=DEFAULT_SCREEN_HEIGHT,
-        min_value=0,
-        tooltip=_(
-            "Remote session height in pixels. 0 = not fixed by the broker "
-            "(the client uses its local monitor geometry, capped)"
-        ),
+        default=DEFAULT_SCREEN_SIZE,
+        choices=[
+            ui.gui.choice_item(f"{width}x{height}", f"{width} x {height}") for width, height in SCREEN_SIZES
+        ],
+        tooltip=_("Resolution of the remote session"),
         tab=types.ui.Tab.DISPLAY,
     )
     session_fps = ui.gui.NumericField(
@@ -429,6 +421,10 @@ class BaseUdsRPTransport(transports.Transport):
             domain=domain,
         )
 
+    def selected_screen_size(self) -> tuple[int, int]:
+        width, _separator, height = self.screen_size.value.partition("x")
+        return int(width), int(height)
+
     def build_ticket_payload(self, ci: types.connections.ConnectionData) -> TicketPayloadData:
         """Builds the session definition consumed by the VM agent."""
         credentials: TicketCredentials | None = None
@@ -439,10 +435,8 @@ class BaseUdsRPTransport(transports.Transport):
                 domain=ci.domain or "",
             )
 
-        display: TicketDisplayPolicy | None = None
-        width, height = self.screen_width.as_int(), self.screen_height.as_int()
-        if width > 0 and height > 0:
-            display = TicketDisplayPolicy(width=width, height=height, fps=self.session_fps.as_int())
+        width, height = self.selected_screen_size()
+        display = TicketDisplayPolicy(width=width, height=height, fps=self.session_fps.as_int())
 
         return TicketPayloadData(
             credentials=credentials,
@@ -469,7 +463,7 @@ class BaseUdsRPTransport(transports.Transport):
         self, server: str, ticket: str, ci: types.connections.ConnectionData
     ) -> UrpConnectionParams:
         """Builds the params for the launcher's `URP.start(data)`."""
-        width, height = self.screen_width.as_int(), self.screen_height.as_int()
+        width, height = self.selected_screen_size()
         codec = self.preferred_codec.value
         return UrpConnectionParams(
             server=server,
@@ -478,8 +472,8 @@ class BaseUdsRPTransport(transports.Transport):
             user=ci.username or None,
             domain=ci.domain or None,
             has_credentials=bool(ci.username and ci.password),
-            screen_width=width if width > 0 else None,
-            screen_height=height if height > 0 else None,
+            screen_width=width,
+            screen_height=height,
             window_mode=self.window_mode.value,
             redirections=UrpRedirections(
                 audio=self.enable_audio.as_bool(),
