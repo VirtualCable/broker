@@ -516,6 +516,9 @@ class TaskInfo:
     def is_failure(self) -> bool:
         return self.status.is_failure()
 
+    def failure_reason(self) -> str:
+        return " / ".join(self.error_info) or self.result or f"XAPI task {self.name} failed"
+
 
 class MacTypeSetter(typing.TypedDict):
     mac: str
