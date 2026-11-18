@@ -27,6 +27,7 @@
 
 """
 Author: Adolfo Gómez, dkmaster at dkmon dot com
+Author: Janier Rodríguez, jrodriguez at virtualcable dot es
 """
 
 import typing
@@ -85,15 +86,40 @@ UUID_REPLACER: tuple[
     ("calendars", models.Calendar),
     ("accounts", models.Account),
     ("mfa", models.MFA),
-    ("gallery", models.Image),
-    ("messaging", models.Notifier),
+    ("gallery/images", models.Image),
+    ("messaging/notifiers", models.Notifier),
 )
+
+# (master, detail) routes whose detail items are user services: .../master/uuid/detail/uuid
+USERSERVICE_DETAIL_ROUTES: typing.Final[frozenset[tuple[str, str]]] = frozenset(
+    {
+        ("servicespools", "services"),
+        ("servicespools", "cache"),
+        ("metapools", "services"),
+    }
+)
+
+
+def _replace_userservice_uuids(path: str) -> str:
+    segments = path.split("/")
+    for index, route in enumerate(zip(segments, segments[2:])):
+        uuid_index = index + 3
+        if route not in USERSERVICE_DETAIL_ROUTES or uuid_index >= len(segments):
+            continue
+        uuid = segments[uuid_index]
+        try:
+            name = models.UserService.objects.get(uuid=uuid).friendly_name
+            path = path.replace(uuid, f"[{name}]")
+        except Exception:  # nosec: intentionally broad exception
+            pass
+    return path
 
 
 def replace_path(path: str) -> str:
     """Replaces uuids in path with names
     All paths are in the form .../type/uuid/...
     """
+    path = _replace_userservice_uuids(path)
     for type, model in UUID_REPLACER:
         if f"/{type}/" in path:
             try:
