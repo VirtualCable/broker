@@ -97,8 +97,20 @@ class TicketVideoPolicy:
     preset: str | None = None
 
 
-# Launcher codec preference -> agent preset. "auto" leaves the choice to the agent.
-VIDEO_PRESET_BY_CODEC: typing.Final[dict[str, str]] = {"vp9": "vp9-balanced"}
+# Agent encoder presets offered to the user: every catalog preset except raw.
+# raw is laboratory-only (its keyframes do not fit the agent send queue).
+VIDEO_PRESETS: typing.Final[tuple[tuple[str, str], ...]] = (
+    ("vp9-low-latency", "VP9 low latency"),
+    ("vp9-balanced", "VP9 balanced"),
+    ("vp9-bandwidth-saver", "VP9 bandwidth saver"),
+    ("vp8-low-latency", "VP8 low latency"),
+    ("vp8-balanced", "VP8 balanced"),
+    ("vp8-quality", "VP8 quality"),
+    ("rects-jpeg", "JPEG rects"),
+    ("rects-jpeg-fast", "JPEG rects (fast)"),
+)
+# Values saved before the preset list existed: H.264 is not supported by the agent.
+LEGACY_PREFERRED_CODECS: typing.Final[dict[str, str]] = {"vp9": "vp9-balanced", "h264": "auto"}
 
 
 @dataclasses.dataclass
@@ -328,12 +340,12 @@ class BaseUdsRPTransport(transports.Transport):
         label=_("Preferred codec"),
         order=95,
         default="auto",
-        choices=[
-            ui.gui.choice_item("auto", _("Auto (quality ladder)")),
-            ui.gui.choice_item("vp9", _("VP9")),
-            ui.gui.choice_item("h264", _("H.264")),
-        ],
-        tooltip=_("Video codec preference. Auto lets the session ladder pick the best available."),
+        choices=[ui.gui.choice_item("auto", _("Auto (quality ladder)"))]
+        + [ui.gui.choice_item(name, _(label)) for name, label in VIDEO_PRESETS],
+        tooltip=_(
+            "Fixed encoder preset for the session. Any choice other than Auto turns off the "
+            "quality ladder and keeps that codec. Auto lets the session ladder pick."
+        ),
         tab=types.ui.Tab.ADVANCED,
     )
     console_policy = ui.gui.ChoiceField(
@@ -427,6 +439,12 @@ class BaseUdsRPTransport(transports.Transport):
             domain=domain,
         )
 
+    def selected_video_preset(self) -> str | None:
+        """Agent preset for the chosen codec option; None keeps the session ladder."""
+        codec = self.preferred_codec.value
+        codec = LEGACY_PREFERRED_CODECS.get(codec, codec)
+        return None if codec == "auto" else codec
+
     def build_ticket_payload(self, ci: types.connections.ConnectionData) -> TicketPayloadData:
         """Builds the session definition consumed by the VM agent."""
         credentials: TicketCredentials | None = None
@@ -443,7 +461,7 @@ class BaseUdsRPTransport(transports.Transport):
             display = TicketDisplayPolicy(width=width, height=height, fps=self.session_fps.as_int())
 
         video: TicketVideoPolicy | None = None
-        if preset := VIDEO_PRESET_BY_CODEC.get(self.preferred_codec.value):
+        if preset := self.selected_video_preset():
             video = TicketVideoPolicy(preset=preset)
 
         return TicketPayloadData(
@@ -473,7 +491,6 @@ class BaseUdsRPTransport(transports.Transport):
     ) -> UrpConnectionParams:
         """Builds the params for the launcher's `URP.start(data)`."""
         width, height = self.screen_width.as_int(), self.screen_height.as_int()
-        codec = self.preferred_codec.value
         return UrpConnectionParams(
             server=server,
             port=self.server_port.as_int(),
@@ -493,6 +510,6 @@ class BaseUdsRPTransport(transports.Transport):
                 storage=self.enable_storage.as_bool(),
             ),
             options=UrpOptions(
-                preferred_codec=codec if codec != "auto" else None,
+                preferred_codec=self.selected_video_preset(),
             ),
         )
