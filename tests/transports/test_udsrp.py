@@ -188,6 +188,16 @@ class UdsRPTransportTest(UDSTestCase):
 
         _assert_no_none(self._payload(self._transport()))
 
+    def test_payload_video_preset_follows_preferred_codec(self) -> None:
+        transport = self._transport()
+        transport.preferred_codec.value = "vp9"
+        self.assertEqual(self._payload(transport)["video"], {"preset": "vp9-balanced"})
+
+    def test_payload_has_no_video_when_codec_is_auto(self) -> None:
+        transport = self._transport()
+        transport.preferred_codec.value = "auto"
+        self.assertNotIn("video", self._payload(transport))
+
     def test_payload_without_credentials_when_empty(self) -> None:
         transport = self._transport()
         transport.force_empty_creds.value = True
