@@ -128,6 +128,12 @@ class UdsRPTransportTest(UDSTestCase):
         self.assertEqual(data["screen_width"], 1024)
         self.assertEqual(data["screen_height"], 768)
 
+    def test_unknown_screen_size_falls_back_to_default(self) -> None:
+        transport = self._transport()
+        transport.screen_size.value = "1234x567"
+
+        self.assertEqual(transport.selected_screen_size(), (1920, 1080))
+
     def test_screen_size_offers_the_five_fixed_sizes(self) -> None:
         values = [choice.id for choice in self._transport().screen_size._field_info.choices]
 

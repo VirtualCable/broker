@@ -54,6 +54,13 @@ SCREEN_SIZES: typing.Final[tuple[tuple[int, int], ...]] = (
     (3840, 2160),
 )
 DEFAULT_SCREEN_SIZE = "1920x1080"
+
+
+def _default_screen_size() -> tuple[int, int]:
+    width, _separator, height = DEFAULT_SCREEN_SIZE.partition("x")
+    return int(width), int(height)
+
+
 DEFAULT_SESSION_FPS = 30
 
 # Payload schema version of the session ticket consumed by the URP agent
@@ -422,8 +429,11 @@ class BaseUdsRPTransport(transports.Transport):
         )
 
     def selected_screen_size(self) -> tuple[int, int]:
-        width, _separator, height = self.screen_size.value.partition("x")
-        return int(width), int(height)
+        value = self.screen_size.value
+        for width, height in SCREEN_SIZES:
+            if value == f"{width}x{height}":
+                return width, height
+        return _default_screen_size()
 
     def build_ticket_payload(self, ci: types.connections.ConnectionData) -> TicketPayloadData:
         """Builds the session definition consumed by the VM agent."""
