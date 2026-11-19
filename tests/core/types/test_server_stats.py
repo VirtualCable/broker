@@ -68,7 +68,9 @@ class ServerStatsStorageTest(UDSTestCase):
         self.assertFalse(stats.is_valid)
 
     def test_write_stamps_now(self) -> None:
-        self.server.stats = types.servers.ServerStats(memtotal=1024, stamp=fixtures_servers.outdated_stats_stamp())
+        self.server.stats = types.servers.ServerStats(
+            memtotal=1024, stamp=fixtures_servers.outdated_stats_stamp()
+        )
 
         stats = self.server.stats
 
@@ -132,6 +134,15 @@ class ServerStatsLoadTest(UDSTestCase):
     def test_users_weight_zero_ignores_user_count(self) -> None:
         weights = types.servers.ServerStatsWeights(users=0, max_expected_users=100)
 
+        load = self._stats(current_users=50).load(weights=weights)
+        load_empty = self._stats(current_users=0).load(weights=weights)
+
+        self.assertEqual(load, load_empty)
+        self.assertLessEqual(load, 1.0)
+
+    def test_users_weight_zero_still_applies_max_expected_users(self) -> None:
+        weights = types.servers.ServerStatsWeights(users=0, max_expected_users=100)
+
         load = self._stats(current_users=500).load(weights=weights)
 
-        self.assertLessEqual(load, 1.0)
+        self.assertGreaterEqual(load, 1_000_000)
