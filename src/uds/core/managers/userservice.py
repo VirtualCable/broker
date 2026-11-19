@@ -342,6 +342,9 @@ class UserServiceManager(metaclass=singleton.Singleton):
         user_service_copy.state = State.REMOVED
         user_service_copy.os_state = State.USABLE
         # Save the new element.
+        # Save first: logging before save inserts an uds_log row with a
+        # NULL owner_id, which is silently swallowed here but poisons an enclosing
+        # transaction.atomic() (e.g. release_from_logout), breaking the following save().
         user_service_copy.save()
 
         log.log(user_service_copy, types.log.LogLevel.INFO, "Service moved to cache")
@@ -542,31 +545,41 @@ class UserServiceManager(metaclass=singleton.Singleton):
 
         This method will take care of removing the service if no cache is desired of cache already full (on servicepool)
         """
-        if userservice.allow_putting_back_to_cache() is False:
-            userservice.release()  # Normal release
-            return
+        # Concurrent logout events may hit the same userservice (duplicate actor logouts,
+        # or the unused-services worker racing an interactive logout). Lock and re-read so
+        # only the first event acts on a consistent state.
+        with transaction.atomic():
+            try:
+                userservice = UserService.objects.select_for_update().get(id=userservice.id)
+            except UserService.DoesNotExist:
+                # A prior logout event already released and cleaned the row. Nothing to do.
+                return
 
-        # Some sanity checks, should never happen
-        if userservice.cache_level != types.services.CacheLevel.NONE:
-            logger.error("Cache level is not NONE for userservice %s on release_on_logout", userservice)
-            # Already on a cache, simply return
-            return
+            if userservice.allow_putting_back_to_cache() is False:
+                userservice.release()  # Normal release
+                return
 
-        if userservice.is_usable() is False:
-            logger.error("State is not USABLE for userservice %s on release_on_logout", userservice)
-            userservice.release()
-            return
+            # Already handled by a prior logout (back in cache). Skip: releasing here
+            # would destroy the cache element that logout just returned.
+            if userservice.cache_level != types.services.CacheLevel.NONE:
+                logger.debug("Userservice %s already handled on logout, skipping", userservice)
+                return
 
-        # Fix assigned value, because "userservice" will not count as assigned anymore
-        stats = self.get_cache_servicepool_stats(userservice.deployed_service, assigned_increased_by=-1)
+            if userservice.is_usable() is False:
+                logger.error("State is not USABLE for userservice %s on release_on_logout", userservice)
+                userservice.release()
+                return
 
-        # Note that only moves to cache L1
-        # Also, we can get values for L2 cache, thats why we check L1 for overflow and needed
-        if stats.is_null() or stats.has_l1_cache_overflow():
-            userservice.release()  # Mark as removable
-        elif stats.is_l1_cache_growth_required():
-            # Move the clone of the user service to cache, and set our as REMOVED
-            self.forced_move_assigned_to_cache_l1(userservice)
+            # Fix assigned value, because "userservice" will not count as assigned anymore
+            stats = self.get_cache_servicepool_stats(userservice.deployed_service, assigned_increased_by=-1)
+
+            # Note that only moves to cache L1
+            # Also, we can get values for L2 cache, thats why we check L1 for overflow and needed
+            if stats.is_null() or stats.has_l1_cache_overflow():
+                userservice.release()  # Mark as removable
+            elif stats.is_l1_cache_growth_required():
+                # Move the clone of the user service to cache, and set our as REMOVED
+                self.forced_move_assigned_to_cache_l1(userservice)
 
     def get_existing_assignation_for_user(self, service_pool: ServicePool, user: User) -> UserService | None:
         existing = service_pool.assigned_user_services().filter(

@@ -170,7 +170,7 @@ class XenLinkedUserService(DynamicUserService, autoserializable.AutoSerializable
                 self._vmid = task_info.result
                 return types.states.TaskState.FINISHED
             elif task_info.is_failure():
-                raise Exception(f"Error deploying machine: {task_info.result}")
+                raise Exception(f"Error deploying machine: {task_info.failure_reason()}")
 
         return types.states.TaskState.RUNNING
 
@@ -185,7 +185,7 @@ class XenLinkedUserService(DynamicUserService, autoserializable.AutoSerializable
             if not task_info.status.is_done():
                 return types.states.TaskState.RUNNING
             if not task_info.is_success():
-                raise Exception(task_info.result)
+                raise Exception(task_info.failure_reason())
         except xen_exceptions.XenRetryableError:
             return types.states.TaskState.RUNNING
         except Exception as e:

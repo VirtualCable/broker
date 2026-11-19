@@ -33,6 +33,9 @@ import typing
 from tests.utils.test import UDSTestCase
 from uds.core import types
 from uds.transports.UdsRP.common import (
+    DEFAULT_SCREEN_SIZE,
+    SCREEN_SIZES,
+    VIDEO_PRESETS,
     BaseUdsRPTransport,
     TicketChannelPolicy,
     TicketPayloadData,
@@ -125,15 +128,33 @@ class UdsRPTransportTest(UDSTestCase):
 
         _assert_no_none(self._params(self._transport()))
 
-    def test_unset_geometry_is_omitted(self) -> None:
-        """0 on either axis means "not fixed by the broker": keys are omitted."""
+    def test_screen_size_choice_sets_geometry(self) -> None:
         transport = self._transport()
-        transport.screen_width.value = 0
-        transport.screen_height.value = 0
+        transport.screen_size.value = "1024x768"
 
         data = self._params(transport)
-        self.assertNotIn("screen_width", data)
-        self.assertNotIn("screen_height", data)
+        self.assertEqual(data["screen_width"], 1024)
+        self.assertEqual(data["screen_height"], 768)
+
+    def test_unknown_screen_size_falls_back_to_default(self) -> None:
+        transport = self._transport()
+        transport.screen_size.value = "1234x567"
+
+        self.assertEqual(transport.selected_screen_size(), (1920, 1080))
+
+    def test_default_screen_size_is_one_of_the_offered_sizes(self) -> None:
+        self.assertIn(DEFAULT_SCREEN_SIZE, SCREEN_SIZES)
+
+    def test_screen_size_field_defaults_to_default_screen_size(self) -> None:
+        transport = self._transport()
+
+        self.assertEqual(transport.screen_size.value, "1920x1080")
+        self.assertEqual(transport.selected_screen_size(), DEFAULT_SCREEN_SIZE)
+
+    def test_screen_size_offers_the_five_fixed_sizes(self) -> None:
+        values = [choice.id for choice in self._transport().screen_size._field_info.choices]
+
+        self.assertEqual(values, ["800x600", "1024x768", "1600x1200", "1920x1080", "3840x2160"])
 
     def test_codec_is_not_sent_to_the_launcher(self) -> None:
         transport = self._transport()
@@ -249,12 +270,12 @@ class UdsRPTransportTest(UDSTestCase):
         self.assertNotIn("credentials", payload)
         self.assertTrue(payload["interactive_credentials"])
 
-    def test_payload_display_omitted_when_unset(self) -> None:
+    def test_payload_display_follows_screen_size(self) -> None:
         transport = self._transport()
-        transport.screen_width.value = 0
-        transport.screen_height.value = 0
+        transport.screen_size.value = "800x600"
 
-        self.assertNotIn("display", self._payload(transport))
+        self.assertEqual(self._payload(transport)["display"]["width"], 800)
+        self.assertEqual(self._payload(transport)["display"]["height"], 600)
 
     def test_payload_console_policy(self) -> None:
         transport = self._transport()

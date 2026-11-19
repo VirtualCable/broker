@@ -286,3 +286,107 @@ class TestUserserviceManager(UDSTransactionTestCase):
                 return_value=actor_answer,
             ):
                 self.assertEqual(self.manager.check_user_service_uuid(userservice), expected, actor_answer)
+
+    def test_release_from_logout_no_cache_releases(self) -> None:
+        # When the pool does not allow putting machines back to cache, a logout must
+        # mark the assigned service for removal.
+        userservice = services_fixtures.create_db_assigned_userservices()[0]
+
+        with mock.patch.object(models.UserService, "allow_putting_back_to_cache", return_value=False):
+            self.manager.release_from_logout(userservice)
+
+        userservice.refresh_from_db()
+        self.assertEqual(userservice.state, core_types.states.State.REMOVABLE)
+
+    def test_release_from_logout_not_usable_is_released(self) -> None:
+        # A machine that is not in cache and no longer usable (e.g. ERROR) must still be
+        # released on logout, as before: only a machine already back in cache is skipped.
+        userservice = services_fixtures.create_db_assigned_userservices()[0]
+        userservice.cache_level = core_types.services.CacheLevel.NONE
+        userservice.state = core_types.states.State.ERROR
+        userservice.save()
+
+        with mock.patch.object(models.UserService, "allow_putting_back_to_cache", return_value=True):
+            self.manager.release_from_logout(userservice)
+
+        userservice.refresh_from_db()
+        self.assertEqual(userservice.state, core_types.states.State.REMOVABLE)
+
+    def test_release_from_logout_already_in_cache_is_not_released(self) -> None:
+        # Regression: a duplicate/racing logout event must NOT release a machine that a
+        # previous logout already returned to cache (cache_level != NONE). Doing so would
+        # destroy a valid cache element and cause the observed cache churn.
+        userservice = services_fixtures.create_db_assigned_userservices()[0]
+        # Simulate the machine already moved back to L1 cache by a prior logout event
+        userservice.cache_level = core_types.services.CacheLevel.L1
+        userservice.user = None
+        userservice.state = core_types.states.State.USABLE
+        userservice.os_state = core_types.states.State.USABLE
+        userservice.save()
+
+        with mock.patch.object(models.UserService, "allow_putting_back_to_cache", return_value=True):
+            self.manager.release_from_logout(userservice)
+
+        userservice.refresh_from_db()
+        # Must remain a valid, usable L1 cache element, NOT marked for removal
+        self.assertEqual(userservice.cache_level, core_types.services.CacheLevel.L1)
+        self.assertEqual(userservice.state, core_types.states.State.USABLE)
+
+    def test_release_from_logout_missing_row_is_noop(self) -> None:
+        # Regression: a prior logout event may have already released AND cleaned the row
+        # before this one grabs the lock. The select_for_update re-read then raises
+        # DoesNotExist, which must be swallowed as a no-op instead of crashing the caller.
+        userservice = services_fixtures.create_db_assigned_userservices()[0]
+        # Simulate the row already gone by the time we re-read under lock
+        models.UserService.objects.filter(id=userservice.id).delete()
+
+        # Must not raise (DoesNotExist swallowed) and must leave nothing behind
+        self.manager.release_from_logout(userservice)
+
+        self.assertEqual(models.UserService.objects.all().count(), 0)
+
+    def test_release_from_logout_l1_overflow_releases(self) -> None:
+        # An assigned logout on a pool whose L1 cache is already full/overflowing must
+        # release the machine rather than returning it to cache.
+        userservice = services_fixtures.create_db_assigned_userservices()[0]
+
+        stats = mock.NonCallableMagicMock()
+        stats.is_null.return_value = False
+        stats.has_l1_cache_overflow.return_value = True
+        stats.is_l1_cache_growth_required.return_value = False
+
+        with (
+            mock.patch.object(models.UserService, "allow_putting_back_to_cache", return_value=True),
+            mock.patch.object(UserServiceManager, "get_cache_servicepool_stats", return_value=stats),
+        ):
+            self.manager.release_from_logout(userservice)
+
+        userservice.refresh_from_db()
+        self.assertEqual(userservice.state, core_types.states.State.REMOVABLE)
+        # No clone created: the machine was released, not moved to cache
+        self.assertEqual(models.UserService.objects.all().count(), 1)
+
+    def test_release_from_logout_l1_growth_moves_to_cache(self) -> None:
+        # An assigned logout on a pool that still needs more L1 cache must move the
+        # machine back to L1 (clone-as-REMOVED bookkeeping), not release it.
+        userservice = services_fixtures.create_db_assigned_userservices()[0]
+        orig_uuid = userservice.uuid
+
+        stats = mock.NonCallableMagicMock()
+        stats.is_null.return_value = False
+        stats.has_l1_cache_overflow.return_value = False
+        stats.is_l1_cache_growth_required.return_value = True
+
+        with (
+            mock.patch.object(models.UserService, "allow_putting_back_to_cache", return_value=True),
+            mock.patch.object(UserServiceManager, "get_cache_servicepool_stats", return_value=stats),
+        ):
+            self.manager.release_from_logout(userservice)
+
+        # forced_move_assigned_to_cache_l1 clones the record: original goes to L1 cache,
+        # a REMOVED copy is kept for tracking -> 2 rows total.
+        self.assertEqual(models.UserService.objects.all().count(), 2)
+        moved = models.UserService.objects.get(uuid=orig_uuid)
+        self.assertEqual(moved.cache_level, core_types.services.CacheLevel.L1)
+        self.assertIsNone(moved.user)
+        self.assertTrue(moved.is_usable())

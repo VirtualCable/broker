@@ -46,8 +46,20 @@ logger: logging.Logger = logging.getLogger(__name__)
 READY_CACHE_TIMEOUT = 30
 
 DEFAULT_SERVER_PORT = 14433
-DEFAULT_SCREEN_WIDTH = 1920
-DEFAULT_SCREEN_HEIGHT = 1080
+SCREEN_SIZES: typing.Final[tuple[tuple[int, int], ...]] = (
+    (800, 600),
+    (1024, 768),
+    (1600, 1200),
+    (1920, 1080),
+    (3840, 2160),
+)
+DEFAULT_SCREEN_SIZE: typing.Final[tuple[int, int]] = (1920, 1080)
+
+
+def _screen_size_id(size: tuple[int, int]) -> str:
+    return "{}x{}".format(*size)
+
+
 DEFAULT_SESSION_FPS = 30
 
 # Payload schema version of the session ticket consumed by the URP agent
@@ -283,28 +295,12 @@ class BaseUdsRPTransport(transports.Transport):
         tab=types.ui.Tab.PARAMETERS,
     )
 
-    screen_width = ui.gui.NumericField(
-        label=_("Screen width"),
+    screen_size = ui.gui.ChoiceField(
+        label=_("Screen size"),
         order=30,
-        length=5,
-        default=DEFAULT_SCREEN_WIDTH,
-        min_value=0,
-        tooltip=_(
-            "Remote session width in pixels. 0 = not fixed by the broker "
-            "(the client uses its local monitor geometry, capped)"
-        ),
-        tab=types.ui.Tab.DISPLAY,
-    )
-    screen_height = ui.gui.NumericField(
-        label=_("Screen height"),
-        order=31,
-        length=5,
-        default=DEFAULT_SCREEN_HEIGHT,
-        min_value=0,
-        tooltip=_(
-            "Remote session height in pixels. 0 = not fixed by the broker "
-            "(the client uses its local monitor geometry, capped)"
-        ),
+        default=_screen_size_id(DEFAULT_SCREEN_SIZE),
+        choices=[ui.gui.choice_item(_screen_size_id(size), "{} x {}".format(*size)) for size in SCREEN_SIZES],
+        tooltip=_("Resolution of the remote session"),
         tab=types.ui.Tab.DISPLAY,
     )
     session_fps = ui.gui.NumericField(
@@ -445,6 +441,13 @@ class BaseUdsRPTransport(transports.Transport):
             domain=domain,
         )
 
+    def selected_screen_size(self) -> tuple[int, int]:
+        value = self.screen_size.value
+        for size in SCREEN_SIZES:
+            if value == _screen_size_id(size):
+                return size
+        return DEFAULT_SCREEN_SIZE
+
     def selected_video_preset(self) -> str | None:
         """Agent preset for the chosen codec option; None keeps the session ladder."""
         codec = self.preferred_codec.value
@@ -460,10 +463,8 @@ class BaseUdsRPTransport(transports.Transport):
                 domain=ci.domain or "",
             )
 
-        display: TicketDisplayPolicy | None = None
-        width, height = self.screen_width.as_int(), self.screen_height.as_int()
-        if width > 0 and height > 0:
-            display = TicketDisplayPolicy(width=width, height=height, fps=self.session_fps.as_int())
+        width, height = self.selected_screen_size()
+        display = TicketDisplayPolicy(width=width, height=height, fps=self.session_fps.as_int())
 
         video: TicketVideoPolicy | None = None
         if preset := self.selected_video_preset():
@@ -495,7 +496,7 @@ class BaseUdsRPTransport(transports.Transport):
         self, server: str, ticket: str, ci: types.connections.ConnectionData
     ) -> UrpConnectionParams:
         """Builds the params for the launcher's `URP.start(data)`."""
-        width, height = self.screen_width.as_int(), self.screen_height.as_int()
+        width, height = self.selected_screen_size()
         return UrpConnectionParams(
             server=server,
             port=self.server_port.as_int(),
@@ -503,8 +504,8 @@ class BaseUdsRPTransport(transports.Transport):
             user=ci.username or None,
             domain=ci.domain or None,
             has_credentials=bool(ci.username and ci.password),
-            screen_width=width if width > 0 else None,
-            screen_height=height if height > 0 else None,
+            screen_width=width,
+            screen_height=height,
             window_mode=self.window_mode.value,
             redirections=UrpRedirections(
                 audio=self.enable_audio.as_bool(),
