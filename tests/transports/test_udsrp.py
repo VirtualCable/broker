@@ -33,6 +33,8 @@ import typing
 from tests.utils.test import UDSTestCase
 from uds.core import types
 from uds.transports.UdsRP.common import (
+    DEFAULT_SCREEN_SIZE,
+    SCREEN_SIZES,
     VIDEO_PRESETS,
     BaseUdsRPTransport,
     TicketChannelPolicy,
@@ -138,6 +140,15 @@ class UdsRPTransportTest(UDSTestCase):
         transport.screen_size.value = "1234x567"
 
         self.assertEqual(transport.selected_screen_size(), (1920, 1080))
+
+    def test_default_screen_size_is_one_of_the_offered_sizes(self) -> None:
+        self.assertIn(DEFAULT_SCREEN_SIZE, SCREEN_SIZES)
+
+    def test_screen_size_field_defaults_to_default_screen_size(self) -> None:
+        transport = self._transport()
+
+        self.assertEqual(transport.screen_size.value, "1920x1080")
+        self.assertEqual(transport.selected_screen_size(), DEFAULT_SCREEN_SIZE)
 
     def test_screen_size_offers_the_five_fixed_sizes(self) -> None:
         values = [choice.id for choice in self._transport().screen_size._field_info.choices]

@@ -53,12 +53,11 @@ SCREEN_SIZES: typing.Final[tuple[tuple[int, int], ...]] = (
     (1920, 1080),
     (3840, 2160),
 )
-DEFAULT_SCREEN_SIZE = "1920x1080"
+DEFAULT_SCREEN_SIZE: typing.Final[tuple[int, int]] = (1920, 1080)
 
 
-def _default_screen_size() -> tuple[int, int]:
-    width, _separator, height = DEFAULT_SCREEN_SIZE.partition("x")
-    return int(width), int(height)
+def _screen_size_id(size: tuple[int, int]) -> str:
+    return "{}x{}".format(*size)
 
 
 DEFAULT_SESSION_FPS = 30
@@ -307,10 +306,8 @@ class BaseUdsRPTransport(transports.Transport):
     screen_size = ui.gui.ChoiceField(
         label=_("Screen size"),
         order=30,
-        default=DEFAULT_SCREEN_SIZE,
-        choices=[
-            ui.gui.choice_item(f"{width}x{height}", f"{width} x {height}") for width, height in SCREEN_SIZES
-        ],
+        default=_screen_size_id(DEFAULT_SCREEN_SIZE),
+        choices=[ui.gui.choice_item(_screen_size_id(size), "{} x {}".format(*size)) for size in SCREEN_SIZES],
         tooltip=_("Resolution of the remote session"),
         tab=types.ui.Tab.DISPLAY,
     )
@@ -453,10 +450,10 @@ class BaseUdsRPTransport(transports.Transport):
 
     def selected_screen_size(self) -> tuple[int, int]:
         value = self.screen_size.value
-        for width, height in SCREEN_SIZES:
-            if value == f"{width}x{height}":
-                return width, height
-        return _default_screen_size()
+        for size in SCREEN_SIZES:
+            if value == _screen_size_id(size):
+                return size
+        return DEFAULT_SCREEN_SIZE
 
     def selected_video_preset(self) -> str | None:
         """Agent preset for the chosen codec option; None keeps the session ladder."""
