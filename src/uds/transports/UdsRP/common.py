@@ -109,19 +109,17 @@ class TicketVideoPolicy:
     preset: str | None = None
 
 
-# Agent encoder presets offered to the user: every catalog preset except raw.
-# raw is laboratory-only (its keyframes do not fit the agent send queue).
+# Agent encoder presets offered to the user. raw is laboratory-only (its keyframes
+# do not fit the agent send queue). h264 is an alias the agent gates on the client
+# decoder and the host hardware encoder, falling back to the ladder otherwise.
 VIDEO_PRESETS: typing.Final[tuple[tuple[str, str], ...]] = (
+    ("h264", _("H.264 (hardware)")),
     ("vp9-low-latency", _("VP9 low latency")),
     ("vp9-balanced", _("VP9 balanced")),
     ("vp9-bandwidth-saver", _("VP9 bandwidth saver")),
-    ("vp8-low-latency", _("VP8 low latency")),
-    ("vp8-balanced", _("VP8 balanced")),
-    ("vp8-quality", _("VP8 quality")),
     ("rects-jpeg", _("JPEG rects")),
     ("rects-jpeg-fast", _("JPEG rects (fast)")),
 )
-LEGACY_PREFERRED_CODECS: typing.Final[dict[str, str]] = {"vp9": "vp9-balanced", "h264": "auto"}
 
 
 @dataclasses.dataclass
@@ -172,11 +170,6 @@ class UrpRedirections:
 
 
 @dataclasses.dataclass
-class UrpOptions:
-    preferred_codec: str | None = None  # None = auto (ladder)
-
-
-@dataclasses.dataclass
 class UrpConnectionParams:
     server: str
     ticket: str
@@ -191,7 +184,6 @@ class UrpConnectionParams:
     screen_height: int | None = None
     window_mode: str | None = None
     redirections: UrpRedirections | None = None
-    options: UrpOptions | None = None
 
     def as_dict(self) -> dict[str, typing.Any]:
         return _pruned_dict(self)
@@ -353,7 +345,8 @@ class BaseUdsRPTransport(transports.Transport):
         + [ui.gui.choice_item(name, label) for name, label in VIDEO_PRESETS],
         tooltip=_(
             "Fixed encoder preset for the session. Any choice other than Auto turns off the "
-            "quality ladder and keeps that codec. Auto lets the session ladder pick."
+            "quality ladder and keeps that codec. Auto lets the session ladder pick. "
+            "If the chosen preset cannot be used, the session falls back to the ladder."
         ),
         tab=types.ui.Tab.ADVANCED,
     )
@@ -458,7 +451,6 @@ class BaseUdsRPTransport(transports.Transport):
     def selected_video_preset(self) -> str | None:
         """Agent preset for the chosen codec option; None keeps the session ladder."""
         codec = self.preferred_codec.value
-        codec = LEGACY_PREFERRED_CODECS.get(codec, codec)
         return None if codec == "auto" else codec
 
     def build_ticket_payload(self, ci: types.connections.ConnectionData) -> TicketPayloadData:
@@ -523,8 +515,5 @@ class BaseUdsRPTransport(transports.Transport):
                 webcam=self.enable_webcam.as_bool(),
                 smartcard=self.enable_smartcard.as_bool(),
                 storage=self.enable_storage.as_bool(),
-            ),
-            options=UrpOptions(
-                preferred_codec=self.selected_video_preset(),
             ),
         )

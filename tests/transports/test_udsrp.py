@@ -91,9 +91,10 @@ class UdsRPTransportTest(UDSTestCase):
         self.assertFalse(redirections["printing"])
         self.assertFalse(redirections["webcam"])
         self.assertFalse(redirections["smartcard"])
-        # Options: codec auto → omitted (privacy screen was dropped: the agent
-        # ignores the flag, it is incompatible with console-mirror capture).
-        self.assertNotIn("preferred_codec", data["options"])
+        # No launcher options: the codec travels in the ticket, and privacy screen
+        # was dropped (the agent ignores the flag, it is incompatible with
+        # console-mirror capture).
+        self.assertNotIn("options", data)
         # Credentials: username/domain travel for prefill, never the password.
         self.assertEqual(data["user"], "testuser")
         self.assertEqual(data["domain"], "TESTDOM")
@@ -155,40 +156,39 @@ class UdsRPTransportTest(UDSTestCase):
 
         self.assertEqual(values, ["800x600", "1024x768", "1600x1200", "1920x1080", "3840x2160"])
 
-    def test_preferred_codec_sent_when_not_auto(self) -> None:
+    def test_codec_is_not_sent_to_the_launcher(self) -> None:
         transport = self._transport()
         transport.preferred_codec.value = "vp9-balanced"
 
-        self.assertEqual(self._params(transport)["options"]["preferred_codec"], "vp9-balanced")
+        self.assertNotIn("options", self._params(transport))
 
-    def test_codec_choices_are_presets_without_raw_or_h264(self) -> None:
+    def test_codec_choices_match_the_agent_presets(self) -> None:
         values = [choice.id for choice in self._transport().preferred_codec._field_info.choices]
 
-        self.assertEqual(values[0], "auto")
-        self.assertEqual(values[1:], [name for name, _label in VIDEO_PRESETS])
-        self.assertNotIn("raw", values)
-        self.assertNotIn("h264", values)
-        self.assertNotIn("vp9", values)
+        self.assertEqual(
+            values,
+            [
+                "auto",
+                "h264",
+                "vp9-low-latency",
+                "vp9-balanced",
+                "vp9-bandwidth-saver",
+                "rects-jpeg",
+                "rects-jpeg-fast",
+            ],
+        )
 
-    def test_legacy_vp9_value_maps_to_balanced_preset(self) -> None:
-        transport = self._transport()
-        transport.preferred_codec.value = "vp9"
-
-        self.assertEqual(self._payload(transport)["video"], {"preset": "vp9-balanced"})
-
-    def test_legacy_h264_value_falls_back_to_auto(self) -> None:
+    def test_h264_is_sent_as_a_literal_preset(self) -> None:
         transport = self._transport()
         transport.preferred_codec.value = "h264"
 
-        self.assertNotIn("video", self._payload(transport))
-        self.assertNotIn("preferred_codec", self._params(transport)["options"])
+        self.assertEqual(self._payload(transport)["video"], {"preset": "h264"})
 
     def test_fixed_codec_is_sent_as_the_chosen_preset(self) -> None:
         transport = self._transport()
         transport.preferred_codec.value = "rects-jpeg"
 
         self.assertEqual(self._payload(transport)["video"], {"preset": "rects-jpeg"})
-        self.assertEqual(self._params(transport)["options"]["preferred_codec"], "rects-jpeg")
 
     def test_redirection_flags(self) -> None:
         transport = self._transport()
@@ -252,7 +252,7 @@ class UdsRPTransportTest(UDSTestCase):
 
     def test_payload_video_preset_follows_preferred_codec(self) -> None:
         transport = self._transport()
-        transport.preferred_codec.value = "vp9"
+        transport.preferred_codec.value = "vp9-balanced"
         self.assertEqual(self._payload(transport)["video"], {"preset": "vp9-balanced"})
 
     def test_payload_has_no_video_when_codec_is_auto(self) -> None:
