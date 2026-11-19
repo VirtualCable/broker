@@ -91,6 +91,26 @@ class TicketDisplayPolicy:
 
 
 @dataclasses.dataclass
+class TicketVideoPolicy:
+    """Video pipeline preset the agent encodes with (names from codec::PRESETS)."""
+
+    preset: str | None = None
+
+
+# Agent encoder presets offered to the user. raw is laboratory-only (its keyframes
+# do not fit the agent send queue). h264 is an alias the agent gates on the client
+# decoder and the host hardware encoder, falling back to the ladder otherwise.
+VIDEO_PRESETS: typing.Final[tuple[tuple[str, str], ...]] = (
+    ("h264", _("H.264 (hardware)")),
+    ("vp9-low-latency", _("VP9 low latency")),
+    ("vp9-balanced", _("VP9 balanced")),
+    ("vp9-bandwidth-saver", _("VP9 bandwidth saver")),
+    ("rects-jpeg", _("JPEG rects")),
+    ("rects-jpeg-fast", _("JPEG rects (fast)")),
+)
+
+
+@dataclasses.dataclass
 class TicketChannelPolicy:
     """Channels the session offers (the client cannot enable what this disables)."""
 
@@ -111,6 +131,7 @@ class TicketPayloadData:
     version: int = PAYLOAD_VERSION
     credentials: TicketCredentials | None = None
     display: TicketDisplayPolicy | None = None
+    video: TicketVideoPolicy | None = None
     wallpaper_off: bool = True
     interactive_credentials: bool = False
     console_conflict: str = "take_over"
@@ -137,11 +158,6 @@ class UrpRedirections:
 
 
 @dataclasses.dataclass
-class UrpOptions:
-    preferred_codec: str | None = None  # None = auto (ladder)
-
-
-@dataclasses.dataclass
 class UrpConnectionParams:
     server: str
     ticket: str
@@ -156,7 +172,6 @@ class UrpConnectionParams:
     screen_height: int | None = None
     window_mode: str | None = None
     redirections: UrpRedirections | None = None
-    options: UrpOptions | None = None
 
     def as_dict(self) -> dict[str, typing.Any]:
         return _pruned_dict(self)
@@ -330,12 +345,13 @@ class BaseUdsRPTransport(transports.Transport):
         label=_("Preferred codec"),
         order=95,
         default="auto",
-        choices=[
-            ui.gui.choice_item("auto", _("Auto (quality ladder)")),
-            ui.gui.choice_item("vp9", _("VP9")),
-            ui.gui.choice_item("h264", _("H.264")),
-        ],
-        tooltip=_("Video codec preference. Auto lets the session ladder pick the best available."),
+        choices=[ui.gui.choice_item("auto", _("Auto (quality ladder)"))]
+        + [ui.gui.choice_item(name, label) for name, label in VIDEO_PRESETS],
+        tooltip=_(
+            "Fixed encoder preset for the session. Any choice other than Auto turns off the "
+            "quality ladder and keeps that codec. Auto lets the session ladder pick. "
+            "If the chosen preset cannot be used, the session falls back to the ladder."
+        ),
         tab=types.ui.Tab.ADVANCED,
     )
     console_policy = ui.gui.ChoiceField(
@@ -429,6 +445,11 @@ class BaseUdsRPTransport(transports.Transport):
             domain=domain,
         )
 
+    def selected_video_preset(self) -> str | None:
+        """Agent preset for the chosen codec option; None keeps the session ladder."""
+        codec = self.preferred_codec.value
+        return None if codec == "auto" else codec
+
     def build_ticket_payload(self, ci: types.connections.ConnectionData) -> TicketPayloadData:
         """Builds the session definition consumed by the VM agent."""
         credentials: TicketCredentials | None = None
@@ -444,9 +465,14 @@ class BaseUdsRPTransport(transports.Transport):
         if width > 0 and height > 0:
             display = TicketDisplayPolicy(width=width, height=height, fps=self.session_fps.as_int())
 
+        video: TicketVideoPolicy | None = None
+        if preset := self.selected_video_preset():
+            video = TicketVideoPolicy(preset=preset)
+
         return TicketPayloadData(
             credentials=credentials,
             display=display,
+            video=video,
             channels=TicketChannelPolicy(
                 audio=self.enable_audio.as_bool(),
                 clipboard=self.enable_clipboard.as_bool(),
@@ -470,7 +496,6 @@ class BaseUdsRPTransport(transports.Transport):
     ) -> UrpConnectionParams:
         """Builds the params for the launcher's `URP.start(data)`."""
         width, height = self.screen_width.as_int(), self.screen_height.as_int()
-        codec = self.preferred_codec.value
         return UrpConnectionParams(
             server=server,
             port=self.server_port.as_int(),
@@ -489,8 +514,5 @@ class BaseUdsRPTransport(transports.Transport):
                 webcam=self.enable_webcam.as_bool(),
                 smartcard=self.enable_smartcard.as_bool(),
                 storage=self.enable_storage.as_bool(),
-            ),
-            options=UrpOptions(
-                preferred_codec=codec if codec != "auto" else None,
             ),
         )
