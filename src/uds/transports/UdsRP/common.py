@@ -91,6 +91,17 @@ class TicketDisplayPolicy:
 
 
 @dataclasses.dataclass
+class TicketVideoPolicy:
+    """Video pipeline preset the agent encodes with (names from codec::PRESETS)."""
+
+    preset: str | None = None
+
+
+# Launcher codec preference -> agent preset. "auto" leaves the choice to the agent.
+VIDEO_PRESET_BY_CODEC: typing.Final[dict[str, str]] = {"vp9": "vp9-balanced"}
+
+
+@dataclasses.dataclass
 class TicketChannelPolicy:
     """Channels the session offers (the client cannot enable what this disables)."""
 
@@ -111,6 +122,7 @@ class TicketPayloadData:
     version: int = PAYLOAD_VERSION
     credentials: TicketCredentials | None = None
     display: TicketDisplayPolicy | None = None
+    video: TicketVideoPolicy | None = None
     wallpaper_off: bool = True
     interactive_credentials: bool = False
     console_conflict: str = "take_over"
@@ -444,9 +456,14 @@ class BaseUdsRPTransport(transports.Transport):
         if width > 0 and height > 0:
             display = TicketDisplayPolicy(width=width, height=height, fps=self.session_fps.as_int())
 
+        video: TicketVideoPolicy | None = None
+        if preset := VIDEO_PRESET_BY_CODEC.get(self.preferred_codec.value):
+            video = TicketVideoPolicy(preset=preset)
+
         return TicketPayloadData(
             credentials=credentials,
             display=display,
+            video=video,
             channels=TicketChannelPolicy(
                 audio=self.enable_audio.as_bool(),
                 clipboard=self.enable_clipboard.as_bool(),
