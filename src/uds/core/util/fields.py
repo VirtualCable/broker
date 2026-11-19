@@ -505,6 +505,7 @@ def put_back_to_cache_field(
         order=order,
         label=_("Put back to cache"),
         tooltip=_("On machine releasy by logout, put it back to cache instead of deleting if possible."),
+        default="no",
         choices=choices,
         tab=tab,
     )

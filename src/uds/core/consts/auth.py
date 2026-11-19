@@ -47,6 +47,9 @@ DENY: typing.Final[str] = "d"
 MFA_COOKIE_NAME: typing.Final[str] = "mfa_status"
 CSRF_FIELD: typing.Final[str] = "csrfmiddlewaretoken"
 
+# Seconds a spent MFA attempts budget blocks new codes, counted from the last failure.
+MFA_LOCK_SECONDS: typing.Final[int] = 300
+
 # Headers
 # Auth token
 AUTH_TOKEN_HEADER: typing.Final[str] = "X-Auth-Token"

@@ -27,6 +27,7 @@
 """
 Author: Adolfo Gómez, dkmaster at dkmon dot com
 Author: Janier Rodríguez, jrodriguez at virtualcable dot es
+Author: Andres Schumann, aschumann at virtualcable dot es
 """
 
 import base64
@@ -108,7 +109,8 @@ class TOTP_MFA(mfas.MFA):
             True if we need to ask for OTP
         """
         return not any(
-            request.ip in i for i in models.Network.objects.filter(uuid__in=self.allow_skip_mfa_from_networks.value)
+            request.ip in i
+            for i in models.Network.objects.filter(uuid__in=self.allow_skip_mfa_from_networks.value)
         )
 
     @typing.override
@@ -202,10 +204,12 @@ class TOTP_MFA(mfas.MFA):
         if self.ask_for_otp(request) is False:
             return
 
+        self._check_budget(userid)
         if self.cache.get(userid + code) is not None:
             logger.warning(
                 "TOTP: Code already used by user [%s] from IP [%s], length [%d]", userid, request.ip, len(code)
             )
+            self._record_failure(userid)
             raise exceptions.auth.MFAError(gettext("Code is already used. Wait a minute and try again."))
 
         # Get data from storage related to this user
@@ -213,7 +217,9 @@ class TOTP_MFA(mfas.MFA):
 
         # Validate code
         now = sql_now()
-        if not self.get_totp(userid, username).verify(code, valid_window=self.valid_window.as_int(), for_time=now):
+        if not self.get_totp(userid, username).verify(
+            code, valid_window=self.valid_window.as_int(), for_time=now
+        ):
             # Only rejected codes are traced. The server time and the valid window go with them because a
             # rejection is, most of the time, a clock drift between the client and this server.
             # The code itself is never traced, only its length.
@@ -225,9 +231,11 @@ class TOTP_MFA(mfas.MFA):
                 self.valid_window.as_int(),
                 now.isoformat(),
             )
+            self._record_failure(userid)
             raise exceptions.auth.MFAError(gettext("Invalid code"))
 
         self.cache.put(userid + code, True, self.valid_window.as_int() * (TOTP_INTERVAL + 1))
+        self._forget_budget(userid)
 
         if qr_has_been_shown is False:
             self._save_user_data(userid, (secret, True))  # Update user data to show QR code only once

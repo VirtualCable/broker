@@ -27,6 +27,7 @@
 
 """
 Author: Adolfo Gómez, dkmaster at dkmon dot com
+Author: Janier Rodríguez, jrodriguez at virtualcable dot es
 """
 
 import enum
@@ -142,6 +143,28 @@ class ProxmoxUserserviceLinked(DynamicUserService):
 
         return types.states.TaskState.RUNNING
 
+    # The machine must not leave the cache until Proxmox has really finished the snapshot task
+    def _check_snapshot_task(self, operation: str) -> types.states.TaskState:
+        if self._task == "":
+            return types.states.TaskState.FINISHED
+
+        node, upid = self._retrieve_task()
+
+        try:
+            task = self.service().provider().api.get_task_info(node, upid)
+            if not task.is_finished():
+                return types.states.TaskState.RUNNING
+            if task.is_errored():
+                raise Exception(task.exitstatus)
+        except uds.services.Proxmox.proxmox.exceptions.ProxmoxConnectionError:
+            return types.states.TaskState.RUNNING
+        except Exception as e:
+            # Same outcome as a failed snapshot call: logged, but the machine is not sent to error
+            self.do_log(types.log.LogLevel.WARNING, f"Could not {operation} SNAPSHOT for this VM. ({e})")
+
+        self._task = ""
+        return types.states.TaskState.FINISHED
+
     @typing.override
     def service(self) -> "ProxmoxService":
         return typing.cast("ProxmoxService", super().service())
@@ -197,11 +220,19 @@ class ProxmoxUserserviceLinked(DynamicUserService):
 
     @typing.override
     def op_create_completed(self) -> None:
+        # Options first: HA may start the vm as soon as it is enabled
+        self.service().set_vm_options(int(self._vmid), self.get_unique_id())
+
         # Note: service will only enable ha if it is configured to do so
         self.service().enable_vm_ha(int(self._vmid), True)  # Enable HA before continuing here
 
-        # Set vm mac address now on first interface
-        self.service().provider().api.set_vm_net_mac(int(self._vmid), self.get_unique_id())
+    @typing.override
+    def op_back_to_cache_snapshot_create_checker(self) -> types.states.TaskState:
+        return self._check_snapshot_task("create")
+
+    @typing.override
+    def op_back_to_cache_snapshot_recover_checker(self) -> types.states.TaskState:
+        return self._check_snapshot_task("restore")
 
     @typing.override
     def get_console_connection(

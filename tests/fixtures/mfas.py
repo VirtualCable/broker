@@ -32,7 +32,6 @@ import logging
 import typing
 
 from uds import models
-from uds.core import exceptions
 from uds.core import mfas
 
 if typing.TYPE_CHECKING:
@@ -57,34 +56,9 @@ class TestMFA(mfas.MFA):
     ) -> mfas.MFA.RESULT:
         return mfas.MFA.RESULT.OK
 
-    @typing.override
-    def process(
-        self,
-        request: "ExtendedHttpRequest",
-        userid: str,
-        username: str,
-        identifier: str,
-        validity: int | None = None,
-    ) -> mfas.MFA.RESULT:
-        # Store a deterministic code for testing
-        self._put_data(request, userid, "123456")
-        return mfas.MFA.RESULT.OK
-
-    @typing.override
-    def validate(
-        self,
-        request: "ExtendedHttpRequest",
-        userid: str,
-        username: str,
-        identifier: str,
-        code: str,
-        validity: int | None = None,
-    ) -> None:
-        data = self._get_data(request, userid)
-        if data and data[1] == code:
-            self._remove_data(request, userid)
-            return
-        raise exceptions.auth.MFAError("Invalid code")
+    @staticmethod
+    def _new_code() -> str:
+        return "123456"
 
     @typing.override
     def label(self) -> str:

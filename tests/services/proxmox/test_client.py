@@ -532,3 +532,120 @@ class TestProxmoxClientDisks(UDSTestCase):
                 "nodes/node1/storage/data/content/100%2Fvm-100-disk-0.qcow2",
                 node="node1",
             )
+
+
+class _NodeSelectionReached(Exception):
+    pass
+
+
+class TestProxmoxBestNodeSelection(UDSTestCase):
+    ESC_STORAGE = "ESC_Dorado_NVME"
+
+    def _client(self) -> prox_client.ProxmoxClient:
+        return prox_client.ProxmoxClient("host", 8006, "user", "password")
+
+    @staticmethod
+    def _node(
+        name: str, mem: int = 50, maxmem: int = 100, cpu: float = 0.1, maxcpu: int = 8
+    ) -> prox_types.NodeStats:
+        return prox_types.NodeStats(
+            name=name,
+            status="online",
+            uptime=1,
+            disk=1,
+            maxdisk=1,
+            level="",
+            id=f"node/{name}",
+            mem=mem,
+            maxmem=maxmem,
+            cpu=cpu,
+            maxcpu=maxcpu,
+        )
+
+    @staticmethod
+    def _storage(node: str, storage: str = ESC_STORAGE, active: bool = True) -> prox_types.StorageInfo:
+        return prox_types.StorageInfo(
+            node=node,
+            storage=storage,
+            content=("images",),
+            type="nfs",
+            shared=True,
+            active=active,
+            used=1,
+            avail=1,
+            total=2,
+        )
+
+    def _patched_cluster(
+        self,
+        pclient: prox_client.ProxmoxClient,
+        nodes: list[prox_types.NodeStats],
+        storages: list[prox_types.StorageInfo],
+    ) -> contextlib.ExitStack:
+        def list_storages(*, node: str | None = None, **kwargs: typing.Any) -> list[prox_types.StorageInfo]:
+            return [s for s in storages if node is None or s.node == node]
+
+        stack = contextlib.ExitStack()
+        stack.enter_context(mock.patch.object(pclient, "get_nodes_stats", return_value=nodes))
+        stack.enter_context(mock.patch.object(pclient, "list_storages", side_effect=list_storages))
+        stack.enter_context(mock.patch.object(pclient, "list_node_gpu_devices", return_value=[]))
+        return stack
+
+    def test_least_loaded_node_is_chosen_without_storage_constraint(self) -> None:
+        pclient = self._client()
+        nodes = [self._node("ESC-PVE-01", mem=50), self._node("RUE-PVE-03", mem=10)]
+        storages = [self._storage("ESC-PVE-01"), self._storage("RUE-PVE-03")]
+        with self._patched_cluster(pclient, nodes, storages):
+            self.assertEqual(pclient.get_best_node_for_vm().name, "RUE-PVE-03")
+
+    def test_node_without_the_storage_is_not_selected(self) -> None:
+        pclient = self._client()
+        nodes = [self._node("ESC-PVE-01", mem=50), self._node("RUE-PVE-03", mem=10)]
+        storages = [self._storage("ESC-PVE-01")]
+        with self._patched_cluster(pclient, nodes, storages):
+            node = pclient.get_best_node_for_vm(storage=self.ESC_STORAGE)
+            self.assertIsNotNone(node)
+            self.assertEqual(node.name, "ESC-PVE-01")
+
+    def test_node_where_the_storage_is_inactive_is_not_selected(self) -> None:
+        pclient = self._client()
+        nodes = [self._node("ESC-PVE-01", mem=50), self._node("RUE-PVE-03", mem=10)]
+        storages = [self._storage("ESC-PVE-01"), self._storage("RUE-PVE-03", active=False)]
+        with self._patched_cluster(pclient, nodes, storages):
+            node = pclient.get_best_node_for_vm(storage=self.ESC_STORAGE)
+            self.assertIsNotNone(node)
+            self.assertEqual(node.name, "ESC-PVE-01")
+
+    def test_no_node_with_the_storage_yields_no_node(self) -> None:
+        pclient = self._client()
+        nodes = [self._node("RUE-PVE-03")]
+        storages = [self._storage("RUE-PVE-03", storage="other")]
+        with self._patched_cluster(pclient, nodes, storages):
+            self.assertIsNone(pclient.get_best_node_for_vm(storage=self.ESC_STORAGE))
+
+    def test_nodes_without_stats_are_skipped_instead_of_dividing_by_zero(self) -> None:
+        pclient = self._client()
+        nodes = [
+            self._node("RUE-PVE-03", mem=0, maxmem=0, cpu=0.0, maxcpu=0),
+            self._node("ESC-PVE-01", mem=50),
+        ]
+        storages = [self._storage("RUE-PVE-03"), self._storage("ESC-PVE-01")]
+        with self._patched_cluster(pclient, nodes, storages):
+            node = pclient.get_best_node_for_vm()
+            self.assertIsNotNone(node)
+            self.assertEqual(node.name, "ESC-PVE-01")
+
+    def test_clone_vm_passes_target_storage_to_node_selection(self) -> None:
+        pclient = self._client()
+        storages = [self._storage("ESC-PVE-01")]
+        vminfo = mock.Mock(node="ESC-PVE-01", template=False, vgpu_type=None)
+        shared_storage = self._storage("ESC-PVE-01")
+        with (
+            self._patched_cluster(pclient, [], storages),
+            mock.patch.object(pclient, "get_vm_info", return_value=vminfo),
+            mock.patch.object(pclient, "get_storage_info", return_value=shared_storage),
+            mock.patch.object(pclient, "get_best_node_for_vm", side_effect=_NodeSelectionReached) as best,
+            self.assertRaises(_NodeSelectionReached),
+        ):
+            pclient.clone_vm(100, 101, "name", None, as_linked_clone=False, target_storage=self.ESC_STORAGE)
+        self.assertEqual(best.call_args.kwargs["storage"], self.ESC_STORAGE)

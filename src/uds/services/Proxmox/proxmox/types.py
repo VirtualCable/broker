@@ -10,6 +10,7 @@ from django.utils import timezone
 from . import exceptions as prox_exceptions
 
 NETWORK_RE: typing.Final[re.Pattern[str]] = re.compile(r"([a-zA-Z0-9]+)=([^,]+)")  # May have vla id at end
+BRIDGE_RE: typing.Final[re.Pattern[str]] = re.compile(r"bridge=[^,]*")
 
 
 class VMStatus(enum.StrEnum):
@@ -264,6 +265,12 @@ class NetworkConfiguration:
         self.macaddr = macaddr
         # Replace mac address in netdata
         self.netdata = re.sub(r"^([^=]+)=([^,]+),", rf"\1={macaddr},", self.netdata)
+
+    def set_bridge(self, bridge: str) -> None:
+        if BRIDGE_RE.search(self.netdata):
+            self.netdata = BRIDGE_RE.sub(f"bridge={bridge}", self.netdata)
+        else:
+            self.netdata = f"{self.netdata},bridge={bridge}"
 
     @staticmethod
     def from_str(net: str, netdata: str) -> "NetworkConfiguration":

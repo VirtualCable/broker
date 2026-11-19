@@ -86,7 +86,7 @@ class Notifiers(ModelHandler[NotifierItem]):
         ui_utils.TableBuilder(_("Notifiers"))
         .icon(name="name", title=_("Name"))
         .text_column(name="type_name", title=_("Type"))
-        .text_column(name="level", title=_("Level"))
+        .dict_column(name="level", title=_("Level"), dct={str(level.value): level.name for level in LogLevel})
         .boolean(name="enabled", title=_("Enabled"))
         .text_column(name="comments", title=_("Comments"))
         .text_column(name="tags", title=_("Tags"), visible=False)
@@ -114,29 +114,29 @@ class Notifiers(ModelHandler[NotifierItem]):
         with Environment.temporary_environment() as env:
             notifier = notifier_type(env, None)
 
-            return (
-                (
-                    ui_utils.GuiBuilder(100)
-                    .add_stock_field(types.rest.stock.StockField.NAME)
-                    .add_stock_field(types.rest.stock.StockField.COMMENTS)
-                    .add_stock_field(types.rest.stock.StockField.TAGS)
-                )
-                .add_fields(notifier.gui_description())
-                .add_choice(
+            gui_builder = (
+                ui_utils.GuiBuilder(100)
+                .add_stock_field(types.rest.stock.StockField.NAME)
+                .add_stock_field(types.rest.stock.StockField.COMMENTS)
+                .add_stock_field(types.rest.stock.StockField.TAGS)
+            ).add_fields(notifier.gui_description())
+
+            # The level only filters the LOG group, so it is meaningless for event-only notifiers
+            if messaging.NotificationGroup.LOG in notifier_type.accepts:
+                gui_builder.add_choice(
                     name="level",
                     choices=[gui.choice_item(i[0], i[1]) for i in LogLevel.interesting()],
                     label=gettext("Level"),
                     tooltip=gettext("Level of notifications"),
                     default=str(LogLevel.ERROR.value),
                 )
-                .add_checkbox(
-                    name="enabled",
-                    label=gettext("Enabled"),
-                    tooltip=gettext("If checked, this notifier will be used"),
-                    default=True,
-                )
-                .build()
-            )
+
+            return gui_builder.add_checkbox(
+                name="enabled",
+                label=gettext("Enabled"),
+                tooltip=gettext("If checked, this notifier will be used"),
+                default=True,
+            ).build()
 
     @typing.override
     def apply_sort(self, qs: "QuerySet[typing.Any]") -> "list[typing.Any] | QuerySet[typing.Any]":

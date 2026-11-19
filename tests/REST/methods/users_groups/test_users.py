@@ -26,6 +26,7 @@
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 """
 Author: Adolfo Gómez, dkmaster at dkmon dot com
+Author: Andres Schumann, aschumann at virtualcable dot es
 """
 
 import collections.abc
@@ -57,7 +58,7 @@ class UsersTest(rest.test.RESTActorTestCase):
 
     @typing.override
     def setUp(self) -> None:
-        timezone.activate(datetime.timezone.utc)
+        timezone.activate(datetime.UTC)
         super().setUp()
         self.login()
 
@@ -197,6 +198,38 @@ class UsersTest(rest.test.RESTActorTestCase):
 
         self.login(as_admin=True)
         self.assertEqual(self.client.rest_post(token_url).status_code, 200)
+
+    def test_manager_cannot_reset_admin_or_staff_password(self) -> None:
+        """A manager without admin rights cannot set the password of admins or staff, but can of plain users."""
+        url = f"authenticators/{self.auth.uuid}/users"
+        manager = self.staffs[0]
+        models.Permissions.add_permission(
+            user=manager,
+            object_type=objtype.ObjectType.from_model(self.auth),
+            permission=types.permissions.PermissionType.MANAGEMENT,
+        )
+        self.login(user=manager)
+
+        for protected in (self.admins[0], self.staffs[1]):
+            original_hash = protected.password
+            denied = self.client.rest_put(
+                f"{url}/{protected.uuid}",
+                rest_fixtures.createUser(
+                    id=protected.uuid, name=protected.name, password="DUMMY-Password-New1"
+                ),
+                content_type="application/json",
+            )
+            self.assertEqual(denied.status_code, 403, denied.content)
+            protected.refresh_from_db()
+            self.assertEqual(protected.password, original_hash)
+
+        plain = self.plain_users[0]
+        allowed = self.client.rest_put(
+            f"{url}/{plain.uuid}",
+            rest_fixtures.createUser(id=plain.uuid, name=plain.name, password="DUMMY-Password-New1"),
+            content_type="application/json",
+        )
+        self.assertEqual(allowed.status_code, 200, allowed.content)
 
     def test_users_token_column(self) -> None:
         """The list shows the hint of whoever has a token, and never the hash."""
@@ -482,7 +515,7 @@ class UsersPasswordPolicyTest(rest.test.RESTActorTestCase):
 
     @typing.override
     def setUp(self) -> None:
-        timezone.activate(datetime.timezone.utc)
+        timezone.activate(datetime.UTC)
         super().setUp()
         self.login()
 

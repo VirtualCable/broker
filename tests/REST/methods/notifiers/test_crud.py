@@ -102,3 +102,14 @@ class NotifiersCrudTest(rest.test.RESTTestCase):
         instance = models.Notifier.objects.get(uuid=uuid).get_instance()
         self.assertEqual(instance.to_email.value, TEST_TO_EMAIL)  # type: ignore[attr-defined]
         self.assertEqual(instance.hostname.value, TEST_HOSTNAME)  # type: ignore[attr-defined]
+
+    def test_tableinfo_maps_level_values_to_names(self) -> None:
+        response = self.client.rest_get("messaging/notifiers/tableinfo")
+        self.assertEqual(response.status_code, 200)
+
+        fields = {name: attrs for field in response.json()["fields"] for name, attrs in field.items()}
+        level_names = fields["level"]["dict"]
+
+        self.assertEqual(level_names, {str(level.value): level.name for level in models.LogLevel})
+        created = self._create("level-name")
+        self.assertEqual(level_names[self._get(created["id"])["level"]], "ERROR")

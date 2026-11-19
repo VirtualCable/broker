@@ -30,6 +30,7 @@
 """
 
 Author: Adolfo Gómez, dkmaster at dkmon dot com
+Author: Andres Schumann, aschumann at virtualcable dot es
 """
 
 import collections.abc
@@ -48,6 +49,7 @@ from uds.core.util import auth as auth_utils
 from uds.core.util import ensure
 from uds.core.util import fields
 from uds.core.util import ldaputil
+from uds.core.util import validators
 
 try:
     from . import extra  # pyright: ignore  # pyrefly: ignore
@@ -176,6 +178,9 @@ class RegexLdap(auths.Authenticator):
         if values:
             auth_utils.validate_regex_field(self.username_attr)
             auth_utils.validate_regex_field(self.groupname_attr)
+            self.certificate.value = self.certificate.value.strip()
+            if self.certificate.value:
+                validators.validate_certificate(self.certificate.value)
 
     def mfa_storage_key(self, username: str) -> str:
         return "mfa_" + self.db_obj().uuid + username
@@ -240,7 +245,7 @@ class RegexLdap(auths.Authenticator):
             self.alternate_class.value = vals[12]
             self.mfa_attribute.value = vals[13]
             self.verify_ssl.value = gui.as_bool(vals[14])
-            self._certificate = vals[15]
+            self.certificate.value = vals[15]
 
         self.mark_for_upgrade()  # Old version, so flag for upgrade if possible
 
@@ -259,6 +264,8 @@ class RegexLdap(auths.Authenticator):
                 use_ssl=self.use_ssl.as_bool(),
                 timeout=self.timeout.as_int(),
                 debug=False,
+                verify_ssl=self.verify_ssl.as_bool(),
+                certificate_data=self.certificate.as_str(),
             )
 
         return self._connection
@@ -272,6 +279,8 @@ class RegexLdap(auths.Authenticator):
             use_ssl=self.use_ssl.as_bool(),
             timeout=self.timeout.as_int(),
             debug=False,
+            verify_ssl=self.verify_ssl.as_bool(),
+            certificate_data=self.certificate.as_str(),
         )
 
     def _get_user(self, username: str) -> "ldaputil.LDAPResultType | None":
@@ -373,7 +382,9 @@ class RegexLdap(auths.Authenticator):
 
             try:
                 # Let's see first if it credentials are fine
-                self._stablish_connection_as(usr["dn"], credentials)  # Will raise an exception if it can't connect
+                self._stablish_connection_as(
+                    usr["dn"], credentials
+                )  # Will raise an exception if it can't connect
             except Exception:
                 log_login(request, self.db_obj(), username, "Invalid password", as_error=True)
                 return types.auth.FAILED_AUTH

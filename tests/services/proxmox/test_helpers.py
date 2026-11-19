@@ -60,9 +60,13 @@ class TestProxmoxHelpers(UDSTransactionTestCase):
             with mock.patch("uds.models.Provider.objects.get") as get_provider:
                 api = typing.cast(mock.Mock, provider.api)
                 get_provider.return_value.get_instance.return_value = provider
+                api.get_node_networks.return_value = [
+                    {"iface": "vmbr0", "type": "bridge"},
+                    {"iface": "bond0", "type": "bond"},
+                    {"iface": "vmbr1", "type": "bridge"},
+                ]
                 result = helpers.get_storage(self._parameters)
-                self.assertEqual(len(result), 1)
-                self.assertEqual(result[0]["name"], "datastore")
+                self.assertEqual([r["name"] for r in result], ["datastore", "network"])
                 choices = result[0]["choices"]
                 self.assertIsInstance(choices, list)
                 self.assertGreaterEqual(len(choices), 1)
@@ -73,6 +77,7 @@ class TestProxmoxHelpers(UDSTransactionTestCase):
 
                 api.get_vm_info.assert_called_once()
                 api.list_storages.assert_called_once()
+                self.assertEqual([c.id for c in result[1]["choices"]], ["", "vmbr0", "vmbr1"])
 
     def test_get_machines(self) -> None:
         with fixtures.patched_provider() as provider:
