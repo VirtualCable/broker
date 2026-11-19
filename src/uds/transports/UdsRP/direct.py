@@ -78,8 +78,7 @@ class UdsRPTransport(BaseUdsRPTransport):
     allow_lock = BaseUdsRPTransport.allow_lock
     wallpaper_off = BaseUdsRPTransport.wallpaper_off
 
-    screen_width = BaseUdsRPTransport.screen_width
-    screen_height = BaseUdsRPTransport.screen_height
+    screen_size = BaseUdsRPTransport.screen_size
     session_fps = BaseUdsRPTransport.session_fps
     window_mode = BaseUdsRPTransport.window_mode
 
