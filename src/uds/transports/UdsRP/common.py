@@ -109,7 +109,6 @@ VIDEO_PRESETS: typing.Final[tuple[tuple[str, str], ...]] = (
     ("rects-jpeg", _("JPEG rects")),
     ("rects-jpeg-fast", _("JPEG rects (fast)")),
 )
-LEGACY_PREFERRED_CODECS: typing.Final[dict[str, str]] = {"vp9": "vp9-balanced", "h264": "auto"}
 
 
 @dataclasses.dataclass
@@ -455,7 +454,6 @@ class BaseUdsRPTransport(transports.Transport):
     def selected_video_preset(self) -> str | None:
         """Agent preset for the chosen codec option; None keeps the session ladder."""
         codec = self.preferred_codec.value
-        codec = LEGACY_PREFERRED_CODECS.get(codec, codec)
         return None if codec == "auto" else codec
 
     def build_ticket_payload(self, ci: types.connections.ConnectionData) -> TicketPayloadData:

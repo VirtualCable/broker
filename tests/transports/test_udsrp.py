@@ -150,19 +150,6 @@ class UdsRPTransportTest(UDSTestCase):
         self.assertNotIn("h264", values)
         self.assertNotIn("vp9", values)
 
-    def test_legacy_vp9_value_maps_to_balanced_preset(self) -> None:
-        transport = self._transport()
-        transport.preferred_codec.value = "vp9"
-
-        self.assertEqual(self._payload(transport)["video"], {"preset": "vp9-balanced"})
-
-    def test_legacy_h264_value_falls_back_to_auto(self) -> None:
-        transport = self._transport()
-        transport.preferred_codec.value = "h264"
-
-        self.assertNotIn("video", self._payload(transport))
-        self.assertNotIn("preferred_codec", self._params(transport)["options"])
-
     def test_fixed_codec_is_sent_as_the_chosen_preset(self) -> None:
         transport = self._transport()
         transport.preferred_codec.value = "rects-jpeg"
@@ -232,7 +219,7 @@ class UdsRPTransportTest(UDSTestCase):
 
     def test_payload_video_preset_follows_preferred_codec(self) -> None:
         transport = self._transport()
-        transport.preferred_codec.value = "vp9"
+        transport.preferred_codec.value = "vp9-balanced"
         self.assertEqual(self._payload(transport)["video"], {"preset": "vp9-balanced"})
 
     def test_payload_has_no_video_when_codec_is_auto(self) -> None:
