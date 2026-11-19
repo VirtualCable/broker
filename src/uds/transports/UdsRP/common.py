@@ -100,16 +100,15 @@ class TicketVideoPolicy:
 # Agent encoder presets offered to the user: every catalog preset except raw.
 # raw is laboratory-only (its keyframes do not fit the agent send queue).
 VIDEO_PRESETS: typing.Final[tuple[tuple[str, str], ...]] = (
-    ("vp9-low-latency", "VP9 low latency"),
-    ("vp9-balanced", "VP9 balanced"),
-    ("vp9-bandwidth-saver", "VP9 bandwidth saver"),
-    ("vp8-low-latency", "VP8 low latency"),
-    ("vp8-balanced", "VP8 balanced"),
-    ("vp8-quality", "VP8 quality"),
-    ("rects-jpeg", "JPEG rects"),
-    ("rects-jpeg-fast", "JPEG rects (fast)"),
+    ("vp9-low-latency", _("VP9 low latency")),
+    ("vp9-balanced", _("VP9 balanced")),
+    ("vp9-bandwidth-saver", _("VP9 bandwidth saver")),
+    ("vp8-low-latency", _("VP8 low latency")),
+    ("vp8-balanced", _("VP8 balanced")),
+    ("vp8-quality", _("VP8 quality")),
+    ("rects-jpeg", _("JPEG rects")),
+    ("rects-jpeg-fast", _("JPEG rects (fast)")),
 )
-# Values saved before the preset list existed: H.264 is not supported by the agent.
 LEGACY_PREFERRED_CODECS: typing.Final[dict[str, str]] = {"vp9": "vp9-balanced", "h264": "auto"}
 
 
@@ -355,7 +354,7 @@ class BaseUdsRPTransport(transports.Transport):
         order=95,
         default="auto",
         choices=[ui.gui.choice_item("auto", _("Auto (quality ladder)"))]
-        + [ui.gui.choice_item(name, _(label)) for name, label in VIDEO_PRESETS],
+        + [ui.gui.choice_item(name, label) for name, label in VIDEO_PRESETS],
         tooltip=_(
             "Fixed encoder preset for the session. Any choice other than Auto turns off the "
             "quality ladder and keeps that codec. Auto lets the session ladder pick."
