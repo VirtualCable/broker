@@ -28,19 +28,22 @@
 Author: Adolfo Gómez, dkmaster at dkmon dot com
 """
 
+import os
+import sys
 import typing
+from unittest import mock
 
 from tests.utils.test import UDSTestCase
 from uds.core import types
 from uds.transports.UdsRP.common import (
     DEFAULT_SCREEN_SIZE,
     SCREEN_SIZES,
-    VIDEO_PRESETS,
     BaseUdsRPTransport,
     TicketChannelPolicy,
     TicketPayloadData,
 )
 from uds.transports.UdsRP.direct import UdsRPTransport
+from uds.transports.UdsRP.tunnel import TUdsRPTransport
 
 TICKET = "a" * 48
 
@@ -327,3 +330,106 @@ class UdsRPTransportTest(UDSTestCase):
         self.assertEqual(data["version"], 1)
         self.assertNotIn("credentials", data)
         self.assertNotIn("display", data)
+
+
+def _tunnel_userservice() -> tuple[mock.MagicMock, mock.MagicMock]:
+    userservice = mock.MagicMock()
+    userservice.process_user_password = mock.MagicMock(side_effect=lambda u, p: (u, p))
+    user = mock.MagicMock()
+    user.get_username_for_auth.return_value = "testuser"
+    return userservice, user
+
+
+class TUdsRPTransportTest(UDSTestCase):
+    def _transport(self) -> TUdsRPTransport:
+        return TUdsRPTransport(self.create_environment(), None)
+
+    def _script_params(self, transport: TUdsRPTransport) -> tuple[dict[str, typing.Any], mock.MagicMock]:
+        userservice, user = _tunnel_userservice()
+        with (
+            mock.patch("uds.models.TicketStore.create_for_tunnel") as create_for_tunnel,
+            mock.patch("uds.core.util.fields.get_tunnel_from_field") as get_tunnel,
+            mock.patch.object(TUdsRPTransport, "get_script") as get_script,
+        ):
+            create_for_tunnel.return_value = TICKET
+            get_tunnel.return_value = mock.MagicMock(host="tunnel-host", port=443)
+            get_script.return_value = "script"
+
+            transport.get_transport_script(
+                userservice=userservice,
+                transport=mock.MagicMock(),
+                ip="1.2.3.4",
+                os=types.os.DetectedOsInfo(
+                    os=types.os.KnownOS.LINUX, browser=types.os.KnownBrowser.FIREFOX, version=""
+                ),
+                user=user,
+                password="testpassword",
+                request=mock.MagicMock(),
+            )
+
+            params = get_script.call_args.args[2]
+            self.assertEqual(get_script.call_args.args[:2], ("linux", "tunnel"))
+            self.assertEqual(get_script.call_args.kwargs, {"associated_ticket": TICKET})
+            self.assertEqual(create_for_tunnel.call_args.kwargs["port"], 14433)
+            self.assertEqual(create_for_tunnel.call_args.kwargs["extra"]["version"], 1)
+            return params, create_for_tunnel
+
+    def test_group_is_tunneled(self) -> None:
+        self.assertEqual(TUdsRPTransport.group, types.transports.Grouping.TUNNELED)
+        self.assertEqual(UdsRPTransport.group, types.transports.Grouping.DIRECT)
+
+    def test_transport_exposes_every_base_field(self) -> None:
+        expected = set(BaseUdsRPTransport._gui_fields_template)
+
+        fields = set(self._transport()._gui_fields_template)
+        self.assertEqual(expected - fields, set(), "TUdsRPTransport is missing fields")
+
+    def test_transport_is_registered(self) -> None:
+        from uds.core import transports
+
+        self.assertIs(transports.factory().lookup("tudsrptransport"), TUdsRPTransport)
+
+    def test_tunnel_fields_present(self) -> None:
+        fields = self._transport()._gui_fields_template
+        self.assertIn("tunnel", fields)
+        self.assertIn("startup_time", fields)
+        self.assertIn("verify_certificate", fields)
+
+    def test_tunnel_script_generated_with_tunnel_block(self) -> None:
+        params, _create = self._script_params(self._transport())
+
+        self.assertEqual(params["server"], "1.2.3.4")
+        self.assertEqual(params["port"], 14433)
+        self.assertEqual(params["ticket"], TICKET)
+        self.assertEqual(
+            params["tunnel"],
+            {
+                "host": "tunnel-host",
+                "port": 443,
+                "ticket": TICKET,
+                "startup_time": 30000,
+                "verify_ssl": True,
+            },
+        )
+        self.assertNotIn("password", params)
+
+    def test_tunnel_ticket_carries_same_payload_as_direct(self) -> None:
+        transport = self._transport()
+        _params, create_for_tunnel = self._script_params(transport)
+
+        expected = transport.build_ticket_payload(_connection_data("testuser", "testpassword", "")).as_dict()
+        self.assertEqual(create_for_tunnel.call_args.kwargs["extra"], expected)
+
+    def test_tunnel_ticket_validity_covers_startup_wait(self) -> None:
+        transport = self._transport()
+        transport.startup_time.value = 180
+        transport.ticket_validity.value = 60
+
+        _params, create_for_tunnel = self._script_params(transport)
+        self.assertEqual(create_for_tunnel.call_args.kwargs["validity"], 240)
+
+    def test_tunnel_script_files_exist_for_each_os(self) -> None:
+        module_dir = os.path.dirname(sys.modules[TUdsRPTransport.__module__].__file__ or "")
+        for osname in ("linux", "macosx", "windows"):
+            path = os.path.join(module_dir, "scripts", osname, "tunnel.js")
+            self.assertTrue(os.path.isfile(path), path)
