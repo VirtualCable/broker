@@ -198,7 +198,6 @@ class BaseUdsRPTransport(transports.Transport):
     is_base = True
 
     PROTOCOL = types.transports.Protocol.UDSRP
-    supported_oss = (types.os.KnownOS.WINDOWS,)  # Agent is Windows-only for now
 
     force_empty_creds = ui.gui.CheckBoxField(
         label=_("Empty creds"),
