@@ -306,6 +306,12 @@ class UdsRPTransportTest(UDSTestCase):
         fields = set(self._transport()._gui_fields_template)
         self.assertEqual(expected - fields, set(), "UdsRPTransport is missing fields")
 
+    def test_supports_every_desktop_client_os(self) -> None:
+        """The URP launcher runs on Linux, Windows and macOS; other client OS must not get the transport."""
+        for os in (types.os.KnownOS.LINUX, types.os.KnownOS.WINDOWS, types.os.KnownOS.MAC_OS):
+            self.assertTrue(UdsRPTransport.supports_os(os), os)
+        self.assertFalse(UdsRPTransport.supports_os(types.os.KnownOS.ANDROID))
+
     def test_udsrp_protocol_in_generic_vdi(self) -> None:
         self.assertIn(types.transports.Protocol.UDSRP, types.transports.Protocol.generic_vdi())
 
