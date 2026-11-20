@@ -152,6 +152,7 @@ class XenProvider(ServiceProvider):  # pylint: disable=too-many-public-methods
     )
 
     _cached_api: client.XenClient | None = None
+    _connection_lock: threading.RLock
 
     # XenServer engine, right now, only permits a connection to one server and only one per instance
     # If we want to connect to more than one server, we need keep locked access to api, change api server, etc..
