@@ -32,5 +32,6 @@ Author: Adolfo Gómez, dkmaster at dkmon dot com
 """
 
 from .direct import UdsRPTransport
+from .tunnel import TUdsRPTransport
 
-__all__ = ["UdsRPTransport"]
+__all__ = ["TUdsRPTransport", "UdsRPTransport"]
