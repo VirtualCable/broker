@@ -29,12 +29,13 @@
 Author: Andres Schumann, aschumann at virtualcable dot es
 """
 
+import re
 import typing
-
-import ldap3
+from unittest import mock
 
 from tests.utils.test import UDSTestCase
 from uds.core.environment import Environment
+from uds.core.util import ldaputil
 from uds.osmanagers.WindowsOsManager import windows_domain as osmanager
 
 MACHINE_DN: typing.Final[str] = "CN=UDSPQV001,OU=VDI,DC=mvdi,DC=local"
@@ -42,14 +43,44 @@ GROUP_DN: typing.Final[str] = "CN=VDI Machines,OU=VDI,DC=mvdi,DC=local"
 
 
 def ad_connection() -> typing.Any:
-    # Real connections load the schema (get_info=ALL), so ldap3 rejects attribute names AD does not know
-    server = ldap3.Server("fake-ad", get_info=typing.cast(typing.Any, ldap3.OFFLINE_AD_2012_R2))
-    connection: typing.Any = ldap3.Connection(server, client_strategy=ldap3.MOCK_SYNC)
-    connection.strategy.add_entry(MACHINE_DN, {"objectClass": ["computer"], "sAMAccountName": "UDSPQV001$"})
-    connection.strategy.add_entry(
-        GROUP_DN, {"objectClass": ["group"], "cn": "VDI Machines", "sAMAccountName": "VDI Machines"}
-    )
-    connection.bind()
+    """Fake native connection serving the canned AD entries."""
+    connection = mock.MagicMock(spec=ldaputil.NativeConnection)
+    entries: typing.Final[list[dict[str, list[str]]]] = [
+        {"dn": MACHINE_DN, "sAMAccountName": ["UDSPQV001$"], "objectClass": ["computer"]},
+        {
+            "dn": GROUP_DN,
+            "cn": ["VDI Machines"],
+            "sAMAccountName": ["VDI Machines"],
+            "objectClass": ["group"],
+        },
+    ]
+
+    def search(
+        base: str,
+        ldap_filter: str,
+        *,
+        scope: int = 2,
+        attributes: list[str] | None = None,
+        size_limit: int = 100,
+    ) -> dict[str, typing.Any]:
+        del base, scope, attributes, size_limit
+        object_class = "computer" if "objectClass=computer" in ldap_filter else "group"
+        # First sAMAccountName value present in the filter, if any
+        sam_match = re.search(r"sAMAccountName=([^)]+)\)", ldap_filter)
+        sam_value = sam_match.group(1) if sam_match else None
+        matched: list[dict[str, typing.Any]] = []
+        for entry in entries:
+            if entry["objectClass"][0] != object_class:
+                continue
+            if sam_value is not None and sam_value not in (
+                entry["sAMAccountName"][0],
+                entry.get("cn", [""])[0],
+            ):
+                continue
+            matched.append(dict(entry))
+        return {"entries": matched, "referrals": []}
+
+    connection.search.side_effect = search
     return connection
 
 

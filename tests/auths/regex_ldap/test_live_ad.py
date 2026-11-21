@@ -136,9 +136,8 @@ class TestRegexLdapLiveDirectory(UDSTransactionTestCase):
         # The parent DC does not hold the child domain, it points at it. This is
         # what has to be followed to reach users living on the child domain.
         con = self._connection(self.vars["host"], int(self.vars.get("port", "389")))
-        # ldap3 chases referrals on its own by default, which consumes them before
-        # they reach us. Turn it off so the referral surfaces on the result.
-        con.auto_referrals = False
+        # The native client never follows referrals: they surface on the
+        # search response.
         with self.assertRaises(ldaputil.LDAPReferralError) as ctx:
             list(
                 ldaputil.as_dict(
