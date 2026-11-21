@@ -58,7 +58,7 @@ class _DummyCache:
 
 
 class _DummyConn:
-    """Stand-in for an ldap3.Connection."""
+    """Stand-in for a native LDAP connection."""
 
 
 class DnFromDomainTest(UDSTestCase):

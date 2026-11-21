@@ -6,162 +6,37 @@
 Author: dkmaster
 Author: Janier Rodríguez, jrodriguez at virtualcable dot es
 
-Unit tests for ``uds.core.util.ldaputil`` focused on the bits that aren't
-covered by ``test_ldaputil_helpers.py``:
+Unit tests for ``uds.core.util.ldaputil`` (native backend).
 
-* :class:`ldaputil.LDAPReferralError` semantics and ``raise_on_referrals``
-  plumbed through ``as_dict`` / ``first``.
-* :func:`ldaputil.connection` preserving the underlying LDAP ``result``
-  ``message`` when the bind fails (so callers like the AD authenticator
-  can detect sub-status codes such as ``773`` "password must be reset").
+The native client is exercised through ``MagicMock(spec=NativeConnection)``
+fakes, so the ``isinstance`` dispatch inside ldaputil routes the calls to
+the mock without needing a live server. The semantics asserted here are the
+ones the UDS modules depend on:
 
-The existing :class:`FakeLDAPConnection` covers ``add``/``modify`` error
-mapping and lives alongside these tests so the surface stays small.
+* ``as_dict`` attribute fill parity (requested-but-missing -> [""]).
+* ``LDAPReferralError`` semantics and ``raise_on_referrals`` plumbed
+  through ``as_dict`` / ``first``.
+* ``connection()`` surfacing the server diagnostic message on bind failure
+  (so callers like the AD authenticator can detect sub-status codes such
+  as "773" password must be reset), and the BindError / LDAPError split.
+* add / modify mapping to AlreadyExistsError, and recursive delete
+  ordering (deepest first).
 """
 
-import collections.abc
 import typing
 import unittest
 from unittest import mock
 
-import ldap3
+from django.conf import settings
 
 from uds.core.util import ldaputil
 
 from ...utils.test import UDSTestCase
 
 
-class FakeLDAPConnection:
-    def __init__(self, result: dict[str, object], *, add_result: bool = True, modify_result: bool = True):
-        self.result = result
-        self._add_result = add_result
-        self._modify_result = modify_result
-
-    def add(self, dn: str, attributes: dict[str, list[bytes | str]]) -> bool:
-        del dn, attributes
-        return self._add_result
-
-    def modify(
-        self,
-        dn: str,
-        changes: dict[str, list[tuple[str, list[bytes | str]]]],
-        controls: object = None,
-    ) -> bool:
-        del dn, changes, controls
-        return self._modify_result
-
-
-class LdapUtilTest(UDSTestCase):
-    def test_add_raises_already_exists_for_duplicate_entry(self) -> None:
-        connection = FakeLDAPConnection(
-            {"result": 68, "description": "entryAlreadyExists", "message": "entry already exists"},
-            add_result=False,
-        )
-
-        with self.assertRaises(ldaputil.ALREADY_EXISTS):
-            ldaputil.add(connection, "cn=test,dc=example,dc=com", attributes={"cn": ["test"]})  # type: ignore[arg-type]
-
-    def test_modify_raises_already_exists_for_duplicate_member(self) -> None:
-        connection = FakeLDAPConnection(
-            {"result": 20, "description": "attributeOrValueExists", "message": "value already exists"},
-            modify_result=False,
-        )
-
-        with self.assertRaises(ldaputil.ALREADY_EXISTS):
-            ldaputil.modify(
-                connection,  # type: ignore[arg-type]
-                "cn=group,dc=example,dc=com",
-                {"member": [(ldaputil.MODIFY_ADD, ["cn=machine,dc=example,dc=com"])]},
-            )
-
-    def test_add_raises_ldap_error_for_non_duplicate_failure(self) -> None:
-        connection = FakeLDAPConnection(
-            {"result": 50, "description": "insufficientAccessRights", "message": "access denied"},
-            add_result=False,
-        )
-
-        with self.assertRaises(ldaputil.LDAPError):
-            ldaputil.add(connection, "cn=test,dc=example,dc=com", attributes={"cn": ["test"]})  # type: ignore[arg-type]
-
-
-# ---------------------------------------------------------------------------
-# Helpers used by both the referral tests and the connection() tests
-# ---------------------------------------------------------------------------
-
-
-class _StubEntry:
-    """Stand-in for an ldap3 ``Entry`` exposing ``entry_dn`` and attrs.
-
-    Only the attributes the generator touches are implemented; that's
-    enough for the tests below.
-    """
-
-    def __init__(
-        self,
-        dn: str,
-        attrs: dict[str, list[str]],
-    ) -> None:
-        self.entry_dn: str = dn
-        self._attrs: dict[str, list[str]] = attrs
-
-    def __contains__(self, key: str) -> bool:
-        return key in self._attrs
-
-    def __getitem__(self, key: str) -> typing.Any:
-        return _AttrValue(self._attrs.get(key, []))
-
-
-class _AttrValue:
-    def __init__(self, values: list[str]) -> None:
-        self.values: list[str] = values
-
-
-class _SearchFakeConn:
-    """Fake ldap3 Connection that records ``search`` calls and yields entries.
-
-    ``referrals`` populates ``result`` so we can exercise the referral path.
-    """
-
-    def __init__(
-        self,
-        entries: list[_StubEntry] | None = None,
-        referrals: list[str] | None = None,
-        response: list[dict[str, typing.Any]] | None = None,
-    ) -> None:
-        # A real Connection follows referrals unless told otherwise
-        self.auto_referrals: bool = True
-        self.entries: list[_StubEntry] = entries or []
-        self.response: list[dict[str, typing.Any]] = response or []
-        self.result: dict[str, typing.Any] = {"result": 0, "description": "success"}
-        if referrals is not None:
-            self.result["referrals"] = referrals
-        self.search_calls: list[dict[str, typing.Any]] = []
-
-    def search(
-        self,
-        *,
-        search_base: str,
-        search_filter: str,
-        search_scope: typing.Any,
-        attributes: typing.Any,
-        size_limit: int,
-    ) -> bool:
-        self.search_calls.append(
-            {
-                "auto_referrals": self.auto_referrals,
-                "search_base": search_base,
-                "search_filter": search_filter,
-                "search_scope": search_scope,
-                "attributes": list(attributes),
-                "size_limit": size_limit,
-            }
-        )
-        return True
-
-
-# ---------------------------------------------------------------------------
-# LDAPReferralError + raise_on_referrals
-# ---------------------------------------------------------------------------
+def _native_mock() -> mock.MagicMock:
+    """A mock that passes the ``isinstance(con, NativeConnection)`` check."""
+    return mock.MagicMock(spec=ldaputil.NativeConnection)
 
 
 class LDAPReferralErrorTest(UDSTestCase):
@@ -194,44 +69,77 @@ class LDAPReferralErrorTest(UDSTestCase):
         self.assertEqual(err.partial_results, [partial])
 
 
-class AsDictReferralsTest(UDSTestCase):
-    def test_referral_chasing_is_held_off_while_the_search_runs(self) -> None:
-        """ldap3 would otherwise follow the referrals before we can report them."""
-        conn: ldaputil.LDAPConnection = _SearchFakeConn(  # type: ignore[arg-type]
-            entries=[],
-            referrals=["ldap://other-dc/dc=corp,dc=local"],
-        )
-        with self.assertRaises(ldaputil.LDAPReferralError):
-            list(ldaputil.as_dict(conn, "dc=corp,dc=local", "(objectClass=user)", raise_on_referrals=True))
-        self.assertFalse(conn.search_calls[0]["auto_referrals"])  # type: ignore[attr-defined]
-        self.assertTrue(conn.auto_referrals)  # type: ignore[attr-defined]
+class AsDictNativeTest(UDSTestCase):
+    def _search_response(
+        self,
+        entries: list[dict[str, typing.Any]],
+        referrals: list[str] | None = None,
+    ) -> dict[str, typing.Any]:
+        return {"entries": entries, "referrals": referrals or []}
 
-    def test_referral_chasing_is_left_alone_by_default(self) -> None:
-        conn: ldaputil.LDAPConnection = _SearchFakeConn(  # type: ignore[arg-type]
-            entries=[],
-            referrals=["ldap://other-dc/dc=corp,dc=local"],
+    def test_yields_all_attributes_when_none_requested(self) -> None:
+        con = _native_mock()
+        con.search.return_value = self._search_response(
+            [
+                {
+                    "dn": "uid=alice,dc=corp,dc=local",
+                    "uid": ["alice"],
+                    "cn": ["Alice"],
+                }
+            ]
         )
-        list(ldaputil.as_dict(conn, "dc=corp,dc=local", "(objectClass=user)"))
-        self.assertTrue(conn.search_calls[0]["auto_referrals"])  # type: ignore[attr-defined]
+        rows = list(ldaputil.as_dict(con, "dc=corp,dc=local", "(uid=alice)"))  # type: ignore[arg-type]
+        self.assertEqual(len(rows), 1)
+        self.assertEqual(rows[0]["uid"], ["alice"])
+        self.assertEqual(rows[0]["cn"], ["Alice"])
+        self.assertEqual(rows[0]["dn"], "uid=alice,dc=corp,dc=local")
+        # All-attributes search: attributes=None reaches the native client.
+        con.search.assert_called_once()
+        self.assertIsNone(con.search.call_args.kwargs["attributes"])
+
+    def test_fills_missing_requested_attributes_with_empty_string(self) -> None:
+        con = _native_mock()
+        con.search.return_value = self._search_response(
+            [{"dn": "uid=alice,dc=corp,dc=local", "uid": ["alice"]}]
+        )
+        rows = list(
+            ldaputil.as_dict(
+                con,  # type: ignore[arg-type]
+                "dc=corp,dc=local",
+                "(uid=alice)",
+                attributes=["uid", "mail", "nonexistent"],
+            )
+        )
+        self.assertEqual(rows[0]["uid"], ["alice"])
+        self.assertEqual(rows[0]["mail"], [""])
+        self.assertEqual(rows[0]["nonexistent"], [""])
+        self.assertEqual(rows[0]["dn"], "uid=alice,dc=corp,dc=local")
+
+    def test_search_error_maps_to_ldap_error(self) -> None:
+        con = _native_mock()
+        con.search.side_effect = ldaputil.NativeLdapError("boom")
+        with self.assertRaises(ldaputil.LDAPError):
+            list(ldaputil.as_dict(con, "dc=corp,dc=local", "(uid=alice)"))  # type: ignore[arg-type]
 
     def test_default_drops_referrals_silently(self) -> None:
         """``raise_on_referrals`` defaults to False for backwards compat."""
-        conn: ldaputil.LDAPConnection = _SearchFakeConn(  # type: ignore[arg-type]
-            entries=[],
-            referrals=["ldap://other-dc/dc=corp,dc=local"],
+        con = _native_mock()
+        con.search.return_value = self._search_response([], referrals=["ldap://other-dc/dc=corp,dc=local"])
+        rows: list[ldaputil.LDAPResultType] = list(
+            ldaputil.as_dict(con, "dc=corp,dc=local", "(uid=alice)")  # type: ignore[arg-type]
         )
-        rows: list[ldaputil.LDAPResultType] = list(ldaputil.as_dict(conn, "dc=corp,dc=local", "(uid=alice)"))
         self.assertEqual(rows, [])
 
     def test_raise_on_referrals_surfaces_uris(self) -> None:
-        conn: ldaputil.LDAPConnection = _SearchFakeConn(  # type: ignore[arg-type]
-            entries=[],
+        con = _native_mock()
+        con.search.return_value = self._search_response(
+            [],
             referrals=["ldap://other-dc/dc=corp,dc=local", "ldap://other-dc2/dc=corp,dc=local"],
         )
         with self.assertRaises(ldaputil.LDAPReferralError) as ctx:
             list(
                 ldaputil.as_dict(
-                    conn,
+                    con,  # type: ignore[arg-type]
                     "dc=corp,dc=local",
                     "(uid=alice)",
                     raise_on_referrals=True,
@@ -243,18 +151,13 @@ class AsDictReferralsTest(UDSTestCase):
         )
 
     def test_raise_on_referrals_yields_entries_when_none_returned(self) -> None:
-        conn: ldaputil.LDAPConnection = _SearchFakeConn(  # type: ignore[arg-type]
-            entries=[
-                _StubEntry(
-                    "cn=alice,dc=corp,dc=local",
-                    {"uid": ["alice"], "cn": ["Alice"]},
-                )
-            ],
-            referrals=None,
+        con = _native_mock()
+        con.search.return_value = self._search_response(
+            [{"dn": "cn=alice,dc=corp,dc=local", "uid": ["alice"], "cn": ["Alice"]}]
         )
-        rows: list[ldaputil.LDAPResultType] = list(
+        rows = list(
             ldaputil.as_dict(
-                conn,  # type: ignore[arg-type]
+                con,  # type: ignore[arg-type]
                 "dc=corp,dc=local",
                 "(uid=alice)",
                 attributes=["uid", "cn"],
@@ -266,19 +169,15 @@ class AsDictReferralsTest(UDSTestCase):
         self.assertEqual(rows[0]["dn"], "cn=alice,dc=corp,dc=local")
 
     def test_raise_on_referrals_preserves_partial_entries(self) -> None:
-        conn: ldaputil.LDAPConnection = _SearchFakeConn(  # type: ignore[arg-type]
-            entries=[
-                _StubEntry(
-                    "cn=alice,dc=corp,dc=local",
-                    {"uid": ["alice"]},
-                )
-            ],
+        con = _native_mock()
+        con.search.return_value = self._search_response(
+            [{"dn": "cn=alice,dc=corp,dc=local", "uid": ["alice"]}],
             referrals=["ldap://child-dc/dc=child,dc=corp,dc=local"],
         )
         with self.assertRaises(ldaputil.LDAPReferralError) as ctx:
             list(
                 ldaputil.as_dict(
-                    conn,
+                    con,  # type: ignore[arg-type]
                     "dc=corp,dc=local",
                     "(uid=*)",
                     attributes=["uid"],
@@ -287,178 +186,269 @@ class AsDictReferralsTest(UDSTestCase):
             )
         self.assertEqual(ctx.exception.partial_results[0]["uid"], ["alice"])
 
-    def test_search_result_references_are_detected_on_success(self) -> None:
-        conn: ldaputil.LDAPConnection = _SearchFakeConn(  # type: ignore[arg-type]
-            response=[
+    def test_scopes_are_forwarded(self) -> None:
+        con = _native_mock()
+        con.search.return_value = self._search_response([])
+        list(ldaputil.as_dict(con, "dc=corp,dc=local", "(objectClass=*)", scope=ldaputil.SCOPE_BASE))  # type: ignore[arg-type]
+        self.assertEqual(con.search.call_args.kwargs["scope"], ldaputil.SCOPE_BASE)
+
+
+class FirstNativeTest(UDSTestCase):
+    def _con_with_entry(self, entry: dict[str, typing.Any] | None) -> mock.MagicMock:
+        con = _native_mock()
+        con.search.return_value = {"entries": [entry] if entry else [], "referrals": []}
+        return con
+
+    def test_first_found(self) -> None:
+        con = self._con_with_entry({"dn": "uid=alice,dc=corp,dc=local", "uid": ["alice"], "cn": ["Alice"]})
+        obj = ldaputil.first(con, "dc=corp,dc=local", "inetOrgPerson", "uid", "alice", attributes=["cn"])  # type: ignore[arg-type]
+        assert obj is not None
+        self.assertEqual(obj["cn"], ["Alice"])
+        self.assertEqual(obj["_id"], "alice")
+
+    def test_first_not_found(self) -> None:
+        con = self._con_with_entry(None)
+        self.assertIsNone(
+            ldaputil.first(con, "dc=corp,dc=local", "inetOrgPerson", "uid", "nobody")  # type: ignore[arg-type]
+        )
+
+    def test_first_escapes_value(self) -> None:
+        # Wildcards in the value must be escaped, so the filter never
+        # matches other users.
+        con = self._con_with_entry(None)
+        ldaputil.first(con, "dc=corp,dc=local", "inetOrgPerson", "uid", "al*")  # type: ignore[arg-type]
+        filter_used = con.search.call_args.args[1]
+        self.assertIn("(uid=al\\2a)", filter_used)
+
+
+class AddModifyNativeTest(UDSTestCase):
+    def test_add_ok(self) -> None:
+        con = _native_mock()
+        self.assertTrue(
+            ldaputil.add(con, "cn=x,dc=x", attributes={"cn": ["x"]})  # type: ignore[arg-type]
+        )
+        con.add.assert_called_once_with("cn=x,dc=x", attributes={"cn": ["x"]})
+
+    def test_add_raises_already_exists(self) -> None:
+        con = _native_mock()
+        con.add.side_effect = ldaputil.NativeAlreadyExistsError("already exists")
+        with self.assertRaises(ldaputil.ALREADY_EXISTS):
+            ldaputil.add(con, "cn=x,dc=x", attributes={"cn": ["x"]})  # type: ignore[arg-type]
+
+    def test_add_raises_ldap_error_for_other_failures(self) -> None:
+        con = _native_mock()
+        con.add.side_effect = ldaputil.NativeLdapError("insufficient access")
+        with self.assertRaises(ldaputil.LDAPError) as ctx:
+            ldaputil.add(con, "cn=x,dc=x", attributes={"cn": ["x"]})  # type: ignore[arg-type]
+        self.assertNotIsInstance(ctx.exception, ldaputil.AlreadyExistsError)
+
+    def test_modify_ok(self) -> None:
+        con = _native_mock()
+        self.assertTrue(
+            ldaputil.modify(
+                con,  # type: ignore[arg-type]
+                "cn=group,dc=x",
+                {"member": [(ldaputil.MODIFY_ADD, ["cn=machine,dc=x"])]},
+            )
+        )
+        con.modify.assert_called_once_with(
+            "cn=group,dc=x",
+            changes={"member": [(ldaputil.MODIFY_ADD, ["cn=machine,dc=x"])]},
+        )
+
+    def test_modify_raises_already_exists(self) -> None:
+        con = _native_mock()
+        con.modify.side_effect = ldaputil.NativeAlreadyExistsError("value exists")
+        with self.assertRaises(ldaputil.ALREADY_EXISTS):
+            ldaputil.modify(
+                con,  # type: ignore[arg-type]
+                "cn=group,dc=x",
+                {"member": [(ldaputil.MODIFY_ADD, ["cn=machine,dc=x"])]},
+            )
+
+    def test_modify_rejects_controls(self) -> None:
+        con = _native_mock()
+        with self.assertRaises(ldaputil.LDAPError):
+            ldaputil.modify(
+                con,  # type: ignore[arg-type]
+                "cn=group,dc=x",
+                {"member": [(ldaputil.MODIFY_ADD, ["cn=x"])]},
+                controls=mock.MagicMock(),
+            )
+        con.modify.assert_not_called()
+
+
+class RootDseNativeTest(UDSTestCase):
+    def test_returns_the_attributes_of_the_root_entry(self) -> None:
+        con = _native_mock()
+        con.search.return_value = {
+            "entries": [
                 {
-                    "type": "searchResRef",
-                    "uri": ["ldap://child-dc/dc=child,dc=corp,dc=local"],
+                    "dn": "",
+                    "namingContexts": ["dc=corp,dc=local", "cn=Configuration,dc=corp,dc=local"],
+                    "supportedLDAPVersion": ["3"],
                 }
-            ]
-        )
-        with self.assertRaises(ldaputil.LDAPReferralError) as ctx:
-            list(
-                ldaputil.as_dict(
-                    conn,
-                    "dc=corp,dc=local",
-                    "(uid=*)",
-                    raise_on_referrals=True,
-                )
-            )
-        self.assertEqual(
-            ctx.exception.referrals,
-            ["ldap://child-dc/dc=child,dc=corp,dc=local"],
-        )
+            ],
+            "referrals": [],
+        }
+        result = ldaputil.get_root_dse(con)  # type: ignore[arg-type]
+        assert result is not None
+        self.assertEqual(result["namingContexts"], ["dc=corp,dc=local", "cn=Configuration,dc=corp,dc=local"])
+        self.assertEqual(result["supportedLDAPVersion"], ["3"])
+        self.assertEqual(result["dn"], "")
+        # Root DSE: base scope over "" with operational attributes
+        self.assertEqual(con.search.call_args.args[0], "")
+        self.assertEqual(con.search.call_args.kwargs["scope"], ldaputil.SCOPE_BASE)
+        self.assertEqual(con.search.call_args.kwargs["attributes"], ["*", "+"])
+
+    def test_returns_none_when_the_server_answers_nothing(self) -> None:
+        con = _native_mock()
+        con.search.return_value = {"entries": [], "referrals": []}
+        self.assertIsNone(ldaputil.get_root_dse(con))  # type: ignore[arg-type]
+
+    def test_maps_search_errors(self) -> None:
+        con = _native_mock()
+        con.search.side_effect = ldaputil.NativeLdapError("boom")
+        with self.assertRaises(ldaputil.LDAPError):
+            ldaputil.get_root_dse(con)  # type: ignore[arg-type]
 
 
-class FirstReferralsTest(UDSTestCase):
-    def test_propagates_referral_error(self) -> None:
-        conn: ldaputil.LDAPConnection = _SearchFakeConn(  # type: ignore[arg-type]
-            entries=[],
-            referrals=["ldap://other-dc/dc=corp,dc=local"],
-        )
-        with self.assertRaises(ldaputil.LDAPReferralError):
-            ldaputil.first(
-                conn,  # type: ignore[arg-type]
-                "dc=corp,dc=local",
-                "user",
-                "uid",
-                "alice",
-                raise_on_referrals=True,
-            )
+class RecursiveDeleteNativeTest(UDSTestCase):
+    """windows_domain pattern: delete an entry tree, deepest first."""
 
-    def test_returns_none_on_empty_when_no_referrals(self) -> None:
-        conn: ldaputil.LDAPConnection = _SearchFakeConn(  # type: ignore[arg-type]
-            entries=[],
-            referrals=None,
-        )
-        self.assertIsNone(
-            ldaputil.first(
-                conn,  # type: ignore[arg-type]
-                "dc=corp,dc=local",
-                "user",
-                "uid",
-                "alice",
-                raise_on_referrals=True,
-            )
-        )
+    ENTRY_DN = "cn=udspqv001,ou=vdi,dc=example,dc=local"
+    CHILD_DN = f"cn=child,{ENTRY_DN}"
+    GRANDCHILD_DN = f"cn=grandchild,{CHILD_DN}"
 
-    def test_default_still_returns_none_on_empty(self) -> None:
-        conn: ldaputil.LDAPConnection = _SearchFakeConn(  # type: ignore[arg-type]
-            entries=[],
-            referrals=["ldap://other-dc/dc=corp,dc=local"],
-        )
-        # Without raise_on_referrals, referrals are silently dropped and
-        # ``first`` behaves like before: returns None on empty result.
-        self.assertIsNone(
-            ldaputil.first(
-                conn,  # type: ignore[arg-type]
-                "dc=corp,dc=local",
-                "user",
-                "uid",
-                "alice",
-            )
-        )
+    def _con_with_tree(self, deleted: list[str]) -> mock.MagicMock:
+        con = _native_mock()
+        tree: dict[str, list[str]] = {
+            self.ENTRY_DN: [self.CHILD_DN],
+            self.CHILD_DN: [self.GRANDCHILD_DN],
+            self.GRANDCHILD_DN: [],
+        }
+
+        def search(base: str, *args: typing.Any, **kwargs: typing.Any) -> dict[str, typing.Any]:
+            return {
+                "entries": [{"dn": child} for child in tree.get(base, [])],
+                "referrals": [],
+            }
+
+        def delete(dn: str, *args: typing.Any, **kwargs: typing.Any) -> None:
+            deleted.append(dn)
+
+        con.search.side_effect = search
+        con.delete.side_effect = delete
+        return con
+
+    def test_recursive_delete_removes_the_subtree_deepest_first(self) -> None:
+        deleted: list[str] = []
+        con = self._con_with_tree(deleted)
+        ldaputil.recursive_delete(con, self.ENTRY_DN)  # type: ignore[arg-type]
+        self.assertEqual(deleted, [self.GRANDCHILD_DN, self.CHILD_DN, self.ENTRY_DN])
+
+    def test_recursive_delete_of_a_leaf_only_deletes_the_entry(self) -> None:
+        deleted: list[str] = []
+        con = _native_mock()
+        con.search.side_effect = lambda *a, **k: {"entries": [], "referrals": []}
+        con.delete.side_effect = deleted.append
+        ldaputil.recursive_delete(con, self.ENTRY_DN)  # type: ignore[arg-type]
+        self.assertEqual(deleted, [self.ENTRY_DN])
 
 
-# ---------------------------------------------------------------------------
-# connection() preserves the LDAP result message so callers can key off
-# sub-status codes like 773.
-# ---------------------------------------------------------------------------
-
-
-class _BindFakeConn:
-    """Minimal stand-in for an ldap3 ``Connection`` driving the bind path."""
-
-    def __init__(
-        self,
-        *,
-        bind_ok: bool,
-        result: dict[str, typing.Any] | None = None,
-    ) -> None:
-        self._bind_ok: bool = bind_ok
-        # ``Connection.result`` is a property in ldap3 that returns a dict;
-        # here it's a plain attribute because nothing in ``connection()``
-        # calls it as a property (only ``.get`` on it).
-        self.result: dict[str, typing.Any] = result if result is not None else {}
-        self.opened: bool = False
-        self.bound: bool = False
-
-    def open(self) -> None:
-        self.opened = True
-
-    def bind(self) -> bool:
-        self.bound = True
-        return self._bind_ok
-
-
-class ConnectionBindMessageTest(UDSTestCase):
-    """``connection()`` must surface the LDAP result ``message`` on bind failure.
+class ConnectionNativeTest(UDSTestCase):
+    """``connection()`` wiring and error mapping on the native backend.
 
     The AD authenticator's ``check_password`` keys off substrings such as
     ``AcceptSecurityContext error, data 773`` to redirect users to a
-    password changer. If ``connection()`` swallows that text the redirect
-    never fires — see the bug report behind these tests.
+    password changer; the native BindError message must carry the server
+    diagnostic text for that to keep working.
     """
 
-    def _patch_connection_factory(
+    def _connect(
         self,
-        fake: _BindFakeConn,
-    ) -> tuple[typing.Any, typing.Any]:
-        return (
-            mock.patch.object(ldaputil, "Server", return_value=mock.MagicMock()),
-            mock.patch.object(ldaputil, "Connection", return_value=fake),
+        side_effect: typing.Any = None,
+        return_value: typing.Any = None,
+        **kwargs: typing.Any,
+    ) -> typing.Any:
+        factory = mock.patch.object(
+            ldaputil,
+            "NativeConnection",
+            return_value=return_value,
+            side_effect=side_effect,
         )
+        return factory
 
-    def test_failed_bind_includes_ldap_message(self) -> None:
-        fake: _BindFakeConn = _BindFakeConn(
-            bind_ok=False,
-            result={
-                "result": 49,
-                "description": "invalidCredentials",
-                "message": (
-                    "80090308: LdapErr: DSID-0C0903A9, comment: AcceptSecurityContext error, data 773, v3830"
-                ),
-            },
+    def test_parameters_are_forwarded(self) -> None:
+        fake = _native_mock()
+        with (
+            mock.patch.object(ldaputil, "NativeConnection", return_value=fake) as native,
+            mock.patch.object(settings, "SECURE_MIN_TLS_VERSION", "1.3", create=True),
+            mock.patch.object(settings, "SECURE_CIPHERS", "TLS_AES_128_GCM_SHA256", create=True),
+        ):
+            con: ldaputil.LDAPConnection = ldaputil.connection(
+                username="alice@corp.local",
+                passwd="ok",
+                host="dc.corp.local",
+                use_ssl=True,
+                verify_ssl=True,
+                certificate_data="",
+                timeout=5,
+            )
+        self.assertIs(con, fake)
+        args, kwargs = native.call_args
+        # Default port for use_ssl is 636
+        self.assertEqual(args, ("dc.corp.local", 636, "alice@corp.local", "ok"))
+        self.assertTrue(kwargs["use_ssl"])
+        self.assertTrue(kwargs["verify_ssl"])
+        # Empty certificate content must behave as "no custom CA".
+        self.assertIsNone(kwargs["ca_certs_data"])
+        self.assertEqual(kwargs["min_tls_version"], "1.3")
+        self.assertEqual(kwargs["ciphers"], "TLS_AES_128_GCM_SHA256")
+        self.assertEqual(kwargs["timeout"], 5.0)
+
+    def test_default_ports(self) -> None:
+        for use_ssl, expected_port in ((False, 389), (True, 636)):
+            with self.subTest(use_ssl=use_ssl):
+                fake = _native_mock()
+                with mock.patch.object(ldaputil, "NativeConnection", return_value=fake) as native:
+                    ldaputil.connection("u", "p", "dc.corp.local", use_ssl=use_ssl)
+                self.assertEqual(native.call_args.args[1], expected_port)
+
+    def test_failed_bind_raises_bind_error_with_message(self) -> None:
+        error = ldaputil.NativeBindError(
+            "Could not bind to LDAP server dc.corp.local:389 as alice@corp.local: "
+            "80090308: LdapErr: DSID-0C0903A9, comment: AcceptSecurityContext error, data 773, v3830"
         )
-        server_patch, conn_patch = self._patch_connection_factory(fake)
-        with server_patch, conn_patch:
-            with self.assertRaises(ldaputil.LDAPError) as ctx:
-                ldaputil.connection(
-                    username="alice@corp.local",
-                    passwd="bad",
-                    host="dc.corp.local",
-                    port=389,
-                    use_ssl=False,
-                    timeout=5,
-                )
+        with (
+            self._connect(side_effect=error),
+            self.assertRaises(ldaputil.BindError) as ctx,
+        ):
+            ldaputil.connection(
+                username="alice@corp.local",
+                passwd="bad",
+                host="dc.corp.local",
+                port=389,
+                use_ssl=False,
+                timeout=5,
+            )
         self.assertIn("AcceptSecurityContext error, data 773", str(ctx.exception))
         self.assertIn("dc.corp.local", str(ctx.exception))
 
-    def test_failed_bind_without_message_still_raises(self) -> None:
-        fake: _BindFakeConn = _BindFakeConn(bind_ok=False, result={"result": 49})
-        server_patch, conn_patch = self._patch_connection_factory(fake)
-        with server_patch, conn_patch:
-            with self.assertRaises(ldaputil.LDAPError) as ctx:
-                ldaputil.connection(
-                    username="alice@corp.local",
-                    passwd="bad",
-                    host="dc.corp.local",
-                    port=389,
-                    use_ssl=False,
-                    timeout=5,
-                )
-        # Falls back to the original prefix when ``result`` has no message.
-        self.assertIn("Could not bind", str(ctx.exception))
-        self.assertIn("dc.corp.local", str(ctx.exception))
-        # And no trailing colon/empty fragment.
-        self.assertFalse(str(ctx.exception).endswith(": "))
+    def test_connect_failure_raises_plain_ldap_error(self) -> None:
+        error = ldaputil.NativeLdapError("I/O error: Connection refused (os error 111)")
+        with (
+            self._connect(side_effect=error),
+            self.assertRaises(ldaputil.LDAPError) as ctx,
+        ):
+            ldaputil.connection("u", "p", "dc.corp.local", port=636, use_ssl=True, timeout=2)
+        self.assertNotIsInstance(ctx.exception, ldaputil.BindError)
+        self.assertIn("Connection refused", str(ctx.exception))
 
     def test_successful_bind_returns_connection(self) -> None:
-        fake: _BindFakeConn = _BindFakeConn(bind_ok=True, result={"result": 0})
-        server_patch, conn_patch = self._patch_connection_factory(fake)
-        with server_patch, conn_patch:
-            con: ldaputil.LDAPConnection = ldaputil.connection(  # type: ignore[arg-type]
+        fake = _native_mock()
+        with self._connect(return_value=fake):
+            con: ldaputil.LDAPConnection = ldaputil.connection(
                 username="alice@corp.local",
                 passwd="ok",
                 host="dc.corp.local",
@@ -467,175 +457,6 @@ class ConnectionBindMessageTest(UDSTestCase):
                 timeout=5,
             )
         self.assertIs(con, fake)
-        self.assertTrue(fake.opened)
-        self.assertTrue(fake.bound)
-
-
-# ---------------------------------------------------------------------------
-# get_root_dse
-# ---------------------------------------------------------------------------
-
-
-class _RootDseEntry:
-    """Root DSE entry as ldap3 hands it back: attribute names plus values."""
-
-    def __init__(self, attrs: dict[str, list[str]]) -> None:
-        self.entry_dn: str = ""
-        self.entry_attributes: list[str] = list(attrs)
-        self._attrs: dict[str, list[str]] = attrs
-
-    def __getitem__(self, key: str) -> typing.Any:
-        return _AttrValue(self._attrs[key])
-
-
-class _RootDseFakeConn:
-    """Records the positional ``search`` call ``get_root_dse`` makes."""
-
-    def __init__(self, entries: list[_RootDseEntry] | None = None) -> None:
-        self.entries: list[_RootDseEntry] = entries or []
-        self.search_calls: list[dict[str, typing.Any]] = []
-
-    def search(
-        self,
-        search_base: str,
-        search_filter: str,
-        search_scope: typing.Any = None,
-        attributes: typing.Any = None,
-        get_operational_attributes: bool = False,
-        **kwargs: typing.Any,
-    ) -> bool:
-        self.search_calls.append(
-            {
-                "search_base": search_base,
-                "search_filter": search_filter,
-                "search_scope": search_scope,
-                "attributes": attributes,
-                "get_operational_attributes": get_operational_attributes,
-            }
-        )
-        return True
-
-
-class GetRootDseTest(UDSTestCase):
-    def test_asks_for_user_and_operational_attributes(self) -> None:
-        # Active Directory returns an attribute-less entry when the search does not
-        # name what it wants, so the request itself is what this guards.
-        fake: _RootDseFakeConn = _RootDseFakeConn()
-
-        ldaputil.get_root_dse(fake)  # type: ignore[arg-type]
-
-        self.assertEqual(len(fake.search_calls), 1)
-        call = fake.search_calls[0]
-        self.assertEqual(call["search_base"], "")
-        self.assertEqual(call["search_filter"], "(objectClass=*)")
-        self.assertEqual(call["search_scope"], ldaputil.SCOPE_BASE)
-        self.assertEqual(call["attributes"], ldap3.ALL_ATTRIBUTES)
-        self.assertTrue(call["get_operational_attributes"])
-
-    def test_returns_the_attributes_of_the_root_entry(self) -> None:
-        entry: _RootDseEntry = _RootDseEntry(
-            {
-                "namingContexts": ["dc=corp,dc=local", "cn=Configuration,dc=corp,dc=local"],
-                "supportedLDAPVersion": ["3"],
-            }
-        )
-        fake: _RootDseFakeConn = _RootDseFakeConn(entries=[entry])
-
-        result = ldaputil.get_root_dse(fake)  # type: ignore[arg-type]
-
-        self.assertIsNotNone(result)
-        assert result is not None  # for the type checker
-        self.assertEqual(result["namingContexts"], ["dc=corp,dc=local", "cn=Configuration,dc=corp,dc=local"])
-        self.assertEqual(result["supportedLDAPVersion"], ["3"])
-        self.assertEqual(result["dn"], "")
-
-    def test_returns_none_when_the_server_answers_nothing(self) -> None:
-        self.assertIsNone(ldaputil.get_root_dse(_RootDseFakeConn()))  # type: ignore[arg-type]
-
-
-class _DirectorySchema(typing.NamedTuple):
-    name: str
-    info: typing.Any
-
-
-# Real connections load the server schema (get_info=ALL) and ldap3 checks requested attribute names against it
-DIRECTORY_SCHEMAS: typing.Final[tuple[_DirectorySchema, ...]] = (
-    _DirectorySchema("Active Directory", ldap3.OFFLINE_AD_2012_R2),
-    _DirectorySchema("OpenLDAP", ldap3.OFFLINE_SLAPD_2_4),
-    _DirectorySchema("eDirectory", ldap3.OFFLINE_EDIR_9_1_4),
-    _DirectorySchema("389 Directory Server", ldap3.OFFLINE_DS389_1_3_3),
-)
-
-ENTRY_DN: typing.Final[str] = "cn=udspqv001,ou=vdi,dc=example,dc=local"
-CHILD_DN: typing.Final[str] = f"cn=child,{ENTRY_DN}"
-GRANDCHILD_DN: typing.Final[str] = f"cn=grandchild,{CHILD_DN}"
-SIBLING_DN: typing.Final[str] = "cn=sibling,ou=vdi,dc=example,dc=local"
-
-
-def _schema_connection(schema: _DirectorySchema) -> tuple[typing.Any, list[str]]:
-    connection: typing.Any = ldap3.Connection(
-        ldap3.Server("fake", get_info=schema.info), client_strategy=ldap3.MOCK_SYNC
-    )
-    for dn in (ENTRY_DN, CHILD_DN, GRANDCHILD_DN, SIBLING_DN):
-        connection.strategy.add_entry(dn, {"objectClass": ["top"], "cn": dn.split(",")[0][3:]})
-    connection.bind()
-
-    # The mock strategy returns the base entry on one-level searches; a real directory does not
-    mock_search: collections.abc.Callable[..., bool] = connection.search
-
-    def search(*args: typing.Any, **kwargs: typing.Any) -> bool:
-        result = mock_search(*args, **kwargs)
-        if kwargs.get("search_scope") == ldap3.LEVEL:
-            base = kwargs.get("search_base", args[0] if args else None)
-            response = typing.cast(list[dict[str, typing.Any]], connection.response or [])
-            connection.response = [item for item in response if item.get("dn") != base]
-        return result
-
-    deleted: list[str] = []
-    mock_delete: collections.abc.Callable[..., bool] = connection.delete
-
-    def delete(dn: str, *args: typing.Any, **kwargs: typing.Any) -> bool:
-        deleted.append(dn)
-        return mock_delete(dn, *args, **kwargs)
-
-    connection.search = search
-    connection.delete = delete
-    return connection, deleted
-
-
-class SchemaCheckedDirectoryTest(UDSTestCase):
-    def test_as_dict_without_attributes_returns_the_entry_dn(self) -> None:
-        for schema in DIRECTORY_SCHEMAS:
-            with self.subTest(directory=schema.name):
-                connection, _ = _schema_connection(schema)
-                found = next(
-                    ldaputil.as_dict(
-                        connection,
-                        "dc=example,dc=local",
-                        "(cn=udspqv001)",
-                        attributes=[ldaputil.NO_ATTRIBUTES],
-                    )
-                )
-                self.assertEqual(found["dn"], ENTRY_DN)
-
-    def test_recursive_delete_removes_the_subtree_deepest_first(self) -> None:
-        # Directories refuse to delete an entry that still has children
-        for schema in DIRECTORY_SCHEMAS:
-            with self.subTest(directory=schema.name):
-                connection, deleted = _schema_connection(schema)
-
-                ldaputil.recursive_delete(connection, ENTRY_DN)
-
-                self.assertEqual(deleted, [GRANDCHILD_DN, CHILD_DN, ENTRY_DN])
-
-    def test_recursive_delete_of_a_leaf_only_deletes_the_entry(self) -> None:
-        for schema in DIRECTORY_SCHEMAS:
-            with self.subTest(directory=schema.name):
-                connection, deleted = _schema_connection(schema)
-
-                ldaputil.recursive_delete(connection, SIBLING_DN)
-
-                self.assertEqual(deleted, [SIBLING_DN])
 
 
 if __name__ == "__main__":
