@@ -10,7 +10,7 @@ daphne
 # Native (Rust) LDAP client with PyO3 bindings, used by ldaputil.
 # Wheel from GitHub releases (abi3: one wheel for all CPython >= 3.12).
 # NOTE: the v0.1.0 release must exist on GitHub for this to resolve.
-uds-ldap-client @ https://github.com/VirtualCable/uds-ldap-client/releases/download/v0.1.1/uds_ldap_client-0.1.1-cp312-abi3-manylinux_2_38_x86_64.whl
+uds-ldap-client @ https://github.com/VirtualCable/uds-ldap-client/releases/download/v0.1.2/uds_ldap_client-0.1.2-cp312-abi3-manylinux_2_38_x86_64.whl
 pytest
 pytest-django
 lark
