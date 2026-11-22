@@ -133,6 +133,34 @@ class ServerEventsLoginLogoutTest(rest.test.RESTTestCase):
         data = response.json()["result"]
         self.assertEqual(data["ticket"]["some_value"], "value")
 
+    def test_login_with_foreign_ticket_is_refused(self) -> None:
+        """A ticket belongs to exactly one user service: presenting one to
+        operate on a different service is refused (transitional hardening of
+        the server event scope, see the actor credential phase-out plan).
+        Legitimate flows always agree, because the ticket is created for the
+        service being logged in."""
+        other_service = self.userservice_unmanaged
+        ticket_uuid = models.TicketStore.create(
+            {"userservice_uuid": self.user_service_managed.uuid, "some_value": "value"}
+        )
+        response = self.client.rest_post(
+            "/servers/event",
+            data={
+                "token": servers_fixtures.raw_token(self.server),
+                "type": "login",
+                "username": "local_user_name",
+                "userservice_uuid": other_service.uuid,
+                "ticket": ticket_uuid,
+            },
+        )
+        self.assertEqual(response.status_code, 200)
+        # The failure is reported in the body: no login happened on the
+        # foreign service
+        self.assertEqual(response.json()["result"], "error")
+        self.assertIn("Ticket does not belong", response.json()["error"])
+        other_service.refresh_from_db()
+        self.assertFalse(other_service.in_use)
+
     def test_login_fail(self) -> None:
         response = self.client.rest_post(
             "/servers/event",

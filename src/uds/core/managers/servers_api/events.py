@@ -91,8 +91,25 @@ def process_login(server: "models.Server", data: dict[str, typing.Any]) -> typin
     if "ticket" in data:
         # Do not invalidate tickets on debug mode, the will last for 1000 hours (41 days and 16 hours)
         ticket = models.TicketStore.get(data["ticket"], invalidate=not getattr(settings, "DEBUG", False))
-        # If ticket is included, user_service can be inside ticket or in data
-        data["userservice_uuid"] = data.get("userservice_uuid", ticket["userservice_uuid"])
+        # If ticket is included, user_service can be inside ticket or in data.
+        # When both are present they must agree: a ticket belongs to exactly
+        # one user service, so presenting one to operate on a different one
+        # is refused (transitional hardening of the server event scope, see
+        # the actor credential phase-out plan for the full binding).
+        requested_uuid = data.get("userservice_uuid")
+        ticket_uuid = ticket.get("userservice_uuid")
+        if requested_uuid and ticket_uuid and requested_uuid != ticket_uuid:
+            # Kept unmasked on purpose: this is the forensic trace of a
+            # misused ticket (which ticket, from which server, against which
+            # service), as the actor plane audit requires.
+            logger.error(
+                "Ticket %s presented from server %s to operate on foreign user service %s (mismatch)",
+                ticket_uuid,
+                server.hostname,
+                requested_uuid,
+            )
+            return rest_result("error", error="Ticket does not belong to the requested user service")
+        data["userservice_uuid"] = requested_uuid or ticket_uuid
 
     userservice = models.UserService.objects.get(uuid=data["userservice_uuid"])
     server.set_actor_version(userservice)
