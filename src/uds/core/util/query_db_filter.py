@@ -55,7 +55,9 @@ from django.db.models.functions import Upper
 from .query_filter import _FUNCTIONS_PARAMS_NUM
 from .query_filter import _QUERY_GRAMMAR
 
-_DB_QUERY_PARSER_VAR: typing.Final[contextvars.ContextVar[lark.Lark]] = contextvars.ContextVar("db_query_parser")
+_DB_QUERY_PARSER_VAR: typing.Final[contextvars.ContextVar[lark.Lark]] = contextvars.ContextVar(
+    "db_query_parser"
+)
 
 _REMOVE_QUOTES_RE: typing.Final[re.Pattern[str]] = re.compile(r"^(['\"])(.*)\1$")
 
@@ -263,10 +265,28 @@ def get_parser() -> lark.Lark:
 T = typing.TypeVar("T", bound=typing.Any)
 
 
-def exec_query(query: str, qs: QuerySet[T]) -> QuerySet[T]:
+def exec_query(
+    query: str, qs: QuerySet[T], allowed_fields: collections.abc.Set[str] | None = None
+) -> QuerySet[T]:
+    """Filters ``qs`` applying the OData ``$filter`` expression ``query``.
+
+    Args:
+        query: The OData filter expression.
+        qs: The queryset to filter.
+        allowed_fields: Names allowed as fields in the expression. ``None``
+            means no restriction; a set rejects any expression referencing a
+            field outside it, before the query reaches the database.
+    """
     try:
         parser = get_parser()
         tree = parser.parse(query)
+        if allowed_fields is not None:
+            for subtree in tree.iter_subtrees():
+                if subtree.data != "field":
+                    continue
+                for child in subtree.children:
+                    if isinstance(child, lark.Token) and str(child) not in allowed_fields:
+                        raise ValueError(f"Field not allowed in filter: {child}")
         transformer = DjangoQueryTransformer()
         q_obj = transformer.transform(tree)
 

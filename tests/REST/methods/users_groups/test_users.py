@@ -34,6 +34,7 @@ import datetime
 import functools
 import logging
 import typing
+from urllib.parse import quote
 
 from django.utils import timezone
 
@@ -589,4 +590,51 @@ class UsersPasswordPolicyTest(rest.test.RESTActorTestCase):
         user_dct = rest_fixtures.createUser(name="ext-weak-user", password="weak")
         response = self.client.rest_put(url, user_dct)
         # The complexity policy only applies to internal users
+        self.assertEqual(response.status_code, 200, response.content)
+
+
+class UsersODataAllowlistTest(rest.test.RESTTestCase):
+    """``$filter``/``$orderby`` are restricted to the fields the table declares.
+
+    Regression for the Strix pentest_4494 finding: the query layer validated
+    field names against the model columns instead of the allowlist, so
+    ``$orderby=password`` (or any ``$filter`` on it) reached the real password
+    hash column and provided an exact-recovery oracle byte by byte. The users
+    collection is a detail route of authenticators.
+    """
+
+    url: str
+
+    @typing.override
+    def setUp(self) -> None:
+        super().setUp()
+        self.login()
+        self.url = f"authenticators/{self.auth.uuid}/users"
+
+    def test_orderby_password_is_rejected(self) -> None:
+        response = self.client.rest_get(f"{self.url}/overview?$orderby=password")
+        self.assertEqual(response.status_code, 400, response.content)
+
+    def test_orderby_password_descending_is_rejected(self) -> None:
+        response = self.client.rest_get(f"{self.url}/overview?$orderby=-password")
+        self.assertEqual(response.status_code, 400, response.content)
+
+    def test_filter_on_password_is_rejected(self) -> None:
+        """Every operator route to the column is closed, not just equality."""
+        for expr in (
+            "password eq 'x'",
+            "password ne 'x'",
+            "contains(password, 'x')",
+            "startswith(password, 'x')",
+        ):
+            response = self.client.rest_get(f"{self.url}/overview?$filter={quote(expr)}")
+            self.assertEqual(response.status_code, 400, f"{expr!r}: {response.content}")
+
+    def test_gui_style_queries_keep_working(self) -> None:
+        """Exactly what the admin datasource builds: contains over declared
+        filter fields, and sorting by a displayed column."""
+        gui_filter = "contains(name, 'a') or contains(real_name, 'a')"
+        response = self.client.rest_get(f"{self.url}/overview?$filter={quote(gui_filter)}")
+        self.assertEqual(response.status_code, 200, response.content)
+        response = self.client.rest_get(f"{self.url}/overview?$orderby=real_name")
         self.assertEqual(response.status_code, 200, response.content)

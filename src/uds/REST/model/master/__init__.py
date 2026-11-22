@@ -156,6 +156,24 @@ class ModelHandler(BaseModelHandler[T_Item], abc.ABC):
 
     TABLE: typing.ClassVar[types.rest.TableInfo] = types.rest.TableInfo.null()
 
+    @typing.override
+    def odata_allowed_fields(self) -> collections.abc.Set[str] | None:
+        """Restricts ``$filter`` to the fields the table declares as filterable."""
+        allowed = self.TABLE.filter_fields
+        return frozenset(allowed) if allowed else None
+
+    @typing.override
+    def odata_orderby_allowed_fields(self) -> collections.abc.Set[str] | None:
+        """Restricts ``$orderby`` to filterable plus rendered table fields.
+
+        The GUI sorts by any displayed column (mapped through
+        ``field_mappings``), so sorting keeps working; fields that are
+        neither filterable nor rendered (``password`` being the target case)
+        become unreachable through OData.
+        """
+        allowed = set(self.TABLE.filter_fields) | {field.name for field in self.TABLE.fields}
+        return frozenset(allowed) if allowed else None
+
     # This methods must be override, depending on what is provided
 
     # types related

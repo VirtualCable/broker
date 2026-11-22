@@ -479,6 +479,26 @@ class DetailHandler(BaseModelHandler[T_Item], abc.ABC):
         """
         return types.rest.TableInfo.null()
 
+    def _odata_table(self) -> types.rest.TableInfo:
+        """The table info of this detail (a null table if there is no parent)."""
+        parent = getattr(self, "_parent_item", None)
+        if parent is None:
+            return types.rest.TableInfo.null()
+        return self.get_table(parent)
+
+    @typing.override
+    def odata_allowed_fields(self) -> collections.abc.Set[str] | None:
+        """Restricts ``$filter`` to the fields the detail table declares as filterable."""
+        allowed = self._odata_table().filter_fields
+        return frozenset(allowed) if allowed else None
+
+    @typing.override
+    def odata_orderby_allowed_fields(self) -> collections.abc.Set[str] | None:
+        """Restricts ``$orderby`` to filterable plus rendered detail table fields."""
+        table = self._odata_table()
+        allowed = set(table.filter_fields) | {field.name for field in table.fields}
+        return frozenset(allowed) if allowed else None
+
     def get_gui(self, parent: models.Model, for_type: str) -> list[types.ui.GuiElement]:
         """
         Gets the gui that is needed in order to "edit/add" new items on this detail
