@@ -16,6 +16,7 @@ All filters apply at the query level (never after the limit), so asking for
 window instead of a slice of the unfiltered log.
 """
 
+import collections.abc
 import datetime
 import re
 import typing
@@ -42,6 +43,13 @@ _MAX_LIMIT: typing.Final[int] = 1000
 _SYSLOG_OWNER_ID: typing.Final[int] = -1
 
 _DATE_ONLY: typing.Final[re.Pattern[str]] = re.compile(r"^\d{4}-\d{2}-\d{2}$")
+
+# Real ``Log`` columns reachable through OData. Restricting the raw log
+# queries keeps them explicit (and future-proof): the columns are harmless,
+# but a forgotten field would otherwise silently fall back to unrestricted.
+_LOG_FIELDS: typing.Final[frozenset[str]] = frozenset(
+    {"id", "owner_id", "owner_type", "created", "source", "level", "name", "data"}
+)
 
 
 class Logs(Handler):
@@ -129,6 +137,15 @@ class Logs(Handler):
         if self.odata.orderby:
             return qs.order_by(*self.odata.orderby, "-id")
         return qs.order_by("-created", "-id")
+
+    @typing.override
+    def odata_allowed_fields(self) -> collections.abc.Set[str] | None:
+        """Restricts raw log queries to the real ``Log`` columns."""
+        return _LOG_FIELDS
+
+    @typing.override
+    def odata_orderby_allowed_fields(self) -> collections.abc.Set[str] | None:
+        return _LOG_FIELDS
 
     def _filtered_queryset(self) -> "QuerySet[Log]":
         """Base queryset: the global slice narrowed by the sugar filters."""
