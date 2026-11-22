@@ -909,11 +909,19 @@ class CuratedToolsJsonRpcTest(rest.test.RESTTestCase):
         gui_registry.callbacks["test-curator-filler"] = filler
         self.addCleanup(gui_registry.callbacks.pop, "test-curator-filler", None)
 
+        # The dispatcher requires a valid cb_ticket: create one as the field
+        # emission would (the opaque uuid wraps the provider context).
+        prov_uuid = "prov-01234567"
+        ticket = models.TicketStore.create({"prov_uuid": prov_uuid}, 3600)
+
         result = json.loads(
             self._result_text(
                 self._call(
                     "get_gui_field_choices",
-                    {"callback_name": "test-curator-filler", "parameters": {"datastore": "ds1"}},
+                    {
+                        "callback_name": "test-curator-filler",
+                        "parameters": {"datastore": "ds1", "cb_ticket": ticket},
+                    },
                 )
             )
         )
@@ -923,7 +931,29 @@ class CuratedToolsJsonRpcTest(rest.test.RESTTestCase):
             result,
             [{"name": "target_field", "choices": [{"id": "a", "text": "Alpha"}, {"id": "b", "text": "Beta"}]}],
         )
-        self.assertEqual(calls, [{"datastore": "ds1"}])
+        # The ticket uuid is consumed by the dispatcher, the wrapped context is
+        # merged into the params, and the ticket never reaches the callback
+        self.assertEqual(calls, [{"datastore": "ds1", "prov_uuid": prov_uuid}])
+
+    def test_get_gui_field_choices_requires_cb_ticket(self) -> None:
+        # The unticketed legacy path is gone: without cb_ticket the tool
+        # answers access denied instead of invoking the callback.
+        from uds.core import types as core_types
+        from uds.core.ui import gui as gui_registry
+
+        def filler(params: dict[str, str]) -> core_types.ui.CallbackResultType:
+            raise AssertionError("callback must not be invoked without a cb_ticket")
+
+        gui_registry.callbacks["test-curator-filler-no-ticket"] = filler
+        self.addCleanup(gui_registry.callbacks.pop, "test-curator-filler-no-ticket", None)
+
+        body = self._call(
+            "get_gui_field_choices",
+            {"callback_name": "test-curator-filler-no-ticket", "parameters": {"datastore": "ds1"}},
+        )
+        self.assertIn("error", body, body)
+        # AccessDenied surfaces as the generic opaque "access denied" error
+        self.assertIn("access denied", str(body["error"]).lower())
 
     def test_get_gui_field_choices_unknown_callback(self) -> None:
         body = self._call("get_gui_field_choices", {"callback_name": "no-such-callback-anywhere"})

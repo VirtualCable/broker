@@ -31,7 +31,12 @@ Author: Adolfo Gómez, dkmaster at dkmon dot com
 
 import typing
 
+from uds import models
+from uds.core import types
 from uds.core.consts.rest import REDACTED
+from uds.core.util import permissions
+
+from tests.fixtures import services as services_fixtures
 
 from ....utils import rest
 
@@ -110,3 +115,95 @@ class TransportsRedactedTest(rest.test.RESTTestCase):
         payload["_redacted"] = True
         response = self.client.rest_put(f"transports/{self.uuid}", data=payload)
         self.assertEqual(response.status_code, 400, response.content)
+
+
+class TransportsPermissionRedactionTest(rest.test.RESTTestCase):
+    """Read-only delegations never receive stored credentials.
+
+    Regression for the Strix pentest_4494 finding: masking used to be
+    client-opt-in (``$redacted``), so a staff user holding only READ on a
+    transport got its secrets in clear text. Redaction is now mandatory
+    for callers without MANAGEMENT on the object; MANAGEMENT+ grantees
+    and administrators keep the previous behavior.
+    """
+
+    @typing.override
+    def setUp(self) -> None:
+        super().setUp()
+        self.login()
+        response = self.client.rest_put("transports", data=_base_payload("perm-redaction-transport"))
+        self.assertEqual(response.status_code, 200, response.content)
+        self.uuid: str = response.json()["id"]
+        self.transport = models.Transport.objects.get(uuid=self.uuid)
+
+    def _grant(self, permission: types.permissions.PermissionType) -> None:
+        permissions.add_user_permission(self.staffs[0], self.transport, permission)
+
+    def test_read_grantee_gets_redacted_single_item_without_asking(self) -> None:
+        self._grant(types.permissions.PermissionType.READ)
+        self.login(self.staffs[0], as_admin=False)
+        response = self.client.rest_get(f"transports/{self.uuid}")
+        self.assertEqual(response.status_code, 200, response.content)
+        body = response.json()
+        self.assertEqual(body["instance"]["pin"], REDACTED)
+        self.assertEqual(body["pin"], REDACTED)  # Legacy flattened field
+        self.assertEqual(body["instance"]["test_url"], "https://example.com")
+        self.assertTrue(body["_redacted"])
+
+    def test_read_grantee_gets_redacted_listings_without_asking(self) -> None:
+        self._grant(types.permissions.PermissionType.READ)
+        self.login(self.staffs[0], as_admin=False)
+        for path in (f"transports/{self.uuid}", "transports/overview", "transports"):
+            with self.subTest(path=path):
+                response = self.client.rest_get(path)
+                self.assertEqual(response.status_code, 200, response.content)
+                body = typing.cast("list[dict[str, typing.Any]] | dict[str, typing.Any]", response.json())
+                items = body if isinstance(body, list) else [body]
+                item = next(i for i in items if i["id"] == self.uuid)
+                self.assertEqual(item["instance"]["pin"], REDACTED)
+                self.assertTrue(item["_redacted"])
+
+    def test_management_grantee_keeps_real_values(self) -> None:
+        self._grant(types.permissions.PermissionType.MANAGEMENT)
+        self.login(self.staffs[0], as_admin=False)
+        response = self.client.rest_get(f"transports/{self.uuid}")
+        self.assertEqual(response.status_code, 200, response.content)
+        body = response.json()
+        self.assertEqual(body["instance"]["pin"], "1234")
+        self.assertNotIn("_redacted", body)
+
+    def test_management_grantee_can_still_opt_in(self) -> None:
+        self._grant(types.permissions.PermissionType.MANAGEMENT)
+        self.login(self.staffs[0], as_admin=False)
+        response = self.client.rest_get(f"transports/{self.uuid}?$redacted")
+        self.assertEqual(response.status_code, 200, response.content)
+        self.assertEqual(response.json()["instance"]["pin"], REDACTED)
+
+    def test_admin_keeps_real_values(self) -> None:
+        response = self.client.rest_get(f"transports/{self.uuid}")
+        self.assertEqual(response.status_code, 200, response.content)
+        self.assertEqual(response.json()["instance"]["pin"], "1234")
+
+    def test_redaction_keeps_etag_stable_for_read_grantee(self) -> None:
+        """The mandatory redaction must not change concurrency tokens."""
+        admin_view = self.client.rest_get(f"transports/{self.uuid}")
+        self._grant(types.permissions.PermissionType.READ)
+        self.login(self.staffs[0], as_admin=False)
+        reader_view = self.client.rest_get(f"transports/{self.uuid}")
+        self.assertEqual(admin_view.status_code, 200, admin_view.content)
+        self.assertEqual(reader_view.status_code, 200, reader_view.content)
+        self.assertEqual(admin_view["ETag"], reader_view["ETag"])
+
+    def test_listings_redact_per_object_permission(self) -> None:
+        """A mixed listing redacts only the objects the caller cannot manage."""
+        other = services_fixtures.create_db_transport()
+        self._grant(types.permissions.PermissionType.MANAGEMENT)
+        permissions.add_user_permission(self.staffs[0], other, types.permissions.PermissionType.READ)
+        self.login(self.staffs[0], as_admin=False)
+        response = self.client.rest_get("transports/overview")
+        self.assertEqual(response.status_code, 200, response.content)
+        items: list[dict[str, typing.Any]] = response.json()
+        managed = next(i for i in items if i["id"] == self.uuid)
+        read_only = next(i for i in items if i["id"] == other.uuid)
+        self.assertNotIn("_redacted", managed)
+        self.assertTrue(read_only["_redacted"])

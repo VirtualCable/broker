@@ -57,40 +57,40 @@ from uds.REST.methods.user_services import UserServiceItem
 from uds.REST.model.detail import DetailHandler
 from uds.REST.model.master import ModelHandler
 
-importlib.import_module('uds.REST.dispatcher')
+importlib.import_module("uds.REST.dispatcher")
 
 _MasterHandler: typing.TypeAlias = type[ModelHandler[typing.Any]]
 
 # Queryset model behind each detail tab, keyed by "<master handler>/<tab>".
 DETAIL_MODELS: typing.Final[dict[str, type[Model]]] = {
-    'Accounts/usage': models.AccountUsage,
-    'Authenticators/users': models.User,
-    'Authenticators/groups': models.Group,
-    'Calendars/rules': models.CalendarRule,
-    'FlowsApproval/actions': models.FlowAction,
-    'FlowsArchive/actions': models.FlowAction,
-    'FlowsOwn/actions': models.FlowAction,
-    'MetaPools/access': models.CalendarAccess,
-    'MetaPools/groups': models.Group,
-    'MetaPools/pools': models.MetaPoolMember,
-    'Providers/services': models.Service,
-    'Providers/usage': models.UserService,
-    'ServersGroups/servers': models.Server,
-    'ServicesPools/access': models.CalendarAccess,
-    'ServicesPools/actions': models.CalendarAction,
-    'ServicesPools/cache': models.UserService,
-    'ServicesPools/changelog': models.ServicePoolPublicationChangelog,
-    'ServicesPools/groups': models.Group,
-    'ServicesPools/publications': models.ServicePoolPublication,
-    'ServicesPools/services': models.UserService,
-    'ServicesPools/transports': models.Transport,
-    'Tunnels/servers': models.Server,
+    "Accounts/usage": models.AccountUsage,
+    "Authenticators/users": models.User,
+    "Authenticators/groups": models.Group,
+    "Calendars/rules": models.CalendarRule,
+    "FlowsApproval/actions": models.FlowAction,
+    "FlowsArchive/actions": models.FlowAction,
+    "FlowsOwn/actions": models.FlowAction,
+    "MetaPools/access": models.CalendarAccess,
+    "MetaPools/groups": models.Group,
+    "MetaPools/pools": models.MetaPoolMember,
+    "Providers/services": models.Service,
+    "Providers/usage": models.UserService,
+    "ServersGroups/servers": models.Server,
+    "ServicesPools/access": models.CalendarAccess,
+    "ServicesPools/actions": models.CalendarAction,
+    "ServicesPools/cache": models.UserService,
+    "ServicesPools/changelog": models.ServicePoolPublicationChangelog,
+    "ServicesPools/groups": models.Group,
+    "ServicesPools/publications": models.ServicePoolPublication,
+    "ServicesPools/services": models.UserService,
+    "ServicesPools/transports": models.Transport,
+    "Tunnels/servers": models.Server,
 }
 
 
 # Item class behind each detail tab that filters in memory instead of querying.
 IN_MEMORY_DETAILS: typing.Final[dict[str, type[typing.Any]]] = {
-    'MetaPools/services': UserServiceItem,
+    "MetaPools/services": UserServiceItem,
 }
 
 
@@ -103,17 +103,17 @@ def _descendants(cls: _MasterHandler) -> collections.abc.Iterator[_MasterHandler
 def _detail_table(detail: type[DetailHandler[typing.Any]], master: _MasterHandler) -> TableInfo:
     # Detail handlers only need the parent to build their table, and building one
     # requires a request, so an uninitialized handler with a mock parent is enough.
-    handler = detail.__new__(detail)
+    handler = object.__new__(detail)
     return handler.get_table(mock.MagicMock(spec=master.MODEL))
 
 
 def _detail_tables() -> list[tuple[str, TableInfo]]:
     tables: list[tuple[str, TableInfo]] = []
     for master in _descendants(ModelHandler):
-        if not master.DETAIL or getattr(master, 'MODEL', None) is None:
+        if not master.DETAIL or getattr(master, "MODEL", None) is None:
             continue
         for tab, detail in master.DETAIL.items():
-            tables.append((f'{master.__qualname__}/{tab}', _detail_table(detail, master)))
+            tables.append((f"{master.__qualname__}/{tab}", _detail_table(detail, master)))
     return sorted(tables)
 
 
@@ -121,23 +121,23 @@ _TABLES = _detail_tables()
 
 
 def test_detail_tables_are_registered() -> None:
-    assert _TABLES, 'no detail handler table found, registration is broken'
+    assert _TABLES, "no detail handler table found, registration is broken"
 
 
 def test_every_detail_table_has_a_known_model() -> None:
     assert sorted(DETAIL_MODELS | IN_MEMORY_DETAILS) == [name for name, _ in _TABLES]
 
 
-@pytest.mark.parametrize(('name', 'table'), _TABLES, ids=[name for name, _ in _TABLES])
+@pytest.mark.parametrize(("name", "table"), _TABLES, ids=[name for name, _ in _TABLES])
 def test_detail_table_declares_filter_fields(name: str, table: TableInfo) -> None:
-    assert table.filter_fields, f'{name} does not declare filter fields'
+    assert table.filter_fields, f"{name} does not declare filter fields"
 
 
-@pytest.mark.parametrize(('name', 'table'), _TABLES, ids=[name for name, _ in _TABLES])
+@pytest.mark.parametrize(("name", "table"), _TABLES, ids=[name for name, _ in _TABLES])
 def test_declared_detail_filter_fields_are_queryable(name: str, table: TableInfo) -> None:
     if item_class := IN_MEMORY_DETAILS.get(name):
         item_fields = {field.name for field in dataclasses.fields(item_class)}
-        assert set(table.filter_fields) <= item_fields, f'{name} declares unknown item fields'
+        assert set(table.filter_fields) <= item_fields, f"{name} declares unknown item fields"
         return
 
     model = DETAIL_MODELS[name]
@@ -145,4 +145,4 @@ def test_declared_detail_filter_fields_are_queryable(name: str, table: TableInfo
         try:
             exec_query(f"contains({field}, 'x')", model.objects.all())
         except FieldError as e:
-            pytest.fail(f'{name} declares a non queryable filter field {field!r}: {e}')
+            pytest.fail(f"{name} declares a non queryable filter field {field!r}: {e}")

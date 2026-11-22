@@ -24,10 +24,10 @@
 # CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-import csv
 import datetime
 import io
 import logging
+import collections.abc
 import typing
 
 from django.utils.translation import gettext
@@ -38,12 +38,23 @@ from uds.core.reports import graphs
 from uds.core.ui import gui
 from uds.models import StatsCountersAccum
 
+from uds.reports.csv_export import safe_csv_writer
 from .servers_base import ServersStatsReport
 from .servers_base import accumulated
 from .servers_base import server_label
 from .servers_base import servers_of
 
 logger: logging.Logger = logging.getLogger(__name__)
+
+
+def _x_tick(labels: list[str]) -> "collections.abc.Callable[[float], str]":
+    """X axis tick formatter for chart data indexed by position."""
+
+    def _formatter(v: float) -> str:
+        return labels[int(v)] if 0 <= int(v) < len(labels) else ""
+
+    return _formatter
+
 
 WIDTH: typing.Final[float] = 19.2
 HEIGHT: typing.Final[float] = 10.8
@@ -116,10 +127,14 @@ class ServerLoadReport(ServersStatsReport):
         charted = 0
         if rows:
             graph_cpu = io.BytesIO()
-            charted = _top_servers_bar_chart(rows, "cpu_avg", gettext("Average CPU usage"), gettext("CPU %"), graph_cpu)
+            charted = _top_servers_bar_chart(
+                rows, "cpu_avg", gettext("Average CPU usage"), gettext("CPU %"), graph_cpu
+            )
 
             graph_mem = io.BytesIO()
-            _top_servers_bar_chart(rows, "mem_avg", gettext("Average memory usage"), gettext("Memory %"), graph_mem)
+            _top_servers_bar_chart(
+                rows, "mem_avg", gettext("Average memory usage"), gettext("Memory %"), graph_mem
+            )
 
             images = {"graph1": graph_cpu.getvalue(), "graph2": graph_mem.getvalue()}
 
@@ -154,7 +169,7 @@ class ServerLoadReportCSV(ServerLoadReport):
     @typing.override
     def generate(self) -> bytes:
         output = io.StringIO()
-        writer = csv.writer(output)
+        writer = safe_csv_writer(output)
         writer.writerow(
             [
                 gettext("Group"),
@@ -224,7 +239,7 @@ def _top_servers_bar_chart(
         {
             "title": title,
             "x": labels,
-            "xtickFnc": lambda v: labels[int(v)] if 0 <= int(v) < len(labels) else "",
+            "xtickFnc": _x_tick(labels),
             "xlabel": gettext("Server"),
             "y": [{"label": ylabel, "data": [r[key] for r in top]}],
             "ylabel": ylabel,

@@ -516,6 +516,31 @@ class Handler(abc.ABC):
             return qs.order_by("pk")
         return qs.order_by(*self.odata.orderby)
 
+    def odata_allowed_fields(self) -> collections.abc.Set[str] | None:
+        """Names allowed in ``$filter`` expressions for this handler.
+
+        ``None`` means no restriction: handlers that do not expose a tabular
+        collection keep the historical behavior. Model and detail handlers
+        restrict the query to the fields their table declares as filterable,
+        so real (never rendered) model columns — the password hash being the
+        notable case — are not reachable through OData.
+        """
+        return None
+
+    def odata_orderby_allowed_fields(self) -> collections.abc.Set[str] | None:
+        """Names allowed in ``$orderby``. Defaults to the ``$filter`` set."""
+        return self.odata_allowed_fields()
+
+    def _check_orderby_fields(self) -> None:
+        """Rejects ``$orderby`` fields outside the handler's allowed set."""
+        allowed = self.odata_orderby_allowed_fields()
+        if allowed is None:
+            return
+        for field in self.odata.orderby:
+            name = field.lstrip("-")
+            if name not in allowed:
+                raise ValueError(f"Field not allowed in orderby: {name}")
+
     @typing.final
     def filter_odata_queryset(self, qs: QuerySet[typing.Any]) -> list[typing.Any]:
         """
@@ -529,7 +554,9 @@ class Handler(abc.ABC):
         # as an HTTP 500 leaking model schema.
         try:
             if self.odata.filter:
-                qs = query_db_filter.exec_query(self.odata.filter, qs)
+                qs = query_db_filter.exec_query(
+                    self.odata.filter, qs, allowed_fields=self.odata_allowed_fields()
+                )
 
             # Store total count before slicing
             self.add_header("X-Total-Count", str(qs.count()))
@@ -537,6 +564,7 @@ class Handler(abc.ABC):
             # order_by must be unique and all fields are summited by once
             # As after slicing we can have a list, we may use list result from sorting
             if self.odata.orderby:
+                self._check_orderby_fields()
                 result = self.apply_sort(qs)
             else:
                 result = qs

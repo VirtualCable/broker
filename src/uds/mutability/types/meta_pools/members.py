@@ -88,10 +88,23 @@ class MetaPoolMember(mutability_base.MutableActionType):
         return "metapool"
 
     @typing.override
-    def field_definitions(self, for_type: str, target: db_models.Model | None = None) -> list[JsonObject]:
+    def field_definitions(
+        self,
+        for_type: str,
+        target: db_models.Model | None = None,
+        user: "models.User | None" = None,
+    ) -> list[JsonObject]:
+        # The choices inherit the object-level authorization the equivalent
+        # REST surfaces apply: globally, only the pools the caller may READ,
+        # plus this metapool's own current members.
+        keep: set[str] = set()
+        if isinstance(target, models.MetaPool):
+            keep = {str(row["pool_id"]) for row in _member_rows(target)}
         pools: list[JsonObject] = [
-            {"value": str(uuid), "label": name}
-            for uuid, name in models.ServicePool.objects.order_by("name").values_list("uuid", "name")
+            {"value": str(obj.uuid), "label": obj.name}
+            for obj in mutability_base.permitted_choices(
+                user, models.ServicePool.objects.order_by("name"), keep_uuids=keep
+            )
         ]
         return [
             {
@@ -202,8 +215,8 @@ class MetaPoolMember(mutability_base.MutableActionType):
         )
 
     @typing.override
-    def read(self, target_uuid: str) -> JsonObject:
-        result = super().read(target_uuid)
+    def read(self, target_uuid: str, user: "models.User | None" = None) -> JsonObject:
+        result = super().read(target_uuid, user)
         meta_pool = typing.cast(models.MetaPool, self.resolve_target(target_uuid))
         names = {str(uuid): name for uuid, name in models.ServicePool.objects.values_list("uuid", "name")}
         result["current_members"] = [

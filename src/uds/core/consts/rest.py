@@ -60,14 +60,16 @@ DEFAULT_ALLOW: typing.Final[str] = ", ".join(m.upper() for m in KNOWN_METHODS)
 
 # -- GUI callback tickets --
 #
-# ``/gui/callback/<name>`` endpoints receive a single required parameter
-# ``cb_uuid`` — the uuid of a ``TicketStore`` entry that the GUI obtained
-# via the corresponding ``/gui/<type>`` response. The ticket wraps the
-# provider uuid and has a short TTL (1 h by default), so a staff cannot
-# forge a callback request just by guessing a ``prov_uuid`` — they need
-# a fresh ticket from the GUI flow. See ``doc/plan/secure_callbacks.md``.
+# ``/gui/callback/<name>`` endpoints REQUIRE a valid ``cb_ticket`` parameter —
+# the uuid of a ``TicketStore`` entry that the GUI obtained via the
+# corresponding ``/gui/<type>`` response. The ticket wraps the provider context
+# (e.g. ``prov_uuid``) and has a short TTL (1 h), so a staff cannot forge a
+# callback request just by guessing a ``prov_uuid`` — they need a fresh ticket
+# from the GUI flow. Every callback is migrated (see
+# ``doc/plan/secure_callbacks.md``), so the legacy unticketed path is gone:
+# the dispatcher refuses callbacks without a valid ``cb_ticket``.
 CALLBACK_TICKET_TTL: typing.Final[int] = 60 * 60  # 1 hour
-CALLBACK_TICKET_PARAM: typing.Final[str] = "cb_uuid"
+CALLBACK_TICKET_PARAM: typing.Final[str] = "cb_ticket"
 
 
 class _NotFound:

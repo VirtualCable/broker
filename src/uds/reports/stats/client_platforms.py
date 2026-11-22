@@ -25,7 +25,6 @@
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 import collections
-import csv
 import io
 import logging
 import typing
@@ -37,6 +36,7 @@ from django.utils.translation import gettext_lazy as _
 from uds.core.managers.stats import StatsManager
 from uds.core.util import stats
 
+from uds.reports.csv_export import safe_csv_writer
 from .base import StatsReport
 
 logger: logging.Logger = logging.getLogger(__name__)
@@ -136,7 +136,7 @@ class ClientPlatformsReportCSV(ClientPlatformsReport):
     @typing.override
     def generate(self) -> bytes:
         output = io.StringIO()
-        writer = csv.writer(output)
+        writer = safe_csv_writer(output)
         writer.writerow(
             [
                 gettext("Platform"),

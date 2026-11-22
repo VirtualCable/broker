@@ -99,7 +99,9 @@ class GroupUpdate(mutability_base.MutableActionType):
         return "group"
 
     @typing.override
-    def field_definitions(self, for_type: str, target: db_models.Model | None = None) -> list[JsonObject]:
+    def field_definitions(
+        self, for_type: str, target: db_models.Model | None = None, user: "models.User | None" = None
+    ) -> list[JsonObject]:
         return [
             {
                 "name": "comments",
@@ -223,7 +225,10 @@ class GroupUpdate(mutability_base.MutableActionType):
 
     @typing.override
     def create_field_definitions(
-        self, for_type: str, target: db_models.Model | None = None
+        self,
+        for_type: str,
+        target: db_models.Model | None = None,
+        user: "models.User | None" = None,
     ) -> list[JsonObject]:
         # The creation form adds the group name and the kind (normal vs
         # meta, with its member groups) on top of the update surface
@@ -235,7 +240,7 @@ class GroupUpdate(mutability_base.MutableActionType):
                 "tooltip": "Name of the group (prefix it with pat: to declare a pattern group)",
                 "secret": False,
             },
-            *[d for d in self.field_definitions(for_type, None) if d["name"] not in ("groups", "pools")],
+            *[d for d in self.field_definitions(for_type, None, user) if d["name"] not in ("groups", "pools")],
             {
                 "name": "is_meta",
                 "type": "checkbox",

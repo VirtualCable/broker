@@ -25,7 +25,6 @@
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 import collections
-import csv
 import io
 import logging
 import typing
@@ -41,6 +40,7 @@ from uds.core.ui import gui
 from uds.core.util import stats
 from uds.models import ServicePool
 
+from uds.reports.csv_export import safe_csv_writer
 from .base import StatsReport
 
 logger: logging.Logger = logging.getLogger(__name__)
@@ -107,7 +107,9 @@ class TopUsersReport(StatsReport):
             .values("event_type", "stamp", "fld4", "prev_type", "prev_stamp", "owner_id")
         )
 
-        users: dict[str, UserEntry] = collections.defaultdict(lambda: UserEntry(sessions=0, time=0, pools=set()))
+        users: dict[str, UserEntry] = collections.defaultdict(
+            lambda: UserEntry(sessions=0, time=0, pools=set())
+        )
         for i in items:
             if i["event_type"] != logout or i["prev_type"] != login:
                 continue
@@ -165,7 +167,7 @@ class TopUsersReportCSV(TopUsersReport):
     @typing.override
     def generate(self) -> bytes:
         output = io.StringIO()
-        writer = csv.writer(output)
+        writer = safe_csv_writer(output)
         writer.writerow(
             [
                 gettext("User"),

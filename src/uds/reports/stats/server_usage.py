@@ -24,7 +24,6 @@
 # CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-import csv
 import datetime
 import io
 import logging
@@ -40,6 +39,7 @@ from uds.core import types
 from uds.core.reports import graphs
 from uds.models import StatsCountersAccum
 
+from uds.reports.csv_export import safe_csv_writer
 from .servers_base import ServersStatsReport
 from .servers_base import accumulated
 from .servers_base import server_label
@@ -140,7 +140,9 @@ class ServerUsageReport(ServersStatsReport):
             index = int(val)
             if index < 0 or index >= len(stamps) or index % label_step:
                 return ""
-            return filters.date(timezone.make_aware(datetime.datetime.fromtimestamp(stamps[index])), x_label_format)
+            return filters.date(
+                timezone.make_aware(datetime.datetime.fromtimestamp(stamps[index])), x_label_format
+            )
 
         graph_users = io.BytesIO()
         graphs.bar_chart(
@@ -199,7 +201,7 @@ class ServerUsageReportCSV(ServerUsageReport):
     @typing.override
     def generate(self) -> bytes:
         output = io.StringIO()
-        writer = csv.writer(output)
+        writer = safe_csv_writer(output)
         writer.writerow(
             [
                 gettext("Group"),

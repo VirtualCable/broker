@@ -585,7 +585,6 @@ class FlowStore:
                 notes.append(note)
         return "\n".join(notes)
 
-
     def verify_flow(self, flow: ActionFlow) -> list[FlowAction]:
         """Pass 1 of the launch: strict CAS re-check of every approved action.
 

@@ -15,6 +15,8 @@ from uds.REST.methods.reports import Reports
 
 from tests.utils import rest
 from tests.utils.test import UDSHttpResponse
+from tests.fixtures import authenticators as authenticators_fixtures
+from uds.reports.csv_export import csv_safe
 
 
 class _FakeReport:
@@ -83,3 +85,42 @@ class ReportsVerbTest(rest.test.RESTTestCase):
         listing = typing.cast("list[dict[str, typing.Any]]", json.loads(response.content))
         self.assertIsInstance(listing, list)
         self.assertTrue(listing)  # the factory always registers reports
+
+
+class CsvExportNeutralizationTest(rest.test.RESTTestCase):
+    """CSV exports neutralize formula-trigger cells (CWE-1236).
+
+    Regression for the Strix pentest_4494 finding: report CSV cells are
+    emitted verbatim, and cells whose text starts with ``=``/``+``/``-``/
+    ``@`` are evaluated as formulas by spreadsheet clients when an
+    administrator opens the export. The values may originate outside the
+    administrator's control (identity provider attributes, user names).
+    """
+
+    def test_csv_safe_cells(self) -> None:
+        self.assertEqual(csv_safe("=cmd|' /C calc'!A0"), "'=cmd|' /C calc'!A0")
+        self.assertEqual(csv_safe("+1"), "'+1")
+        self.assertEqual(csv_safe("-2"), "'-2")
+        self.assertEqual(csv_safe("@SUM(A1)"), "'@SUM(A1)")
+        self.assertEqual(csv_safe("\tformula"), "'\tformula")
+        self.assertEqual(csv_safe("Alice Harness"), "Alice Harness")
+        # Non-string cells are untouched
+        self.assertEqual(csv_safe(42), 42)
+        self.assertIsNone(csv_safe(None))
+
+    def test_users_csv_report_neutralizes_formula_cells(self) -> None:
+        from uds.reports.lists import users as users_report
+
+        auth = authenticators_fixtures.create_db_authenticator()
+        user = authenticators_fixtures.create_db_users(auth, number_of_users=1)[0]
+        user.real_name = "=cmd|' /C calc'!A0"
+        user.save(update_fields=["real_name"])
+
+        report = users_report.ListReportsUsersCSV(values={"authenticator": auth.uuid})
+        data = report.generate().decode()
+
+        # Ordinary rows and headers are byte-identical, the formula cell is
+        # neutralized with the leading apostrophe
+        self.assertIn("User ID,Real Name,Last access (UTC)", data)
+        self.assertIn("'=cmd|' /C calc'!A0", data)
+        self.assertNotIn("\n=cmd", data)

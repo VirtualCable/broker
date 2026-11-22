@@ -218,19 +218,29 @@ class DetailHandler(BaseModelHandler[T_Item], abc.ABC):
             )
             # Append etag header
             etag = response.etag(*fields)
+            # Redaction (opt-in or mandatory for read-only callers) is flagged
+            # after the etag, so concurrency tokens track the real values.
+            # The permission is evaluated on the parent: detail routes
+            # authorize against it, and detail objects inherit their
+            # delegation from it (services from their provider, etc.).
+            self._flag_redaction(response, parent)  # pyright: ignore[reportUnknownArgumentType]
         return response, etag  # pyright: ignore[reportUnknownVariableType]
 
     def _mark_redacted_items(self, items: types.rest.ItemsResult[T_Item]) -> types.rest.ItemsResult[T_Item]:
-        """Flags managed items for redaction when ``$redacted`` was requested."""
-        if self._odata.redacted:
-            # Materialize the (possibly lazy) iterator so flags reach the
-            # items before serialization
-            result = list(items)
-            for item in result:
-                if isinstance(item, types.rest.ManagedObjectItem):
-                    item._redacted = True
-            return result
-        return items
+        """Flags managed items for redaction when the caller must not see secrets.
+
+        Applies when ``$redacted`` was requested, and always for callers
+        without MANAGEMENT on the parent (see ``_must_redact``): detail
+        routes authorize against the parent, and detail objects inherit
+        their delegation from it.
+        """
+        # Materialize the (possibly lazy) iterator so flags reach the
+        # items before serialization
+        result = list(items)
+        for item in result:
+            if isinstance(item, types.rest.ManagedObjectItem):
+                self._flag_redaction(item, self._parent_item)  # pyright: ignore[reportUnknownArgumentType]
+        return result
 
     def get(self) -> typing.Any:
         """
@@ -478,6 +488,26 @@ class DetailHandler(BaseModelHandler[T_Item], abc.ABC):
         :return: TableInfo object with title, fields and row style
         """
         return types.rest.TableInfo.null()
+
+    def _odata_table(self) -> types.rest.TableInfo:
+        """The table info of this detail (a null table if there is no parent)."""
+        parent = getattr(self, "_parent_item", None)
+        if parent is None:
+            return types.rest.TableInfo.null()
+        return self.get_table(parent)
+
+    @typing.override
+    def odata_allowed_fields(self) -> collections.abc.Set[str] | None:
+        """Restricts ``$filter`` to the fields the detail table declares as filterable."""
+        allowed = self._odata_table().filter_fields
+        return frozenset(allowed) if allowed else None
+
+    @typing.override
+    def odata_orderby_allowed_fields(self) -> collections.abc.Set[str] | None:
+        """Restricts ``$orderby`` to filterable plus rendered detail table fields."""
+        table = self._odata_table()
+        allowed = set(table.filter_fields) | {field.name for field in table.fields}
+        return frozenset(allowed) if allowed else None
 
     def get_gui(self, parent: models.Model, for_type: str) -> list[types.ui.GuiElement]:
         """

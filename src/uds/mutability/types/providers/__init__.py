@@ -92,7 +92,9 @@ class ProviderUpdate(mutability_base.MutableActionType):
         return typing.cast(models.Provider, target).data_type
 
     @typing.override
-    def field_definitions(self, for_type: str, target: db_models.Model | None = None) -> list[JsonObject]:
+    def field_definitions(
+        self, for_type: str, target: db_models.Model | None = None, user: "models.User | None" = None
+    ) -> list[JsonObject]:
         # Provider guis depend only on the subtype; ``target`` is unused.
         # The model columns are the handler's own FIELDS_TO_SAVE; every
         # other gui element is module-instance configuration (prefixed with

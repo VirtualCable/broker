@@ -70,10 +70,14 @@ def curated_tools() -> tuple[ToolDefinition, ...]:
                 "whose definition carries a 'choices_callback' annotation). Pass the "
                 "callback name and the current values of the fields it depends on (the "
                 "annotation lists them; use the stored values of the item when editing "
-                "it, or the values already chosen for the proposal). The response is a "
-                "list of entries naming the field each one fills with its available "
-                "choices: use the entry whose name matches the field you are proposing. "
-                "An unknown callback answers not found."
+                "it, or the values already chosen for the proposal). The annotation "
+                "also carries a 'cb_ticket' ticket id: include it in the parameters "
+                "object, it is required by the dispatcher and it is safe to reuse "
+                "while it is not expired (a fresh one comes with a re-read of the "
+                "field definitions). The response is a list of entries naming the "
+                "field each one fills with its available choices: use the entry whose "
+                "name matches the field you are proposing. An unknown callback "
+                "answers not found."
             ),
             input_schema=schema(
                 {

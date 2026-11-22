@@ -121,6 +121,7 @@ class ServicePoolUpdate(mutability_base.MutableActionType):
         self,
         for_type: str,
         target: db_models.Model | None = None,
+        user: "models.User | None" = None,
     ) -> list[JsonObject]:
         # The creation view of the same handler gui: readonly references
         # (base service, OS manager, account) and context references
@@ -205,7 +206,9 @@ class ServicePoolUpdate(mutability_base.MutableActionType):
         return errors
 
     @typing.override
-    def field_definitions(self, for_type: str, target: db_models.Model | None = None) -> list[JsonObject]:
+    def field_definitions(
+        self, for_type: str, target: db_models.Model | None = None, user: "models.User | None" = None
+    ) -> list[JsonObject]:
         # Deletion needs no fields: the target itself is what disappears.
         # (An unbound instance serves the update surface, its default op.)
         if self.operation is ActionOperation.DELETE:

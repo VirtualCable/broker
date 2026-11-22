@@ -31,8 +31,9 @@ Cache recommendations report, built on top of the usage predictor.
 Author: Janier Rodríguez, jrodriguez at virtualcable dot es
 """
 
+from uds.reports.csv_export import safe_csv_writer
+
 import collections.abc
-import csv
 import io
 import logging
 import typing
@@ -231,7 +232,7 @@ class PoolCacheRecommendationsReportCSV(PoolCacheRecommendationsReport):
     @typing.override
     def generate(self) -> bytes:
         output = io.StringIO()
-        writer = csv.writer(output)
+        writer = safe_csv_writer(output)
         writer.writerow(
             [
                 gettext("Pool"),

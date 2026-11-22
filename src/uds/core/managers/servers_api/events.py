@@ -40,7 +40,7 @@ from uds.core import osmanagers
 from uds.core import types
 from uds.core.util import log
 from uds.core.util.model import sql_now
-from uds.REST.utils import rest_result
+from uds.REST.utils import rest_result, sanitize_params
 
 logger: logging.Logger = logging.getLogger(__name__)
 
@@ -60,7 +60,9 @@ def process_log(server: "models.Server", data: dict[str, typing.Any]) -> typing.
         except models.UserService.DoesNotExist:
             pass  # If not found, log on server
 
-    log.log(server, types.log.LogLevel.from_str(data["level"]), data["message"], source=types.log.LogSource.SERVER)
+    log.log(
+        server, types.log.LogLevel.from_str(data["level"]), data["message"], source=types.log.LogSource.SERVER
+    )
 
     return rest_result(consts.OK)
 
@@ -89,8 +91,25 @@ def process_login(server: "models.Server", data: dict[str, typing.Any]) -> typin
     if "ticket" in data:
         # Do not invalidate tickets on debug mode, the will last for 1000 hours (41 days and 16 hours)
         ticket = models.TicketStore.get(data["ticket"], invalidate=not getattr(settings, "DEBUG", False))
-        # If ticket is included, user_service can be inside ticket or in data
-        data["userservice_uuid"] = data.get("userservice_uuid", ticket["userservice_uuid"])
+        # If ticket is included, user_service can be inside ticket or in data.
+        # When both are present they must agree: a ticket belongs to exactly
+        # one user service, so presenting one to operate on a different one
+        # is refused (transitional hardening of the server event scope, see
+        # the actor credential phase-out plan for the full binding).
+        requested_uuid = data.get("userservice_uuid")
+        ticket_uuid = ticket.get("userservice_uuid")
+        if requested_uuid and ticket_uuid and requested_uuid != ticket_uuid:
+            # Kept unmasked on purpose: this is the forensic trace of a
+            # misused ticket (which ticket, from which server, against which
+            # service), as the actor plane audit requires.
+            logger.error(
+                "Ticket %s presented from server %s to operate on foreign user service %s (mismatch)",
+                ticket_uuid,
+                server.hostname,
+                requested_uuid,
+            )
+            return rest_result("error", error="Ticket does not belong to the requested user service")
+        data["userservice_uuid"] = requested_uuid or ticket_uuid
 
     userservice = models.UserService.objects.get(uuid=data["userservice_uuid"])
     server.set_actor_version(userservice)
@@ -198,5 +217,8 @@ def process(server: "models.Server", data: dict[str, typing.Any]) -> typing.Any:
     try:
         return fnc(server, data)
     except Exception as e:
-        logger.exception("Exception processing event %s", data)
+        # The body still carries the server bearer token: mask it, exactly as
+        # the REST boundary does, or a valid credential would land in clear
+        # text on the log file, the syslog table and the journal.
+        logger.exception("Exception processing event %s", sanitize_params(data))
         return rest_result("error", error=str(e))

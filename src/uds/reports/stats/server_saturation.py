@@ -32,7 +32,8 @@ Server saturation forecast report, built on top of the saturation engine.
 Author: Janier Rodríguez, jrodriguez at virtualcable dot es
 """
 
-import csv
+from uds.reports.csv_export import safe_csv_writer
+
 import datetime
 import io
 import logging
@@ -90,8 +91,7 @@ class ServerSaturationReport(ServersStatsReport):
 
         for group in self.selected_groups():
             servers = [
-                _as_server_row(saturation.server_saturation_cached(server))
-                for server in servers_of(group)
+                _as_server_row(saturation.server_saturation_cached(server)) for server in servers_of(group)
             ]
             servers.sort(key=_worst_first)
             groups_data.append({"group": group.name, "servers": servers})
@@ -172,7 +172,7 @@ class ServerSaturationReportCSV(ServerSaturationReport):
     @typing.override
     def generate(self) -> bytes:
         output = io.StringIO()
-        writer = csv.writer(output)
+        writer = safe_csv_writer(output)
         writer.writerow(
             [
                 gettext("Group"),

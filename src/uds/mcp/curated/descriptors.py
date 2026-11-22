@@ -52,7 +52,7 @@ def _read_tool(family: type[registry.MutableActionType]) -> ToolDefinition:
         if not target_uuid.strip():
             raise ValueError("target_uuid is required")
         descriptor.check_read_access(user, descriptor.resolve_target(target_uuid))
-        return descriptor.read(target_uuid)
+        return descriptor.read(target_uuid, user)
 
     root = family.type_id.replace(".", "_")
     return ToolDefinition(

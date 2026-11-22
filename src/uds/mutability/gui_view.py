@@ -73,11 +73,13 @@ SECRET_FIELD_TYPES: typing.Final[frozenset[ui_types.FieldType]] = frozenset(
 # Fixed hint appended to the tooltip of callback-driven fields. The targets
 # of a filler are only known at runtime (each callback result item names the
 # field it fills), so the definition carries the resolver contract and the
-# tool response is the one naming the filled fields.
+# tool response is the one naming the filled fields. The ticket id is part of
+# the contract: the dispatcher requires a valid ``cb_ticket`` (it wraps the
+# provider context), so the agent must forward it inside ``parameters``.
 _FILLS_TOOLTIP_SUFFIX: typing.Final[str] = (
     " Its choices are resolved dynamically: call get_gui_field_choices with "
-    "callback_name {name!r} and the current values of the fields {params}; the "
-    "response entries name the field each one fills."
+    "callback_name {name!r}, the cb_ticket ticket id {ticket!r} and the current "
+    "values of the fields {params}; the response entries name the field each one fills."
 )
 
 
@@ -87,7 +89,11 @@ def _fills_annotation(gui: ui_types.FieldInfo) -> JsonObject | None:
     Module gui fields can declare ``fills`` metadata: a named callback plus
     the fields whose values the callback needs (the administration frontend
     resolves the choices on demand; agents do it through the
-    ``get_gui_field_choices`` tool).
+    ``get_gui_field_choices`` tool). The annotation also carries the opaque
+    ``cb_ticket`` uuid, which the dispatcher requires: only the uuid is
+    disclosed — a dict here means the ticket has not been emitted yet (the
+    field has not gone through ``gui_description()``) and its content, the
+    provider context, must never reach the agent.
     """
     fills = gui.fills
     if not fills:
@@ -96,7 +102,11 @@ def _fills_annotation(gui: ui_types.FieldInfo) -> JsonObject | None:
     if not callback_name:
         return None
     parameters = list(fills.get("parameters", []))
-    return {"name": callback_name, "parameters": parameters}
+    annotation: JsonObject = {"name": callback_name, "parameters": parameters}
+    cb_ticket = fills.get("cb_ticket")
+    if isinstance(cb_ticket, str) and cb_ticket:
+        annotation["cb_ticket"] = cb_ticket
+    return annotation
 
 
 def mutability_of(element: ui_types.GuiElement) -> FieldMutability | None:
@@ -244,6 +254,7 @@ def agent_definition(
         definition["choices_callback"] = choices_callback
         definition["tooltip"] = _text(definition["tooltip"]) + _FILLS_TOOLTIP_SUFFIX.format(
             name=choices_callback["name"],
+            ticket=choices_callback.get("cb_ticket", "(missing)"),
             params=", ".join(repr(param) for param in choices_callback["parameters"]) or "(none)",
         )
     return definition

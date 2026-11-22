@@ -29,6 +29,7 @@ Author: Adolfo Gómez, dkmaster at dkmon dot com
 """
 
 import logging
+import typing
 
 from uds import models
 
@@ -45,6 +46,7 @@ class ServerEventsLoginLogoutTest(rest.test.RESTTestCase):
 
     server: "models.Server"
 
+    @typing.override
     def setUp(self) -> None:
         super().setUp()
         self.server = servers_fixtures.create_server()
@@ -89,6 +91,31 @@ class ServerEventsLoginLogoutTest(rest.test.RESTTestCase):
         # Must not have ticket
         self.assertIsNone(result.get("ticket", None))
 
+    def test_failed_event_does_not_log_the_server_token(self) -> None:
+        """A failing event processor must not write the bearer token in clear text.
+
+        Regression for the Strix pentest_4494 finding: the exception handler
+        logged the whole event body, which still carries the server token,
+        while the REST boundary masks it with ``sanitize_params``.
+        """
+        raw = servers_fixtures.raw_token(self.server)
+        with self.assertLogs("uds.core.managers.servers_api.events", level="ERROR") as logs:
+            response = self.client.rest_post(
+                "/servers/event",
+                data={
+                    "token": raw,
+                    "type": "login",
+                    "userservice_uuid": "nonexistent-uuid",
+                    "username": "local_user_name",
+                },
+            )
+        self.assertEqual(response.status_code, 200)
+        # The failure is reported in the body, not through the http status
+        self.assertEqual(response.json()["result"], "error")
+        output = "\n".join(logs.output)
+        self.assertNotIn(raw, output)
+        self.assertIn("********", output)
+
     def test_login_with_ticket(self) -> None:
         ticket_uuid = models.TicketStore.create(
             {"userservice_uuid": self.user_service_managed.uuid, "some_value": "value"}
@@ -105,6 +132,34 @@ class ServerEventsLoginLogoutTest(rest.test.RESTTestCase):
         self.assertEqual(response.status_code, 200)
         data = response.json()["result"]
         self.assertEqual(data["ticket"]["some_value"], "value")
+
+    def test_login_with_foreign_ticket_is_refused(self) -> None:
+        """A ticket belongs to exactly one user service: presenting one to
+        operate on a different service is refused (transitional hardening of
+        the server event scope, see the actor credential phase-out plan).
+        Legitimate flows always agree, because the ticket is created for the
+        service being logged in."""
+        other_service = self.userservice_unmanaged
+        ticket_uuid = models.TicketStore.create(
+            {"userservice_uuid": self.user_service_managed.uuid, "some_value": "value"}
+        )
+        response = self.client.rest_post(
+            "/servers/event",
+            data={
+                "token": servers_fixtures.raw_token(self.server),
+                "type": "login",
+                "username": "local_user_name",
+                "userservice_uuid": other_service.uuid,
+                "ticket": ticket_uuid,
+            },
+        )
+        self.assertEqual(response.status_code, 200)
+        # The failure is reported in the body: no login happened on the
+        # foreign service
+        self.assertEqual(response.json()["result"], "error")
+        self.assertIn("Ticket does not belong", response.json()["error"])
+        other_service.refresh_from_db()
+        self.assertFalse(other_service.in_use)
 
     def test_login_fail(self) -> None:
         response = self.client.rest_post(

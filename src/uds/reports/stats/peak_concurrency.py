@@ -24,7 +24,6 @@
 # CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-import csv
 import datetime
 import io
 import logging
@@ -42,6 +41,7 @@ from uds.core.ui import gui
 from uds.core.util import stats
 from uds.models import ServicePool
 
+from uds.reports.csv_export import safe_csv_writer
 from .base import StatsReport
 
 logger: logging.Logger = logging.getLogger(__name__)
@@ -171,7 +171,7 @@ class PeakConcurrencyReportCSV(PeakConcurrencyReport):
     @typing.override
     def generate(self) -> bytes:
         output = io.StringIO()
-        writer = csv.writer(output)
+        writer = safe_csv_writer(output)
         writer.writerow([gettext("Pool"), gettext("Peak"), gettext("Peak at"), gettext("Sessions")])
         for v in self.get_data():
             writer.writerow([v["pool"], v["peak"], v["peak_at"], v["sessions"]])

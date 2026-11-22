@@ -62,7 +62,9 @@ class MetaPoolFallback(mutability_base.MutableActionType):
         return "metapool"
 
     @typing.override
-    def field_definitions(self, for_type: str, target: db_models.Model | None = None) -> list[JsonObject]:
+    def field_definitions(
+        self, for_type: str, target: db_models.Model | None = None, user: "models.User | None" = None
+    ) -> list[JsonObject]:
         return [
             {
                 "name": "fallback",

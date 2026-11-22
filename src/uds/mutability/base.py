@@ -31,6 +31,7 @@ import typing
 
 from django.db import models as db_models
 
+from uds import models
 from uds.core import types
 from uds.core.exceptions import rest as rest_exceptions
 from uds.core.types.requests import ExtendedHttpRequestWithUser
@@ -39,6 +40,36 @@ from uds.models import User
 from uds.REST.handlers import Handler
 
 JsonObject = dict[str, typing.Any]
+
+
+T_co = typing.TypeVar("T_co", bound=db_models.Model, covariant=True)
+
+
+def permitted_choices(
+    user: "models.User | None",
+    items: "collections.abc.Iterable[T_co]",
+    keep_uuids: "collections.abc.Set[str]" = frozenset(),
+) -> "list[T_co]":
+    """Objects of ``items`` the caller may see.
+
+    The object-level boundary the equivalent REST surfaces apply: a
+    collection only publishes objects where the caller holds READ
+    permission (``ModelHandler.get_items``), and the detail view of a
+    readable target shows its own current members even without a
+    permission row on them. ``keep_uuids`` carries those member uuids
+    (the target's live relation), so discovery choices never hide
+    something the caller already sees, while unrelated objects stay
+    undisclosed. Admins and server-internal callers (``user is None``,
+    CAS snapshots, fingerprints) see everything.
+    """
+    if user is None or user.is_admin:
+        return list(items)
+    return [
+        obj
+        for obj in items
+        if str(getattr(obj, "uuid", "")) in keep_uuids
+        or permissions.has_access(user, obj, types.permissions.PermissionType.READ)
+    ]
 
 
 class StalePolicy(enum.StrEnum):
@@ -198,7 +229,9 @@ class EntityDescriptor(abc.ABC):
         """Return the ``data_type`` (subtype) of the target."""
 
     @abc.abstractmethod
-    def field_definitions(self, for_type: str, target: db_models.Model | None = None) -> list[JsonObject]:
+    def field_definitions(
+        self, for_type: str, target: db_models.Model | None = None, user: "models.User | None" = None
+    ) -> list[JsonObject]:
         """Ordered mutable field definitions for one subtype.
 
         Each definition carries at least ``name``, ``type`` (gui field
@@ -211,24 +244,35 @@ class EntityDescriptor(abc.ABC):
         ``target_scoped_fields`` build their definitions from it (their
         gui depends on the parent item, not only on the subtype) and
         refuse when it is ``None``.
+
+        ``user`` is the caller whose permissions must scope everything
+        the definitions disclose — inline choices above all: the
+        equivalent REST collections only publish objects the caller may
+        READ, so a relation field enumerating them must inherit exactly
+        that filter. ``None`` means "no caller available" (server-internal
+        machinery such as CAS snapshots or fingerprints): definitions that
+        publish object choices keep them unfiltered there, as nothing is
+        being disclosed to anyone.
         """
 
     @abc.abstractmethod
     def snapshot_values(self, target: db_models.Model, names: collections.abc.Iterable[str]) -> JsonObject:
         """Current values of ``names`` on ``target`` (CAS base)."""
 
-    def read(self, target_uuid: str) -> JsonObject:
+    def read(self, target_uuid: str, user: "models.User | None" = None) -> JsonObject:
         """Live read view of the target (no flow, no approval, no execution).
 
         The generic view mirrors the discovery surface: the field
         definitions of the concrete target plus its current values.
         Relation types override it to add the human side of the current
         members. Overriding ``read`` is what publishes the entity's
-        ``get_*`` tool: implementation is declaration here too.
+        ``get_*`` tool: implementation is declaration here too. The
+        caller's ``user`` scopes the choices the definitions publish,
+        exactly as in :meth:`field_definitions`.
         """
         target = self.resolve_target(target_uuid)
         for_type = self.for_type_of(target)
-        fields = self.field_definitions(for_type, target)
+        fields = self.field_definitions(for_type, target, user)
         return {
             "entity_type": self.type_id,
             "target_uuid": self.target_uuid_of(target),
@@ -268,8 +312,34 @@ class EntityDescriptor(abc.ABC):
         READ over the same model that grants MANAGEMENT to propose, as the
         REST handlers check it before returning an item. Raises AccessDenied.
         """
-        if not permissions.has_access(user, self.permission_target(target), types.permissions.PermissionType.READ):
+        if not permissions.has_access(
+            user, self.permission_target(target), types.permissions.PermissionType.READ
+        ):
             raise rest_exceptions.AccessDenied()
+
+    def check_container_read_access(self, user: "User", parent: db_models.Model) -> None:
+        """Authorization to *discover* a creation inside the ``parent``.
+
+        READ over the container itself, without the
+        :meth:`permission_target` indirection: detail families map the
+        family entity to its parent there, and here the object at hand
+        already IS the parent (a Calendar for rule creations, an
+        Authenticator for user creations). Raises AccessDenied.
+        """
+        if not permissions.has_access(user, parent, types.permissions.PermissionType.READ):
+            raise rest_exceptions.AccessDenied()
+
+    def check_discovery_access(self, user: "User", for_type: str) -> None:
+        """Authorization to *discover* the field definitions of ``for_type``.
+
+        Discovery without a target (bare ``for_type``) is a no-op by
+        default: plain gui metadata (names, types, labels) is staff
+        readable, as the REST ``gui`` surface is. Types whose definitions
+        disclose more than metadata — configuration values, above all —
+        override this hook with the authorization their REST equivalent
+        requires (configuration: superuser only, as ``PUT /config``).
+        Raises AccessDenied.
+        """
 
     def secret_names(self, for_type: str, target: db_models.Model | None = None) -> set[str]:
         """Names of the secret fields of one subtype."""
@@ -601,6 +671,7 @@ class MutableActionType(EntityDescriptor):
         self,
         for_type: str,
         target: db_models.Model | None = None,
+        user: "models.User | None" = None,
     ) -> list[JsonObject]:
         """Field definitions of a creation of one subtype.
 
@@ -610,7 +681,7 @@ class MutableActionType(EntityDescriptor):
         without a live instance; families whose gui depends on the
         parent override this.
         """
-        return self.field_definitions(for_type, None)
+        return self.field_definitions(for_type, None, user)
 
     def create_validate_values(
         self,

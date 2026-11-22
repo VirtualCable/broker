@@ -156,6 +156,24 @@ class ModelHandler(BaseModelHandler[T_Item], abc.ABC):
 
     TABLE: typing.ClassVar[types.rest.TableInfo] = types.rest.TableInfo.null()
 
+    @typing.override
+    def odata_allowed_fields(self) -> collections.abc.Set[str] | None:
+        """Restricts ``$filter`` to the fields the table declares as filterable."""
+        allowed = self.TABLE.filter_fields
+        return frozenset(allowed) if allowed else None
+
+    @typing.override
+    def odata_orderby_allowed_fields(self) -> collections.abc.Set[str] | None:
+        """Restricts ``$orderby`` to filterable plus rendered table fields.
+
+        The GUI sorts by any displayed column (mapped through
+        ``field_mappings``), so sorting keeps working; fields that are
+        neither filterable nor rendered (``password`` being the target case)
+        become unreachable through OData.
+        """
+        allowed = set(self.TABLE.filter_fields) | {field.name for field in self.TABLE.fields}
+        return frozenset(allowed) if allowed else None
+
     # This methods must be override, depending on what is provided
 
     # types related
@@ -434,19 +452,21 @@ class ModelHandler(BaseModelHandler[T_Item], abc.ABC):
         return response, response.etag(*fields)  # pyright: ignore[reportUnknownVariableType]
 
     def _mark_redacted(self, items: types.rest.ItemsResult[T_Item]) -> types.rest.ItemsResult[T_Item]:
-        """Flags managed items for redaction when ``$redacted`` was requested.
+        """Flags managed items for redaction when the caller must not see secrets.
+
+        Redaction applies when ``$redacted`` was requested, and always for
+        callers without MANAGEMENT on the item (read-only delegations never
+        receive stored credentials, see ``_must_redact``).
 
         The flag is applied after the etag computation, so concurrency
         tokens keep being computed over the real values. ``items`` may be a
         lazy iterator, so it is materialized before being iterated here.
         """
-        if self._odata.redacted:
-            result = list(items)
-            for item in result:
-                if isinstance(item, types.rest.ManagedObjectItem):
-                    item._redacted = True
-            return result
-        return items
+        result = list(items)
+        for item in result:
+            if isinstance(item, types.rest.ManagedObjectItem):
+                self._flag_redaction(item, item.item)  # pyright: ignore[reportUnknownArgumentType, reportUnknownMemberType]
+        return result
 
     def get(self) -> typing.Any:
         logger.debug("method GET for %s, %s", self.__class__.__name__, self._args)
@@ -488,11 +508,9 @@ class ModelHandler(BaseModelHandler[T_Item], abc.ABC):
                         item = self.MODEL.objects.get(uuid__iexact=self._args[0].lower())
                         self.check_access(item, types.permissions.PermissionType.READ)
                         response, etag = self._item_with_etag(item)
-                        flagged = response
-                        if isinstance(flagged, types.rest.ManagedObjectItem) and self._odata.redacted:
-                            # After the etag computation, so it keeps being
-                            # computed over the real values
-                            flagged._redacted = True
+                        # After the etag computation, so it keeps being
+                        # computed over the real values
+                        self._flag_redaction(response, item)
                         # Append etag header
                         self.add_header("ETag", etag)
                         return response

@@ -24,7 +24,6 @@
 # CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-import csv
 import datetime
 import io
 import logging
@@ -38,6 +37,7 @@ from uds.core.ui import gui
 from uds.core.util import dateutils
 from uds.models import ServerGroup
 
+from uds.reports.csv_export import safe_csv_writer
 from .base import ListReport
 
 logger: logging.Logger = logging.getLogger(__name__)
@@ -102,7 +102,9 @@ class ServersListReport(ListReport):
                         "last_stats_at": _stamp_as_datetime(stats.stamp) if stats else None,
                         "users": stats.current_users if stats else "",
                         "cpu": f"{stats.cpuused * 100:.1f}" if stats else "",
-                        "memory": (f"{stats.memused * 100 / stats.memtotal:.1f}" if stats and stats.memtotal else ""),
+                        "memory": (
+                            f"{stats.memused * 100 / stats.memtotal:.1f}" if stats and stats.memtotal else ""
+                        ),
                     }
                 )
 
@@ -130,7 +132,7 @@ class ServersListReportCSV(ServersListReport):
     @typing.override
     def generate(self) -> bytes:
         output = io.StringIO()
-        writer = csv.writer(output)
+        writer = safe_csv_writer(output)
         writer.writerow(
             [
                 gettext("Group"),
@@ -178,4 +180,4 @@ def _stamp_as_str(stamp: float) -> str:
 def _stamp_as_datetime(stamp: float) -> datetime.datetime | None:
     if not stamp:
         return None
-    return datetime.datetime.fromtimestamp(stamp, tz=datetime.timezone.utc)
+    return datetime.datetime.fromtimestamp(stamp, tz=datetime.UTC)

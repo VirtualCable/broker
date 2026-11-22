@@ -165,7 +165,9 @@ class CalendarRuleUpdate(mutability_base.MutableActionType):
         return "calendar_rule"
 
     @typing.override
-    def field_definitions(self, for_type: str, target: db_models.Model | None = None) -> list[JsonObject]:
+    def field_definitions(
+        self, for_type: str, target: db_models.Model | None = None, user: "models.User | None" = None
+    ) -> list[JsonObject]:
         # Deletion needs no fields: the target itself is what disappears.
         if self.operation is ActionOperation.DELETE:
             return []
@@ -222,7 +224,10 @@ class CalendarRuleUpdate(mutability_base.MutableActionType):
 
     @typing.override
     def create_field_definitions(
-        self, for_type: str, target: db_models.Model | None = None
+        self,
+        for_type: str,
+        target: db_models.Model | None = None,
+        user: "models.User | None" = None,
     ) -> list[JsonObject]:
         # Same surface as the update (the rules handler builds one form)
         return _rule_definitions()
@@ -257,9 +262,11 @@ class CalendarRuleUpdate(mutability_base.MutableActionType):
         if value is None and name in _NULLABLE_FIELDS:
             return []
         if name in _DATETIME_FIELDS:
+            if not isinstance(value, str):
+                return [f"field {name} must be an ISO 8601 date-time"]
             try:
                 datetime.datetime.fromisoformat(value)
-            except (TypeError, ValueError):
+            except ValueError:
                 return [f"field {name} must be an ISO 8601 date-time"]
         return mutability_base.MutableActionType._field_type_errors(name, value, definition)
 

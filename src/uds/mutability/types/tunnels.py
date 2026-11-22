@@ -87,7 +87,9 @@ class TunnelUpdate(mutability_base.MutableActionType):
         return "tunnel"
 
     @typing.override
-    def field_definitions(self, for_type: str, target: db_models.Model | None = None) -> list[JsonObject]:
+    def field_definitions(
+        self, for_type: str, target: db_models.Model | None = None, user: "models.User | None" = None
+    ) -> list[JsonObject]:
         shim = typing.cast(typing.Any, _Namespace())
         # Agent view derived from the handler gui; the gui fields are
         # exactly the handler's own FIELDS_TO_SAVE columns, so any change

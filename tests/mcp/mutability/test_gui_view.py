@@ -278,6 +278,45 @@ class DefinitionsTest(unittest.TestCase):
         self.assertIn("'vcFillMachines'", definition["tooltip"])
         self.assertIn("'datastore'", definition["tooltip"])
 
+    def test_fills_annotation_carries_the_cb_ticket(self) -> None:
+        # The dispatcher requires a valid cb_ticket: the annotation must hand
+        # the agent the opaque ticket uuid (and the tooltip must mention it).
+        element = _element(
+            "resource",
+            field_type=types_ui.FieldType.CHOICE,
+            fills=types_ui.Filler(
+                callback_name="pmFillMachines",
+                parameters=["prov_uuid", "pool"],
+                cb_ticket="ticket-0123456789abcdef",
+            ),
+        )
+        definition = _definition(element)
+        self.assertEqual(
+            definition["choices_callback"],
+            {
+                "name": "pmFillMachines",
+                "parameters": ["prov_uuid", "pool"],
+                "cb_ticket": "ticket-0123456789abcdef",
+            },
+        )
+        self.assertIn("'ticket-0123456789abcdef'", definition["tooltip"])
+
+    def test_unemitted_ticket_is_never_disclosed(self) -> None:
+        # A dict cb_ticket is the not-yet-emitted ticket content (the provider
+        # context, e.g. prov_uuid): it must never reach the agent annotation.
+        element = _element(
+            "resource",
+            field_type=types_ui.FieldType.CHOICE,
+            fills=types_ui.Filler(
+                callback_name="pmFillMachines",
+                parameters=["pool"],
+                cb_ticket={"prov_uuid": "prov-secret-uuid"},
+            ),
+        )
+        definition = _definition(element)
+        self.assertNotIn("cb_ticket", definition["choices_callback"])
+        self.assertNotIn("prov-secret-uuid", str(definition))
+
     def test_fills_without_parameters_render_none_placeholder(self) -> None:
         element = _element(
             "resource",

@@ -99,7 +99,9 @@ class MetaPoolUpdate(mutability_base.MutableActionType):
         return "metapool"
 
     @typing.override
-    def field_definitions(self, for_type: str, target: db_models.Model | None = None) -> list[JsonObject]:
+    def field_definitions(
+        self, for_type: str, target: db_models.Model | None = None, user: "models.User | None" = None
+    ) -> list[JsonObject]:
         # Deletion needs no fields: the target itself is what disappears.
         # (An unbound instance serves the update surface, its default op.)
         if self.operation is ActionOperation.DELETE:
@@ -120,6 +122,7 @@ class MetaPoolUpdate(mutability_base.MutableActionType):
         self,
         for_type: str,
         target: db_models.Model | None = None,
+        user: "models.User | None" = None,
     ) -> list[JsonObject]:
         # The creation view of the same gui: the context references (image,
         # pool group) join the surface — selected, not changed.

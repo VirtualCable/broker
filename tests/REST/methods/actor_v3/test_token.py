@@ -103,6 +103,49 @@ class ActorTokenTest(rest.test.RESTActorTestCase):
 
         self.assertEqual(response.status_code, 200)
 
+    def test_uuid_rejected_after_token_rotation(self) -> None:
+        """
+        A service whose token has been rotated (real own token delivered by
+        initialize) no longer accepts the uuid as credential: only services
+        that never rotated keep the uuid fallback. This is the transitional
+        surface shrink of the actor credential phase-out plan: as actors
+        re-initialize, uuid-authenticated services vanish by themselves.
+        """
+        user_service = self.user_service_managed
+        unique_id = user_service.get_unique_id()
+
+        actor_token = self.login_and_register()
+        response = self.client.post(
+            "/uds/rest/actor/v3/initialize",
+            data={
+                "type": "managed",
+                "version": consts.system.VERSION,
+                "token": actor_token,
+                "id": [{"mac": unique_id, "ip": "1.2.3.4"}],
+            },
+            content_type="application/json",
+        )
+        self.assertEqual(response.status_code, 200)
+        new_token = response.json()["result"]["token"]
+        user_service.refresh_from_db()
+        self.assertFalse(user_service.token_hash.startswith(consts.auth.INVALID_TOKEN_PREFIX))
+
+        # The uuid no longer authenticates the rotated service...
+        response = self.client.post(
+            "/uds/rest/actor/v3/version",
+            data={"token": user_service.uuid, "version": consts.system.VERSION, "ip": "1.2.3.4"},
+            content_type="application/json",
+        )
+        self.assertEqual(response.status_code, 403, response.content)
+
+        # ...while the delivered own token keeps working
+        response = self.client.post(
+            "/uds/rest/actor/v3/version",
+            data={"token": new_token, "version": consts.system.VERSION, "ip": "1.2.3.4"},
+            content_type="application/json",
+        )
+        self.assertEqual(response.status_code, 200, response.content)
+
     def test_dual_lookup_unknown_blocked(self) -> None:
         """
         Test that actor_v3 blocks requests with unknown token/uuid
