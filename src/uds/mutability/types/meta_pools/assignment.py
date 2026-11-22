@@ -207,7 +207,9 @@ class MetaPoolAssignment(mutability_base.MutableActionType):
     # ---------------------------------------------------------- discovery
 
     @typing.override
-    def field_definitions(self, for_type: str, target: db_models.Model | None = None) -> list[JsonObject]:
+    def field_definitions(
+        self, for_type: str, target: db_models.Model | None = None, user: "models.User | None" = None
+    ) -> list[JsonObject]:
         user_service: JsonObject = {
             "name": "user_service",
             "type": types.ui.FieldType.TEXT.value,
@@ -456,7 +458,7 @@ class MetaPoolAssignment(mutability_base.MutableActionType):
     # ------------------------------------------------------------ read
 
     @typing.override
-    def read(self, target_uuid: str) -> JsonObject:
+    def read(self, target_uuid: str, user: "models.User | None" = None) -> JsonObject:
         meta_pool = typing.cast(models.MetaPool, self.resolve_target(target_uuid))
         return {
             "entity_type": self.type_id,

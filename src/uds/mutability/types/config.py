@@ -110,11 +110,23 @@ class ConfigUpdate(mutability_base.MutableActionType):
             raise rest_exceptions.AccessDenied()
 
     @typing.override
+    def check_discovery_access(self, user: "models.User", for_type: str) -> None:
+        # Discovery of a configuration section discloses the LIVE values of
+        # every key in it (minus the secret-ish types): the same boundary the
+        # REST equivalent enforces (``PUT/GET /config`` is admin-only).
+        # Without this, a staff user reads nearly the whole configuration
+        # through get_mutable_fields while GET /rest/config answers 403.
+        if not user.is_admin:
+            raise rest_exceptions.AccessDenied()
+
+    @typing.override
     def for_type_of(self, target: db_models.Model) -> str:
         return typing.cast(models.Config, target).section
 
     @typing.override
-    def field_definitions(self, for_type: str, target: db_models.Model | None = None) -> list[JsonObject]:
+    def field_definitions(
+        self, for_type: str, target: db_models.Model | None = None, user: "models.User | None" = None
+    ) -> list[JsonObject]:
         """Mutable keys of one section (secret types excluded).
 
         Same source the admin configuration panel uses

@@ -75,7 +75,9 @@ class CalendarUpdate(mutability_base.MutableActionType):
         return "calendar"
 
     @typing.override
-    def field_definitions(self, for_type: str, target: db_models.Model | None = None) -> list[JsonObject]:
+    def field_definitions(
+        self, for_type: str, target: db_models.Model | None = None, user: "models.User | None" = None
+    ) -> list[JsonObject]:
         # Deletion needs no fields: the target itself is what disappears.
         if self.operation is ActionOperation.DELETE:
             return []
@@ -93,6 +95,7 @@ class CalendarUpdate(mutability_base.MutableActionType):
         self,
         for_type: str,
         target: db_models.Model | None = None,
+        user: "models.User | None" = None,
     ) -> list[JsonObject]:
         # The creation view of the same gui (no readonly/context fields
         # to unlock here)

@@ -74,7 +74,9 @@ class ServerUpdate(mutability_base.MutableActionType):
         return parent_group
 
     @typing.override
-    def field_definitions(self, for_type: str, target: db_models.Model | None = None) -> list[JsonObject]:
+    def field_definitions(
+        self, for_type: str, target: db_models.Model | None = None, user: "models.User | None" = None
+    ) -> list[JsonObject]:
         server = self._require_target(target)
         parent_group = self._parent_group(server)
         # Only unmanaged servers have editable fields through the canonical PUT
@@ -187,7 +189,10 @@ class ServerUpdate(mutability_base.MutableActionType):
 
     @typing.override
     def create_field_definitions(
-        self, for_type: str, target: db_models.Model | None = None
+        self,
+        for_type: str,
+        target: db_models.Model | None = None,
+        user: "models.User | None" = None,
     ) -> list[JsonObject]:
         # The creation gui is built from the parent group (the target of
         # the proposal). Only UNMANAGED groups accept new servers through

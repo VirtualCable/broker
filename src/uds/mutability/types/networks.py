@@ -81,7 +81,9 @@ class NetworkUpdate(mutability_base.MutableActionType):
         return "network"
 
     @typing.override
-    def field_definitions(self, for_type: str, target: db_models.Model | None = None) -> list[JsonObject]:
+    def field_definitions(
+        self, for_type: str, target: db_models.Model | None = None, user: "models.User | None" = None
+    ) -> list[JsonObject]:
         shim = typing.cast(typing.Any, _Namespace())
         # The gui fields are exactly the handler's own FIELDS_TO_SAVE
         # columns; they come from the instance and are not proposed

@@ -165,7 +165,9 @@ class UserUpdate(mutability_base.MutableActionType):
         return not user.manager.get_instance().external_source
 
     @typing.override
-    def field_definitions(self, for_type: str, target: db_models.Model | None = None) -> list[JsonObject]:
+    def field_definitions(
+        self, for_type: str, target: db_models.Model | None = None, user: "models.User | None" = None
+    ) -> list[JsonObject]:
         if self.operation is mutability_base.ActionOperation.CUSTOM:
             return [self._action_definition(target)]
         return [

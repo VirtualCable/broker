@@ -95,7 +95,9 @@ class ImageActions(mutability_base.MutableActionType):
         return "image"
 
     @typing.override
-    def field_definitions(self, for_type: str, target: db_models.Model | None = None) -> list[JsonObject]:
+    def field_definitions(
+        self, for_type: str, target: db_models.Model | None = None, user: "models.User | None" = None
+    ) -> list[JsonObject]:
         # Deletion needs no fields: the target itself is what disappears
         # (the families referencing it drop the icon by themselves). The
         # family implements no update verb.
@@ -105,7 +107,10 @@ class ImageActions(mutability_base.MutableActionType):
 
     @typing.override
     def create_field_definitions(
-        self, for_type: str, target: db_models.Model | None = None
+        self,
+        for_type: str,
+        target: db_models.Model | None = None,
+        user: "models.User | None" = None,
     ) -> list[JsonObject]:
         return [dict(definition) for definition in _IMAGE_DEFINITIONS]
 

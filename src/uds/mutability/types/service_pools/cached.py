@@ -106,7 +106,9 @@ class ServicePoolCached(mutability_base.MutableActionType):
     # ---------------------------------------------------------- discovery
 
     @typing.override
-    def field_definitions(self, for_type: str, target: db_models.Model | None = None) -> list[JsonObject]:
+    def field_definitions(
+        self, for_type: str, target: db_models.Model | None = None, user: "models.User | None" = None
+    ) -> list[JsonObject]:
         return [
             {
                 "name": "user_service",
@@ -208,7 +210,7 @@ class ServicePoolCached(mutability_base.MutableActionType):
     # ------------------------------------------------------------ read
 
     @typing.override
-    def read(self, target_uuid: str) -> JsonObject:
+    def read(self, target_uuid: str, user: "models.User | None" = None) -> JsonObject:
         pool = typing.cast(models.ServicePool, self.resolve_target(target_uuid))
         return {
             "entity_type": self.type_id,

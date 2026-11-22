@@ -87,14 +87,19 @@ class ServicePoolAssignable(mutability_base.MutableActionType):
         return typing.cast(models.ServicePool, target).name
 
     @typing.override
-    def field_definitions(self, for_type: str, target: db_models.Model | None = None) -> list[JsonObject]:
+    def field_definitions(
+        self, for_type: str, target: db_models.Model | None = None, user: "models.User | None" = None
+    ) -> list[JsonObject]:
         # This family creates only; the non-create discovery surface is
         # the creation form itself.
         return self.create_field_definitions(for_type, target)
 
     @typing.override
     def create_field_definitions(
-        self, for_type: str, target: db_models.Model | None = None
+        self,
+        for_type: str,
+        target: db_models.Model | None = None,
+        user: "models.User | None" = None,
     ) -> list[JsonObject]:
         tooltip = (
             "id of one inventory element of the pool's service to hand out. "

@@ -117,7 +117,9 @@ class ModuleUpdateActionType(mutability_base.MutableActionType):
         return sorted(self.handler.get_gui(shim, for_type), key=lambda element: element.gui.order)
 
     @typing.override
-    def field_definitions(self, for_type: str, target: db_models.Model | None = None) -> list[JsonObject]:
+    def field_definitions(
+        self, for_type: str, target: db_models.Model | None = None, user: "models.User | None" = None
+    ) -> list[JsonObject]:
         columns = self.params_columns()
         return gui_view.agent_definitions(
             self._gui_elements(for_type),

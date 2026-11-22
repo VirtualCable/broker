@@ -160,7 +160,12 @@ class M2MRelationActionType(mutability_base.MutableActionType):
         return f"Discover current members and {self.item_label} uuids with {self.uuid_source}."
 
     @typing.override
-    def field_definitions(self, for_type: str, target: db_models.Model | None = None) -> list[JsonObject]:
+    def field_definitions(
+        self,
+        for_type: str,
+        target: db_models.Model | None = None,
+        user: "models.User | None" = None,
+    ) -> list[JsonObject]:
         definition: JsonObject = {
             "name": self.field_name,
             "type": types.ui.FieldType.MULTICHOICE.value,
@@ -169,9 +174,19 @@ class M2MRelationActionType(mutability_base.MutableActionType):
             "secret": False,
         }
         if self.include_choices:
+            # The choices inherit the object-level authorization the
+            # equivalent REST surfaces apply: globally, only the related
+            # items the caller may READ, plus this target's own current
+            # members (its detail view shows them).
+            keep: set[str] = set()
+            if target is not None:
+                manager = getattr(target, self.relation_manager)
+                keep = {str(uuid) for uuid in manager.values_list("uuid", flat=True)}
             definition["choices"] = [
-                {"value": str(uuid), "label": name}
-                for uuid, name in self.related_model.objects.order_by("name").values_list("uuid", "name")
+                {"value": str(obj.uuid), "label": obj.name}
+                for obj in mutability_base.permitted_choices(
+                    user, self.related_model.objects.order_by("name"), keep_uuids=keep
+                )
             ]
         return [definition]
 
@@ -258,8 +273,8 @@ class M2MRelationActionType(mutability_base.MutableActionType):
     # ------------------------------------------------------------- read
 
     @typing.override
-    def read(self, target_uuid: str) -> JsonObject:
-        result = super().read(target_uuid)
+    def read(self, target_uuid: str, user: "models.User | None" = None) -> JsonObject:
+        result = super().read(target_uuid, user)
         # The uuid list is already in ``current_values``; the read view
         # adds the human side of every live member.
         target = self.resolve_target(target_uuid)

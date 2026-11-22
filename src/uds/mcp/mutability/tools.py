@@ -161,7 +161,7 @@ def _parse_date_arg(value: typing.Any, name: str) -> datetime.datetime | None:
     except ValueError:
         raise ValueError(f"{name} must be an ISO date or datetime") from None
     if parsed.tzinfo is None:
-        parsed = parsed.replace(tzinfo=datetime.timezone.utc)
+        parsed = parsed.replace(tzinfo=datetime.UTC)
     return parsed
 
 
@@ -323,10 +323,15 @@ def _discovery_sync(arguments: JsonObject, request: ExtendedHttpRequestWithUser)
             # like the REST flows create path does.
             target = action_type.resolve_create_parent(target_uuid)
             result["target_uuid"] = target_uuid
+            # Inherit the object-level authorization: building the gui of
+            # a detail creation reads from the parent, so the caller needs
+            # READ over the container itself (the proposal itself will
+            # require MANAGEMENT through the flows surface).
+            action_type.check_container_read_access(user, target)
         else:
             target = None
         result["for_type"] = for_type
-        result["fields"] = action_type.create_field_definitions(for_type, target)
+        result["fields"] = action_type.create_field_definitions(for_type, target, user=user)
         return result
     if target_uuid.strip():
         target = action_type.resolve_target(target_uuid)
@@ -334,7 +339,7 @@ def _discovery_sync(arguments: JsonObject, request: ExtendedHttpRequestWithUser)
         for_type = action_type.for_type_of(target)
         result["target_uuid"] = target_uuid
         result["for_type"] = for_type
-        fields = action_type.field_definitions(for_type, target)
+        fields = action_type.field_definitions(for_type, target, user=user)
         result["fields"] = fields
         result["current_values"] = action_type.snapshot_values(target, [d["name"] for d in fields])
     elif for_type.strip():
@@ -342,8 +347,12 @@ def _discovery_sync(arguments: JsonObject, request: ExtendedHttpRequestWithUser)
             # Detail types build their gui from the parent item, so a bare
             # subtype is not enough to enumerate their fields.
             raise ValueError(f"{type_id} requires target_uuid: its fields depend on the concrete target")
+        # Bare-subtype discovery may disclose more than gui metadata
+        # (configuration values, above all): the type declares the
+        # authorization its REST equivalent requires.
+        action_type.check_discovery_access(user, for_type)
         result["for_type"] = for_type
-        result["fields"] = action_type.field_definitions(for_type)
+        result["fields"] = action_type.field_definitions(for_type, user=user)
     else:
         raise ValueError("Provide either target_uuid or for_type")
     return result

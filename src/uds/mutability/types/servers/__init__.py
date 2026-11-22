@@ -65,7 +65,9 @@ class ServerGroupUpdate(mutability_base.MutableActionType):
         return f"{types.servers.ServerType(server_group.type).name}@{server_group.subtype}"
 
     @typing.override
-    def field_definitions(self, for_type: str, target: db_models.Model | None = None) -> list[JsonObject]:
+    def field_definitions(
+        self, for_type: str, target: db_models.Model | None = None, user: "models.User | None" = None
+    ) -> list[JsonObject]:
         shim = typing.cast(typing.Any, _Namespace())
         elements = sorted(ServersGroups.get_gui(shim, for_type), key=lambda element: element.gui.order)
         # The gui names the handler PUT does NOT read from params (the
@@ -140,7 +142,10 @@ class ServerGroupUpdate(mutability_base.MutableActionType):
 
     @typing.override
     def create_field_definitions(
-        self, for_type: str, target: db_models.Model | None = None
+        self,
+        for_type: str,
+        target: db_models.Model | None = None,
+        user: "models.User | None" = None,
     ) -> list[JsonObject]:
         # The creation gui is the same group gui (there is no live
         # instance): name/comments/tags travel in params, the weights
