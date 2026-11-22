@@ -190,10 +190,24 @@ class ActorV3Action(Handler):
     def get_userservice(self) -> models.UserService:
         """
         Looks for an userservice by token or uuid (for backward compat) and, if not found, raises a exceptions.rest.BlockAccess request
+
+        Note: the uuid fallback is a DELIBERATE backward-compatibility path for
+        the legacy actors, being phased out in future releases (new actors
+        authenticate with their own token, acquired through ``initialize``;
+        see the actor credential phase-out plan, enterprise private docs).
+        Do not remove it on your own.
+
+        Within that transitional window, a service whose token has already
+        been rotated (a real own token was minted and delivered by
+        ``initialize``) no longer accepts the uuid as credential: only the
+        services that never rotated (their ``token_hash`` still carries the
+        invalid-token sentinel) keep authenticating by uuid. As actors
+        re-initialize, the uuid-authenticated surface shrinks by itself.
         """
         try:
             return models.UserService.objects.get(
-                Q(token_hash=hash_actor_token(self._params["token"])) | Q(uuid=self._params["token"])
+                Q(token_hash=hash_actor_token(self._params["token"]))
+                | (Q(uuid=self._params["token"]) & Q(token_hash__startswith=consts.auth.INVALID_TOKEN_PREFIX))
             )
         except models.UserService.DoesNotExist:
             logger.error("User service not found (params: %s)", sanitize_params(self._params))
