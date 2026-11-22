@@ -40,7 +40,7 @@ from uds.core import osmanagers
 from uds.core import types
 from uds.core.util import log
 from uds.core.util.model import sql_now
-from uds.REST.utils import rest_result
+from uds.REST.utils import rest_result, sanitize_params
 
 logger: logging.Logger = logging.getLogger(__name__)
 
@@ -60,7 +60,9 @@ def process_log(server: "models.Server", data: dict[str, typing.Any]) -> typing.
         except models.UserService.DoesNotExist:
             pass  # If not found, log on server
 
-    log.log(server, types.log.LogLevel.from_str(data["level"]), data["message"], source=types.log.LogSource.SERVER)
+    log.log(
+        server, types.log.LogLevel.from_str(data["level"]), data["message"], source=types.log.LogSource.SERVER
+    )
 
     return rest_result(consts.OK)
 
@@ -198,5 +200,8 @@ def process(server: "models.Server", data: dict[str, typing.Any]) -> typing.Any:
     try:
         return fnc(server, data)
     except Exception as e:
-        logger.exception("Exception processing event %s", data)
+        # The body still carries the server bearer token: mask it, exactly as
+        # the REST boundary does, or a valid credential would land in clear
+        # text on the log file, the syslog table and the journal.
+        logger.exception("Exception processing event %s", sanitize_params(data))
         return rest_result("error", error=str(e))

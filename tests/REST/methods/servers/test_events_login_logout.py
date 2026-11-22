@@ -29,6 +29,7 @@ Author: Adolfo Gómez, dkmaster at dkmon dot com
 """
 
 import logging
+import typing
 
 from uds import models
 
@@ -45,6 +46,7 @@ class ServerEventsLoginLogoutTest(rest.test.RESTTestCase):
 
     server: "models.Server"
 
+    @typing.override
     def setUp(self) -> None:
         super().setUp()
         self.server = servers_fixtures.create_server()
@@ -88,6 +90,31 @@ class ServerEventsLoginLogoutTest(rest.test.RESTTestCase):
         self.assertEqual(self.user_service_managed.properties.get("last_username", ""), "local_user_name")
         # Must not have ticket
         self.assertIsNone(result.get("ticket", None))
+
+    def test_failed_event_does_not_log_the_server_token(self) -> None:
+        """A failing event processor must not write the bearer token in clear text.
+
+        Regression for the Strix pentest_4494 finding: the exception handler
+        logged the whole event body, which still carries the server token,
+        while the REST boundary masks it with ``sanitize_params``.
+        """
+        raw = servers_fixtures.raw_token(self.server)
+        with self.assertLogs("uds.core.managers.servers_api.events", level="ERROR") as logs:
+            response = self.client.rest_post(
+                "/servers/event",
+                data={
+                    "token": raw,
+                    "type": "login",
+                    "userservice_uuid": "nonexistent-uuid",
+                    "username": "local_user_name",
+                },
+            )
+        self.assertEqual(response.status_code, 200)
+        # The failure is reported in the body, not through the http status
+        self.assertEqual(response.json()["result"], "error")
+        output = "\n".join(logs.output)
+        self.assertNotIn(raw, output)
+        self.assertIn("********", output)
 
     def test_login_with_ticket(self) -> None:
         ticket_uuid = models.TicketStore.create(
