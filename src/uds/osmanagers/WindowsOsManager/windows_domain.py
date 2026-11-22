@@ -223,6 +223,11 @@ class WinDomainOsManager(WindowsOsManager):
                     use_ssl=ssl,
                     timeout=self.timeout.as_int(),
                     debug=False,
+                    # The os manager has no certificate field: verification
+                    # against AD (internal CA) would fail without it. Kept
+                    # explicitly off; flip together with adding certificate
+                    # support to this authenticator.
+                    verify_ssl=False,
                 )
             except Exception as e:
                 _error_string = f"Error: {e}"

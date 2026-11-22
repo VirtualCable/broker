@@ -149,7 +149,7 @@ def connection(
     use_ssl: bool = False,
     timeout: int = 3,
     debug: bool = False,
-    verify_ssl: bool = False,
+    verify_ssl: bool = True,
     certificate_data: str | None = None,  # Content of the certificate, not the file itself
 ) -> LDAPConnection:
     """
