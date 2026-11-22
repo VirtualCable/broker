@@ -29,8 +29,9 @@
 Author: Adolfo Gómez, dkmaster at dkmon dot com
 """
 
+from uds.reports.csv_export import safe_csv_writer
+
 import collections.abc
-import csv
 import io
 import logging
 import typing
@@ -164,7 +165,7 @@ class ListReportAuditCSV(ListReport):
     @typing.override
     def generate(self) -> bytes:
         output = io.StringIO()
-        writer = csv.writer(output)
+        writer = safe_csv_writer(output)
 
         writer.writerow(
             [

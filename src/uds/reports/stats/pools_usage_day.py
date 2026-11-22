@@ -29,7 +29,8 @@
 Author: Adolfo Gómez, dkmaster at dkmon dot com
 """
 
-import csv
+from uds.reports.csv_export import safe_csv_writer
+
 import datetime
 import io
 import logging
@@ -152,7 +153,7 @@ class CountersPoolAssignedCSV(CountersPoolAssigned):
     @typing.override
     def generate(self) -> bytes:
         output = io.StringIO()
-        writer = csv.writer(output)
+        writer = safe_csv_writer(output)
         writer.writerow([gettext("Pool"), gettext("Hour"), gettext("Services")])
 
         items = self.get_data()

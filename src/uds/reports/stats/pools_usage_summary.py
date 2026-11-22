@@ -29,8 +29,9 @@
 Author: Adolfo Gómez, dkmaster at dkmon dot com
 """
 
+from uds.reports.csv_export import safe_csv_writer
+
 import collections.abc
-import csv
 import datetime
 import io
 import logging
@@ -141,7 +142,7 @@ class PoolsUsageSummaryCSV(PoolsUsageSummary):
     @typing.override
     def generate(self) -> bytes:
         output = io.StringIO()
-        writer = csv.writer(output)
+        writer = safe_csv_writer(output)
 
         report_data, total_time, total_count, total_users = self.processed_data()
 

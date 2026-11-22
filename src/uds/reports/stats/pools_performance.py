@@ -29,7 +29,8 @@
 Author: Adolfo Gómez, dkmaster at dkmon dot com
 """
 
-import csv
+from uds.reports.csv_export import safe_csv_writer
+
 import datetime
 import io
 import logging
@@ -124,7 +125,9 @@ class PoolPerformanceReport(StatsReport):
             .values("owner_id", "stamp", fld)
         )
 
-        distinct_users: dict[int, list[set[str]]] = {p[0]: [set() for _ in range(sampling_points)] for p in pools}
+        distinct_users: dict[int, list[set[str]]] = {
+            p[0]: [set() for _ in range(sampling_points)] for p in pools
+        }
         accesses_count: dict[int, list[int]] = {p[0]: [0] * sampling_points for p in pools}
         for row in rows:
             idx = int((row["stamp"] - start) // sampling_interval_seconds)
@@ -253,7 +256,7 @@ class PoolPerformanceReportCSV(PoolPerformanceReport):
     @typing.override
     def generate(self) -> bytes:
         output = io.StringIO()
-        writer = csv.writer(output)
+        writer = safe_csv_writer(output)
 
         report_data = self.get_range_data()[2]
 

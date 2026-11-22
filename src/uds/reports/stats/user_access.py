@@ -29,7 +29,8 @@
 Author: Adolfo Gómez, dkmaster at dkmon dot com
 """
 
-import csv
+from uds.reports.csv_export import safe_csv_writer
+
 import datetime
 import io
 import logging
@@ -281,7 +282,7 @@ class StatsReportLoginCSV(StatsReportLogin):
     @typing.override
     def generate(self) -> bytes:
         output = io.StringIO()
-        writer = csv.writer(output)
+        writer = safe_csv_writer(output)
 
         report_data = self.get_range_data()[2]
 

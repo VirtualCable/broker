@@ -29,7 +29,8 @@
 Author: Adolfo Gómez, dkmaster at dkmon dot com
 """
 
-import csv
+from uds.reports.csv_export import safe_csv_writer
+
 import io
 import logging
 import typing
@@ -110,7 +111,7 @@ class ListReportsUsersCSV(ListReportUsers):
     @typing.override
     def generate(self) -> bytes:
         output = io.StringIO()
-        writer = csv.writer(output)
+        writer = safe_csv_writer(output)
         auth = Authenticator.objects.get(uuid=self.authenticator.value)
         users = auth.users.order_by("name")
 

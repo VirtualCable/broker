@@ -24,10 +24,10 @@
 # CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-import csv
 import io
 import logging
 import statistics
+import collections.abc
 import typing
 
 from django.utils.translation import gettext
@@ -37,12 +37,23 @@ from uds.core import types
 from uds.core.reports import graphs
 from uds.models import StatsCountersAccum
 
+from uds.reports.csv_export import safe_csv_writer
 from .servers_base import ServersStatsReport
 from .servers_base import accumulated
 from .servers_base import server_label
 from .servers_base import servers_of
 
 logger: logging.Logger = logging.getLogger(__name__)
+
+
+def _x_tick(labels: list[str]) -> "collections.abc.Callable[[float], str]":
+    """X axis tick formatter for chart data indexed by position."""
+
+    def _formatter(v: float) -> str:
+        return labels[int(v)] if 0 <= int(v) < len(labels) else ""
+
+    return _formatter
+
 
 WIDTH: typing.Final[float] = 19.2
 HEIGHT: typing.Final[float] = 10.8
@@ -140,7 +151,7 @@ class ServerBalanceReport(ServersStatsReport):
                 {
                     "title": gettext("Share of served users by server"),
                     "x": labels,
-                    "xtickFnc": lambda v: labels[int(v)] if 0 <= int(v) < len(labels) else "",
+                    "xtickFnc": _x_tick(labels),
                     "xlabel": gettext("Server"),
                     "y": [
                         {
@@ -184,7 +195,7 @@ class ServerBalanceReportCSV(ServerBalanceReport):
     @typing.override
     def generate(self) -> bytes:
         output = io.StringIO()
-        writer = csv.writer(output)
+        writer = safe_csv_writer(output)
         writer.writerow(
             [
                 gettext("Group"),
@@ -196,5 +207,7 @@ class ServerBalanceReportCSV(ServerBalanceReport):
             ]
         )
         for r in self.get_data()[1]:
-            writer.writerow([r["group"], r["server"], r["user_hours"], r["peak_users"], r["share"], r["deviation"]])
+            writer.writerow(
+                [r["group"], r["server"], r["user_hours"], r["peak_users"], r["share"], r["deviation"]]
+            )
         return output.getvalue().encode()
