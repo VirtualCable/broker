@@ -275,7 +275,10 @@ class ActionsCalendars(DetailHandler[ActionCalendarItem]):
         )
 
         if uuid is not None:
-            calendar_action = models.CalendarAction.objects.get(uuid=uuid)
+            # Scoped to the parent pool: the caller was already authorized
+            # against the pool in the URL, so only its own actions are
+            # reachable here (never a foreign pool's row).
+            calendar_action = parent.calendaraction_set.get(uuid=uuid)
             calendar_action.calendar = calendar
             calendar_action.service_pool = parent
             calendar_action.action = action
@@ -300,7 +303,11 @@ class ActionsCalendars(DetailHandler[ActionCalendarItem]):
     @typing.override
     def delete_item(self, parent: "Model", item: str) -> None:
         parent = ensure.is_instance(parent, models.ServicePool)
-        calendar_action = models.CalendarAction.objects.get(uuid=process_uuid(self._args[0]))
+        # Scoped to the parent pool, as the sibling reads are: the caller is
+        # authorized against the pool in the URL, so a foreign pool's action
+        # must resolve as unknown instead of being deleted through a pool the
+        # caller controls.
+        calendar_action = parent.calendaraction_set.get(uuid=process_uuid(self._args[0]))
         log_str = (
             f'Removed scheduled action "{calendar_action.calendar.name},'
             f"{calendar_action.action},{calendar_action.events_offset},"
