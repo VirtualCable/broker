@@ -110,6 +110,32 @@ class BaseModelHandler(Handler, abc.ABC, typing.Generic[T_Item]):
     def get_permissions(self, obj: models.Model, root: bool = False) -> int:
         return permissions.effective_permissions(self._user, obj, root)
 
+    def _must_redact(self, obj: models.Model) -> bool:
+        """Whether sensitive values of ``obj`` must be redacted for this caller.
+
+        Redaction is requested by the client with ``$redacted``, and it is
+        mandatory for callers without MANAGEMENT on the object: a read-only
+        delegation must never receive the stored infrastructure credentials
+        (hypervisor/cloud passwords, API keys, ...). Those secrets grant
+        authority on the external platform that the broker's own permission
+        model never conceded, and a reader cannot modify the object anyway,
+        so it has no legitimate need to read them (Strix pentest_4494).
+        Administrators and MANAGEMENT+ grantees keep seeing real values.
+        """
+        return self._odata.redacted or not permissions.has_access(
+            self._user, obj, types.permissions.PermissionType.MANAGEMENT
+        )
+
+    def _flag_redaction(self, response: T_Item, obj: models.Model) -> None:
+        """Flags a managed item for redaction when the caller must not see secrets.
+
+        Must be invoked **after** the etag computation, so concurrency tokens
+        keep being computed over the real values (same contract as the
+        ``$redacted`` opt-in flag).
+        """
+        if isinstance(response, types.rest.ManagedObjectItem) and self._must_redact(obj):
+            response._redacted = True
+
     @classmethod
     def extra_type_info(cls: type[typing.Self], type_: type["Module"]) -> types.rest.ExtraTypeInfo | None:
         """
