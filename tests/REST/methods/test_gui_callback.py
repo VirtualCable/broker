@@ -77,14 +77,28 @@ class GuiCallbackDispatcherTests(UDSTestCase):
         cb._params = params
         return cb
 
-    def test_no_ticket_passes_params_directly(self) -> None:
-        """Without cb_ticket, the dispatcher forwards ``_params`` verbatim."""
+    def test_no_ticket_is_refused(self) -> None:
+        """cb_ticket is mandatory: without it the dispatcher refuses the call."""
         params: dict[str, typing.Any] = {"a": "1", "b": "2"}
         cb = self._make_callback([_TEST_CB], params)
-        with mock.patch.object(models.TicketStore, "get") as m_get:
+        with (
+            mock.patch.object(models.TicketStore, "get") as m_get,
+            self.assertRaises(exceptions.rest.AccessDenied),
+        ):
             cb.get()
         m_get.assert_not_called()
-        self.assertEqual(self.received, [{"a": "1", "b": "2"}])
+        self.assertEqual(self.received, [])
+
+    def test_empty_ticket_is_refused(self) -> None:
+        """An empty cb_ticket is not a ticket: refused, callback not called."""
+        cb = self._make_callback([_TEST_CB], {"cb_ticket": "", "a": "1"})
+        with (
+            mock.patch.object(models.TicketStore, "get") as m_get,
+            self.assertRaises(exceptions.rest.AccessDenied),
+        ):
+            cb.get()
+        m_get.assert_not_called()
+        self.assertEqual(self.received, [])
 
     def test_valid_ticket_is_merged(self) -> None:
         """A valid cb_ticket is resolved and its dict is merged into the params."""
@@ -124,13 +138,15 @@ class GuiCallbackDispatcherTests(UDSTestCase):
     def test_invalid_ticket_raises_request_error(self) -> None:
         """A missing or expired cb_ticket yields a RequestError; the callback is not called."""
         cb = self._make_callback([_TEST_CB], {"cb_ticket": "missing"})
-        with mock.patch.object(
-            models.TicketStore,
-            "get",
-            side_effect=models.TicketStore.DoesNotExist,
+        with (
+            mock.patch.object(
+                models.TicketStore,
+                "get",
+                side_effect=models.TicketStore.DoesNotExist,
+            ),
+            self.assertRaises(exceptions.rest.RequestError),
         ):
-            with self.assertRaises(exceptions.rest.RequestError):
-                cb.get()
+            cb.get()
         self.assertEqual(self.received, [])
 
     def test_handler_does_not_mutate_self_params(self) -> None:

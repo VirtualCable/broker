@@ -62,13 +62,18 @@ class Callback(Handler):
 
         # Copy so we don't mutate the handler's params on subsequent calls.
         params = dict(self._params)
-        cb_ticket = params.pop("cb_ticket", None)
-        if cb_ticket:
-            try:
-                ticket_data = models.TicketStore.get(cb_ticket, invalidate=False)
-            except models.TicketStore.DoesNotExist:
-                raise exceptions.rest.RequestError("Invalid or expired cb_ticket")
-            # Ticket data wins on collision with the query-string params.
-            params.update(ticket_data)
+        cb_ticket = params.pop(consts.rest.CALLBACK_TICKET_PARAM, None)
+        if not cb_ticket:
+            # The ticket is mandatory: every callback is migrated (see
+            # doc/plan/secure_callbacks.md), so there is no legacy unticketed
+            # path. Without it, a staff user could invoke a callback for any
+            # provider just by knowing (or guessing) its prov_uuid.
+            raise exceptions.rest.AccessDenied("cb_ticket required")
+        try:
+            ticket_data = models.TicketStore.get(cb_ticket, invalidate=False)
+        except models.TicketStore.DoesNotExist:
+            raise exceptions.rest.RequestError("Invalid or expired cb_ticket")
+        # Ticket data wins on collision with the query-string params.
+        params.update(ticket_data)
 
         return gui.callbacks[self._args[0]](params)
