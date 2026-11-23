@@ -549,7 +549,8 @@ class GlobalConfig:
         type=Config.FieldType.TEXT,
         help=_(
             "SameSite policy of the session cookie: Lax or Strict. Lax is required for SSO "
-            "logins (SAML, OAuth2, EntraID) to keep the session after the identity provider redirects back"
+            "logins (SAML, OAuth2, EntraID) to keep the session after the identity provider redirects back. "
+            "Changes apply after restarting uds and udsweb on every server"
         ),
         group=Config.GroupType.HARDENING,
     )

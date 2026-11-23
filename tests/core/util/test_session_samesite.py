@@ -81,6 +81,17 @@ class SessionSameSiteTest(UDSTestCase):
                 self.assertEqual(settings.SESSION_COOKIE_SAMESITE, value)
                 self.assertEqual(self.session_cookie_samesite(), value)
 
+    def test_value_is_cached_until_restart(self) -> None:
+        GlobalConfig.SESSION_COOKIE_SAMESITE.set("Strict")
+        DBConfig.objects.filter(
+            section=GlobalConfig.SESSION_COOKIE_SAMESITE.section(),
+            key=GlobalConfig.SESSION_COOKIE_SAMESITE.key(),
+        ).update(value="Lax")
+
+        self.assertEqual(settings.SESSION_COOKIE_SAMESITE, "Strict")
+        GlobalConfig.SESSION_COOKIE_SAMESITE.get(force=True)
+        self.assertEqual(settings.SESSION_COOKIE_SAMESITE, "Lax")
+
     def test_invalid_value_falls_back_to_default(self) -> None:
         GlobalConfig.SESSION_COOKIE_SAMESITE.set("None")
 
