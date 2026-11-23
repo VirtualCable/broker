@@ -48,9 +48,9 @@ _django_getattr: typing.Callable[[typing.Any, str], typing.Any] | None = None
 
 
 def configured_value() -> str:
-    # force=True: the config cache is per process and this runs only when a session cookie is written,
-    # so reading the database here keeps every worker on the value saved from the web.
-    value = GlobalConfig.SESSION_COOKIE_SAMESITE.as_str(force=True)
+    # Cached per process like the rest of GlobalConfig: a change saved from the web applies to the
+    # worker that saved it at once, and to the others after restarting uds and udsweb.
+    value = GlobalConfig.SESSION_COOKIE_SAMESITE.as_str()
     if value in SESSION_COOKIE_SAMESITE_VALUES:
         return value
     logger.warning(
