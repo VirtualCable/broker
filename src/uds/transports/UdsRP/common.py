@@ -141,6 +141,7 @@ class TicketPayloadData:
 
     channels: TicketChannelPolicy
     version: int = PAYLOAD_VERSION
+    ticket_auth: bool = True
     credentials: TicketCredentials | None = None
     display: TicketDisplayPolicy | None = None
     video: TicketVideoPolicy | None = None

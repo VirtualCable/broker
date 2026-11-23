@@ -45,8 +45,8 @@ class TicketConnectionTest(rest.test.RESTTestCase):
     Test actorv3 "connection" ticket functionality (start & stop commands)
 
     Connection tickets carry a single dummy remote (host/port are ignored,
-    they exist just to transport the "extra" data), and authenticate via
-    the actor's (rotated) token.
+    they exist just to transport the "extra" data). URP tickets authenticate
+    with the ticket itself; legacy tickets use the actor token.
     """
 
     userservice: models.UserService
@@ -100,7 +100,7 @@ class TicketConnectionTest(rest.test.RESTTestCase):
         sent: int = 0,
         recv: int = 0,
     ) -> typing.Any:
-        """Posts a connection ticket request, authenticating with the actor token"""
+        """Posts a connection ticket request with its configured authentication token"""
         return self.client.post(
             self.get_url(),
             data=types.tickets.TunnelTicketRequest(
@@ -239,6 +239,27 @@ class TicketConnectionTest(rest.test.RESTTestCase):
         response = self._start(self.connection_ticket, token="invalid")
         self.assertEqual(response.status_code, 403)
         self.assertTrue(models.TicketStore.objects.filter(uuid=self.connection_ticket[:-8]).exists())
+
+    def test_ticket_auth_survives_actor_rotation_for_start_and_stop(self) -> None:
+        ticket = self._ticket_for(self.userservice, {"version": 1, "ticket_auth": True})
+
+        response = self._start(ticket, token="not-the-actor-token")
+        self.assertEqual(response.status_code, 200, response.content)
+        result = self.cm.decrypted_dict(response.json()["result"], ticket, self.kyber_private_key)
+        notify = types.tickets.TunnelTicketResponse.from_dict(result).notify
+
+        self.userservice.token_hash = models.user_service.hash_actor_token("rotated-away")
+        self.userservice.save(update_fields=["token_hash"])
+        stopped = self._post(command="stop", ticket=notify, token="rotated-away")
+        self.assertEqual(stopped.status_code, 200, stopped.content)
+        self.assertIsNone(stopped.json().get("error"))
+
+    def test_ticket_auth_does_not_require_an_actor_token(self) -> None:
+        ticket = self._ticket_for(self.userservice, {"version": 1, "ticket_auth": True})
+
+        response = self._start(ticket, token="")
+
+        self.assertEqual(response.status_code, 200, response.content)
 
     def test_connection_start_ticket_from_other_userservice(self) -> None:
         """
