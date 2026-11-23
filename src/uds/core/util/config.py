@@ -431,6 +431,10 @@ _GROUP_LABELS: typing.Final[dict[Config.GroupType, str]] = {
 }
 
 
+SESSION_COOKIE_SAMESITE_VALUES: typing.Final[tuple[str, ...]] = ("Lax", "Strict")
+SESSION_COOKIE_SAMESITE_DEFAULT: typing.Final[str] = "Strict"
+
+
 class GlobalConfig:
     """
     Simple helper to keep track of global configuration
@@ -537,6 +541,16 @@ class GlobalConfig:
         "1",
         type=Config.FieldType.BOOLEAN,
         help=_("Enable enhanced security modules"),
+        group=Config.GroupType.HARDENING,
+    )
+    SESSION_COOKIE_SAMESITE: Config.Value = Config.section(Config.SectionType.SECURITY).value(
+        "Session cookie SameSite",
+        SESSION_COOKIE_SAMESITE_DEFAULT,
+        type=Config.FieldType.TEXT,
+        help=_(
+            "SameSite policy of the session cookie: Lax or Strict. Lax is required for SSO "
+            "logins (SAML, OAuth2, EntraID) to keep the session after the identity provider redirects back"
+        ),
         group=Config.GroupType.HARDENING,
     )
     # Password complexity enforcement. Applies when an
