@@ -74,7 +74,43 @@ class UdsRPTransportTest(UDSTestCase):
     def _payload(self, transport: UdsRPTransport) -> dict[str, typing.Any]:
         return transport.build_ticket_payload(_connection_data()).as_dict()
 
+    def _script_params(self, transport: UdsRPTransport) -> tuple[dict[str, typing.Any], mock.MagicMock]:
+        userservice, user = _tunnel_userservice()
+        with (
+            mock.patch("uds.models.TicketStore.create_for_tunnel") as create_for_tunnel,
+            mock.patch.object(UdsRPTransport, "get_script") as get_script,
+        ):
+            create_for_tunnel.return_value = TICKET
+            get_script.return_value = "script"
+
+            transport.get_transport_script(
+                userservice=userservice,
+                transport=mock.MagicMock(),
+                ip="1.2.3.4",
+                os=types.os.DetectedOsInfo(
+                    os=types.os.KnownOS.LINUX, browser=types.os.KnownBrowser.FIREFOX, version=""
+                ),
+                user=user,
+                password="testpassword",
+                request=mock.MagicMock(),
+            )
+
+            params = get_script.call_args.args[2]
+            self.assertEqual(get_script.call_args.args[:2], ("linux", "direct"))
+            return params, create_for_tunnel
+
     # --- Client params -------------------------------------------------
+
+    def test_ticket_payload_enables_ticket_auth(self) -> None:
+        payload = self._payload(self._transport())
+
+        self.assertTrue(payload["ticket_auth"])
+
+    def test_direct_script_marks_ticket_for_ticket_auth(self) -> None:
+        params, create_for_tunnel = self._script_params(self._transport())
+
+        self.assertTrue(create_for_tunnel.call_args.kwargs["extra"]["ticket_auth"])
+        self.assertNotIn("token", params)
 
     def test_default_params_shape(self) -> None:
         data = self._params(self._transport())
@@ -106,6 +142,7 @@ class UdsRPTransportTest(UDSTestCase):
         self.assertNotIn("key", data)
         self.assertNotIn("shared_secret", data)
         self.assertNotIn("password", data)
+        self.assertNotIn("token", data)
 
     def test_missing_credentials_flag(self) -> None:
         """Without usable credentials the script must ask (has_credentials=False)."""
@@ -155,7 +192,8 @@ class UdsRPTransportTest(UDSTestCase):
         self.assertEqual(transport.selected_screen_size(), DEFAULT_SCREEN_SIZE)
 
     def test_screen_size_offers_the_five_fixed_sizes(self) -> None:
-        values = [choice.id for choice in self._transport().screen_size._field_info.choices]
+        choices = typing.cast("list[types.ui.ChoiceItem]", self._transport().screen_size._field_info.choices)
+        values = [choice.id for choice in choices]
 
         self.assertEqual(values, ["800x600", "1024x768", "1600x1200", "1920x1080", "3840x2160"])
 
@@ -166,7 +204,10 @@ class UdsRPTransportTest(UDSTestCase):
         self.assertNotIn("options", self._params(transport))
 
     def test_codec_choices_match_the_agent_presets(self) -> None:
-        values = [choice.id for choice in self._transport().preferred_codec._field_info.choices]
+        choices = typing.cast(
+            "list[types.ui.ChoiceItem]", self._transport().preferred_codec._field_info.choices
+        )
+        values = [choice.id for choice in choices]
 
         self.assertEqual(
             values,
@@ -311,8 +352,8 @@ class UdsRPTransportTest(UDSTestCase):
 
     def test_supports_every_desktop_client_os(self) -> None:
         """The URP launcher runs on Linux, Windows and macOS; other client OS must not get the transport."""
-        for os in (types.os.KnownOS.LINUX, types.os.KnownOS.WINDOWS, types.os.KnownOS.MAC_OS):
-            self.assertTrue(UdsRPTransport.supports_os(os), os)
+        for os_name in (types.os.KnownOS.LINUX, types.os.KnownOS.WINDOWS, types.os.KnownOS.MAC_OS):
+            self.assertTrue(UdsRPTransport.supports_os(os_name), os_name)
         self.assertFalse(UdsRPTransport.supports_os(types.os.KnownOS.ANDROID))
 
     def test_udsrp_protocol_in_generic_vdi(self) -> None:
@@ -332,9 +373,13 @@ class UdsRPTransportTest(UDSTestCase):
         self.assertNotIn("display", data)
 
 
+def _process_user_password(username: str, password: str) -> tuple[str, str]:
+    return username, password
+
+
 def _tunnel_userservice() -> tuple[mock.MagicMock, mock.MagicMock]:
     userservice = mock.MagicMock()
-    userservice.process_user_password = mock.MagicMock(side_effect=lambda u, p: (u, p))
+    userservice.process_user_password = mock.MagicMock(side_effect=_process_user_password)
     user = mock.MagicMock()
     user.get_username_for_auth.return_value = "testuser"
     return userservice, user
@@ -412,6 +457,12 @@ class TUdsRPTransportTest(UDSTestCase):
             },
         )
         self.assertNotIn("password", params)
+
+    def test_tunnel_script_marks_ticket_for_ticket_auth(self) -> None:
+        params, create_for_tunnel = self._script_params(self._transport())
+
+        self.assertTrue(create_for_tunnel.call_args.kwargs["extra"]["ticket_auth"])
+        self.assertNotIn("token", params)
 
     def test_tunnel_ticket_carries_same_payload_as_direct(self) -> None:
         transport = self._transport()

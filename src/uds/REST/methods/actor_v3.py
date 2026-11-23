@@ -839,6 +839,13 @@ class Ticket(ActorV3Action):
 
     NAME = "ticket"
 
+    def get_connection_userservice(self, ticket: types.tickets.TunnelTicket) -> models.UserService:
+        if not any(remote.extra.get("ticket_auth") is True for remote in ticket.remotes):
+            return self.get_userservice()
+        if ticket.userservice is None:
+            raise exceptions.rest.BlockAccess()
+        return ticket.userservice
+
     @typing.override
     def action(self) -> dict[str, typing.Any]:
         logger.debug("Args: %s,  Params: %s", self._args, sanitize_params(self._params))
@@ -885,19 +892,19 @@ class Ticket(ActorV3Action):
 
                     match req.command:
                         case "start":
-                            # Validate the request and authenticate the actor
-                            # BEFORE consuming the ticket, so an invalid request
+                            # Validate the request and authenticate the ticket
+                            # BEFORE consuming it, so an invalid request
                             # does not waste it
                             if net.ip_to_long(req.ip).version == 0:
                                 raise Exception("Invalid from IP")
-
-                            userservice = self.get_userservice()
 
                             ticket = models.TicketStore.get_for_tunnel(req.ticket)
                             if ticket.userservice is None or ticket.userservice.user is None:
                                 raise Exception(
                                     "Ticket has no associated userservice or the userservice has no user"
                                 )
+
+                            userservice = self.get_connection_userservice(ticket)
 
                             # If the userservice does not match...
                             if ticket.userservice.uuid != userservice.uuid:
@@ -948,7 +955,7 @@ class Ticket(ActorV3Action):
                                     "Ticket has no associated userservice or the userservice has no user"
                                 )
 
-                            userservice = self.get_userservice()
+                            userservice = self.get_connection_userservice(ticket)
 
                             # If the userservice does not match...
                             if ticket.userservice.uuid != userservice.uuid:
