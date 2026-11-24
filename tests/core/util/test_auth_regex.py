@@ -57,3 +57,21 @@ class TestProcessRegexField(UDSTestCase):
         from uds.core.util.auth import get_attributes_regex_field
 
         self.assertEqual(get_attributes_regex_field("alumno:alumno\npas:pas"), {"alumno", "pas"})
+
+    def test_attribute_name_with_colon_is_used_verbatim(self) -> None:
+        from uds.core.util.auth import process_regex_field
+
+        attributes = {
+            "urn:oid:1.3.6.1.4.1.5923.1.5.1.1": ["staff"],
+            "http://schemas.xmlsoap.org/ws/2005/05/identity/claims/emailaddress": ["user@example.com"],
+        }
+        self.assertEqual(
+            process_regex_field("urn:oid:1.3.6.1.4.1.5923.1.5.1.1", attributes),
+            ["staff"],
+        )
+        self.assertEqual(
+            process_regex_field(
+                "http://schemas.xmlsoap.org/ws/2005/05/identity/claims/emailaddress=(.*)@", attributes
+            ),
+            ["user"],
+        )
