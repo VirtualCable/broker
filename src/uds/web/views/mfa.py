@@ -74,7 +74,7 @@ def mfa(
         stored_data = store.read_pickled(mfa_cookie) or (None, None, None)
         stored_user_id, created, ip = (stored_data + (None,))[:3]
         if (
-            stored_user_id
+            stored_user_id == mfa_user_id  # Bind the record to the user being authenticated
             and created
             and (
                 timezone.make_aware(datetime.datetime.fromtimestamp(created))

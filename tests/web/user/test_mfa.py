@@ -50,6 +50,7 @@ class WebMFATest(test.WEBTestCase):
     Test MFA web flow
     """
 
+    @typing.override
     def setUp(self) -> None:
         super().setUp()
         # Create an MFA provider and link to the authenticator
@@ -194,6 +195,35 @@ class WebMFATest(test.WEBTestCase):
         # GET MFA -> should skip due to cookie and redirect to index
         response = self.client.get(reverse("page.mfa"))
         self.assertRedirects(response, reverse("page.index"), status_code=302, fetch_redirect_response=False)
+
+    def test_mfa_remember_cookie_of_another_user_does_not_authorize(self) -> None:
+        # The remember-device record is bound to the user that completed MFA:
+        # user B must NOT be authorized by user A's cookie, even with a valid
+        # (unexpired) record and matching IP.
+        mfa_with_remember = mfa_fixtures.create_db_mfa(remember_device=24)
+        self.auth.mfa = mfa_with_remember
+        self.auth.save()
+        user_b = self.plain_users[1]
+        user_b.mfa_data = "test2@example.com"
+        user_b.save()
+
+        # User A: complete MFA with remember=True and capture the cookie
+        self.do_login(self.user.name, self.user.name, self.auth.uuid)
+        self.client.get(reverse("page.mfa"))
+        response = self.client.post(reverse("page.mfa"), {"code": "123456", "remember": True})
+        self.assertIn("mfa_status", response.cookies)
+        cookie_a = response.cookies["mfa_status"].value
+
+        # User B: logout, login with B's own password (redirects to MFA stage)
+        self.client.get(reverse("page.logout"))
+        response = self.do_login(user_b.name, user_b.name, self.auth.uuid)
+        self.assertRedirects(response, reverse("page.mfa"), status_code=302, fetch_redirect_response=False)
+
+        # Replay user A's remember cookie during user B's MFA stage
+        self.client.cookies["mfa_status"] = cookie_a
+        response = self.client.get(reverse("page.mfa"))
+        # Not authorized: the MFA form is rendered instead of skipping to index
+        self.assertEqual(response.status_code, 200)
 
     def test_mfa_skip_mfa_group_skips_mfa(self) -> None:
         group_with_skip = fixtures_authenticators.create_db_groups(self.auth, number_of_groups=1)[0]
