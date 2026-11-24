@@ -15,7 +15,7 @@ Notes
 
 import typing
 
-from uds.core import types, consts
+from uds.core import types
 from uds.core.util.config import GlobalConfig
 
 from ....utils import rest
@@ -23,7 +23,6 @@ from ....utils import rest
 EXPECTED_CHECK_IDS: typing.Final[frozenset[str]] = frozenset(
     (
         # B-family (global_config.py)
-        "default-superuser-credentials",
         "superuser-web-access",
         "trusted-sources-wildcard",
         "ip-forwarders-wildcard",
@@ -109,7 +108,7 @@ class ChecksEndpointTest(rest.test.RESTTestCase):
     def tearDown(self) -> None:
         # Restore the shipped default root password: config values keep an
         # in-memory copy that outlives the (truncated) test database.
-        GlobalConfig.SUPER_USER_PASS.set(consts.security.DEFAULT_SUPERUSER_PASSWORD)
+        GlobalConfig.SUPER_USER_PASS.set("test-root-password")  # nosec: fixed test password
         super().tearDown()
 
     def _get_report(self, path: str = "system/checks") -> dict[str, typing.Any]:
@@ -196,40 +195,3 @@ class ChecksEndpointTest(rest.test.RESTTestCase):
         self.login()
         response = self.client.rest_get("system/manual_checks/not-a-category")
         self.assertEqual(response.status_code, 400, response.content)
-
-    def test_admin_report_reflects_configuration_state(self) -> None:
-        # Isolate this test from the other CRITICAL/HIGH findings the test
-        # settings trigger (DEBUG=True, ALLOWED_HOSTS=['*'],
-        # CSRF middleware commented out, and the shipped sample SECRET_KEY /
-        # RSA_KEY when running off a pristine settings.py). The
-        # superuser-credentials check is the one we want to exercise here.
-        # The session + request middleware are kept so REST login/auth tokens
-        # (which are Django sessions) work inside the overridden settings.
-        middleware: list[str] = [
-            "django.middleware.security.SecurityMiddleware",
-            "django.contrib.sessions.middleware.SessionMiddleware",
-            "django.middleware.csrf.CsrfViewMiddleware",
-            "django.middleware.common.CommonMiddleware",
-            "uds.middleware.request.GlobalRequestMiddleware",
-        ]
-        with self.settings(
-            DEBUG=False,
-            ALLOWED_HOSTS=["testserver"],
-            MIDDLEWARE=middleware,
-            SECRET_KEY="a-rotated-not-default-secret-key",
-            RSA_KEY="a-rotated-not-default-rsa-key",
-        ):
-            # Login inside the settings override: the auth token is a Django
-            # session signed with the active SECRET_KEY, so it must be issued
-            # and validated under the same settings block.
-            self.login()
-            body = self._get_report("system/checks/security")
-            critical = {
-                check["id"] for check in body["checks"] if check["severity"] == "critical" and not check["ok"]
-            }
-            self.assertEqual(critical, {"default-superuser-credentials"})
-
-            # Rotating the root password clears the only critical finding
-            GlobalConfig.SUPER_USER_PASS.set("a-rotated-not-default-password")
-            body = self._get_report("system/checks/security")
-            self.assertEqual(body["critical"], 0)

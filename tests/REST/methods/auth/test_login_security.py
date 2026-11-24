@@ -39,7 +39,6 @@ if typing.TYPE_CHECKING:
 
 SUPERUSER_AUTH_ID = "00000000-0000-0000-0000-000000000000"
 SUPERUSER_PASSWORD = "test-root-password"  # nosec: hardcoded test password
-DEFAULT_ROOT_PASSWORD = "udsmam0"  # nosec: hardcoded test password
 TEST_CLIENT_IP = "127.0.0.1"  # REMOTE_ADDR used by UDSClient on ipv4
 
 
@@ -91,7 +90,7 @@ class SuperuserLoginSecurityTest(rest.test.RESTTestCase):
         # tests running on the same process.
         GlobalConfig.SUPER_USER_ALLOW_WEBACCESS.set(True)
         GlobalConfig.TRUSTED_SOURCES.set("*")
-        GlobalConfig.SUPER_USER_PASS.set(DEFAULT_ROOT_PASSWORD)
+        GlobalConfig.SUPER_USER_PASS.set(SUPERUSER_PASSWORD)
         super().tearDown()
 
     def _superuser_login(self, password: str, username: str | None = None) -> UDSHttpResponse:

@@ -42,38 +42,7 @@ from django.utils.translation import gettext_noop
 
 from uds.core import consts, types
 from uds.core.checks import AutomaticCheck, CheckOutcome
-from uds.core.managers.crypto import CryptoManager
 from uds.core.util.config import GlobalConfig
-
-
-class DefaultSuperuserCredentialsCheck(AutomaticCheck):
-    """Root password left at the shipped default."""
-
-    id: typing.ClassVar[str] = "default-superuser-credentials"
-    category: typing.ClassVar[types.checks.CheckCategory] = types.checks.CheckCategory.SECURITY
-    description: typing.ClassVar[str] = gettext_noop(
-        "Verifies that the superuser (root) password is not the default one. A known password "
-        "gives full administration access. Change SUPER_USER_PASS in the global configuration."
-    )
-
-    @typing.override
-    def run(self) -> CheckOutcome:
-        stored = GlobalConfig.SUPER_USER_PASS.get(True)
-        # Both the raw comparison (legacy unhashed storage) and the hash check
-        # (modern installs store an Argon2 hash of the password) are needed.
-        if stored == consts.security.DEFAULT_SUPERUSER_PASSWORD or CryptoManager.manager().check_hash(
-            consts.security.DEFAULT_SUPERUSER_PASSWORD, stored
-        ):
-            return (
-                types.checks.CheckSeverity.CRITICAL,
-                False,
-                _("Default superuser credentials are still active. Change the root password immediately."),
-            )
-        return (
-            types.checks.CheckSeverity.CRITICAL,
-            True,
-            _("Superuser password is not the shipped default."),
-        )
 
 
 class SuperuserWebAccessCheck(AutomaticCheck):

@@ -33,6 +33,7 @@ Author: Andres Schumann, aschumann at virtualcable dot es
 import collections.abc
 import enum
 import logging
+import secrets
 import sys
 import typing
 
@@ -519,9 +520,13 @@ class GlobalConfig:
         group=Config.GroupType.ACCESS,
     )
     # Superuser password (do not need to be at database!!!)
+    # No default password exists: on first boot (first access to this value on
+    # a fresh database) a random, unrecoverable password is generated and
+    # stored (hashed). Operators set their own with:
+    #   manage.py config Security.rootPass=<new password>
     SUPER_USER_PASS: Config.Value = Config.section(Config.SectionType.SECURITY).value(
         "rootPass",
-        consts.security.DEFAULT_SUPERUSER_PASSWORD,
+        secrets.token_hex(32),
         type=Config.FieldType.PASSWORD,
         help=_("Superuser password"),
         group=Config.GroupType.ACCESS,

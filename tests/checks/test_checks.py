@@ -50,7 +50,6 @@ from ..utils.test import UDSTransactionTestCase
 ALL_CHECK_IDS: typing.Final[frozenset[str]] = frozenset(
     (
         # B-family (global_config.py)
-        "default-superuser-credentials",
         "superuser-web-access",
         "trusted-sources-wildcard",
         "ip-forwarders-wildcard",
@@ -107,7 +106,7 @@ class ChecksTest(UDSTransactionTestCase):
     def setUp(self) -> None:
         super().setUp()
         # Normalize the security configuration to a known baseline
-        GlobalConfig.SUPER_USER_PASS.set(consts.security.DEFAULT_SUPERUSER_PASSWORD)
+        GlobalConfig.SUPER_USER_PASS.set("test-root-password")  # nosec: fixed test password
         GlobalConfig.SUPER_USER_ALLOW_WEBACCESS.set(True)
         GlobalConfig.TRUSTED_SOURCES.set("*")
         GlobalConfig.ADMIN_TRUSTED_SOURCES.set("*")
@@ -120,7 +119,7 @@ class ChecksTest(UDSTransactionTestCase):
         # Restore the shipped defaults: config values keep an in-memory copy
         # that outlives the (truncated) test database and would leak into
         # other tests running on the same process.
-        GlobalConfig.SUPER_USER_PASS.set(consts.security.DEFAULT_SUPERUSER_PASSWORD)
+        GlobalConfig.SUPER_USER_PASS.set("test-root-password")  # nosec: fixed test password
         GlobalConfig.SUPER_USER_ALLOW_WEBACCESS.set(True)
         GlobalConfig.TRUSTED_SOURCES.set("*")
         GlobalConfig.ADMIN_TRUSTED_SOURCES.set("*")
@@ -156,22 +155,7 @@ class ChecksTest(UDSTransactionTestCase):
         return authenticator
 
     # ------------------------------------------------------------------
-    # Check 1: default superuser credentials
-    # ------------------------------------------------------------------
-    def test_default_superuser_credentials_detected(self) -> None:
-        result = self._run_check("default-superuser-credentials")
-        self.assertFalse(result.ok, result.message)
-        self.assertEqual(result.severity, types.checks.CheckSeverity.CRITICAL)
-        self.assertIn("root password", result.message.lower())
-
-    def test_rotated_superuser_credentials_pass(self) -> None:
-        GlobalConfig.SUPER_USER_PASS.set("a-rotated-not-default-password")
-        result = self._run_check("default-superuser-credentials")
-        self.assertTrue(result.ok, result.message)
-        self.assertEqual(result.severity, types.checks.CheckSeverity.CRITICAL)
-
-    # ------------------------------------------------------------------
-    # Check 2: root account web/API access
+    # Check 1: root account web/API access
     # ------------------------------------------------------------------
     def test_superuser_web_access_enabled_fails(self) -> None:
         GlobalConfig.SUPER_USER_ALLOW_WEBACCESS.set(True)
@@ -801,7 +785,7 @@ class ChecksTest(UDSTransactionTestCase):
 
         key = rsa.generate_private_key(public_exponent=65537, key_size=2048)
         subject = issuer = x509.Name([x509.NameAttribute(x509.oid.NameOID.COMMON_NAME, "uds-test")])
-        now = _dt.datetime.now(_dt.timezone.utc)
+        now = _dt.datetime.now(_dt.UTC)
         not_before = now + _dt.timedelta(days=days_from_now) - _dt.timedelta(days=365)
         not_after = now + _dt.timedelta(days=days_from_now)
         cert = (
