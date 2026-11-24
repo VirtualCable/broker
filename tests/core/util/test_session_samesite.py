@@ -63,15 +63,15 @@ class SessionSameSiteTest(UDSTestCase):
         response = middleware.process_response(request, HttpResponse())
         return str(response.cookies[settings.SESSION_COOKIE_NAME]["samesite"])
 
-    def test_default_is_strict_when_not_saved(self) -> None:
-        self.assertEqual(SESSION_COOKIE_SAMESITE_DEFAULT, "Strict")
+    def test_default_is_lax_when_not_saved(self) -> None:
+        self.assertEqual(SESSION_COOKIE_SAMESITE_DEFAULT, "Lax")
         DBConfig.objects.filter(
             section=GlobalConfig.SESSION_COOKIE_SAMESITE.section(),
             key=GlobalConfig.SESSION_COOKIE_SAMESITE.key(),
         ).delete()
 
-        self.assertEqual(settings.SESSION_COOKIE_SAMESITE, "Strict")
-        self.assertEqual(self.session_cookie_samesite(), "Strict")
+        self.assertEqual(settings.SESSION_COOKIE_SAMESITE, "Lax")
+        self.assertEqual(self.session_cookie_samesite(), "Lax")
 
     def test_value_saved_from_web_is_applied_to_session_cookie(self) -> None:
         for value in ("Lax", "Strict"):

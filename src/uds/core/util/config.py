@@ -432,7 +432,7 @@ _GROUP_LABELS: typing.Final[dict[Config.GroupType, str]] = {
 
 
 SESSION_COOKIE_SAMESITE_VALUES: typing.Final[tuple[str, ...]] = ("Lax", "Strict")
-SESSION_COOKIE_SAMESITE_DEFAULT: typing.Final[str] = "Strict"
+SESSION_COOKIE_SAMESITE_DEFAULT: typing.Final[str] = "Lax"
 
 
 class GlobalConfig:
