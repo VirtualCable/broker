@@ -48,8 +48,6 @@ class Command(BaseCommand):
     @typing.override
     def add_arguments(self, parser: argparse.ArgumentParser) -> None:
         parser.add_argument("name_value", nargs="+", type=str)
-        # If set as "password field"
-        parser.add_argument("--password", action="store_true", default=False, help="Set as password field")
 
     @typing.override
     def handle(self, *args: typing.Any, **options: typing.Any) -> None:
@@ -65,9 +63,11 @@ class Command(BaseCommand):
                 else:
                     mod, name = Config.SectionType.GLOBAL, first[0]
                 if Config.update(mod, name, value) is None:
-                    kwargs = {}
-                    if options["password"]:
-                        kwargs["type"] = Config.FieldType.PASSWORD
+                    # New key: created with the default field type. Keys with
+                    # PASSWORD semantics (hashed on write, hidden from reads)
+                    # are the ones defined in code (e.g. Security.rootPass,
+                    # whose row already exists with FieldType.PASSWORD, so
+                    # Config.update() above hashes the new value).
                     Config.section(mod).value(name, value).get()
         except Exception as e:
             self.stderr.write(f"The command could not be processed: {e}")
