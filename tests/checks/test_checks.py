@@ -784,7 +784,10 @@ class ChecksTest(UDSTransactionTestCase):
         try:
             result = self._run_check("no-mfa-configured")
             self.assertFalse(result.ok, result.message)
-            self.assertEqual(result.severity, types.checks.CheckSeverity.MEDIUM)
+            # Informational by design: not having MFA is an environment
+            # decision (e.g. IP auth for large student populations), not a
+            # weakness by itself
+            self.assertEqual(result.severity, types.checks.CheckSeverity.INFO)
             self.assertIn("no-mfa-auth", result.message)
         finally:
             models.Authenticator.objects.all().delete()

@@ -45,6 +45,7 @@ EXPECTED_CHECK_IDS: typing.Final[frozenset[str]] = frozenset(
         "no-mfa-configured",
         "server-certificates-expiring",
         "restrained-service-pools",
+        "ipauth-proxy-unrestricted",
         # C-family (logs.py)
         "failed-logins-24h",
         "brute-force-by-ip",

@@ -165,17 +165,20 @@ class NoMfaConfiguredCheck(AutomaticCheck):
 
     @typing.override
     def run(self) -> CheckOutcome:
+        # Informational by design: many environments deliberately run without
+        # MFA (e.g. IP authenticators for large student populations), so this
+        # is an inventory hint, not a weakness by itself.
         authenticators = list(models.Authenticator.objects.all())
         if not authenticators:
             return (
-                types.checks.CheckSeverity.MEDIUM,
+                types.checks.CheckSeverity.INFO,
                 True,
                 _("No authenticators configured (nothing to enforce MFA on)."),
             )
         without_mfa = [a.name for a in authenticators if a.mfa is None]
         if len(without_mfa) == len(authenticators):
             return (
-                types.checks.CheckSeverity.MEDIUM,
+                types.checks.CheckSeverity.INFO,
                 False,
                 _(
                     "No authenticator has MFA configured: {names}. Assign at least one MFA per authenticator."
@@ -183,7 +186,7 @@ class NoMfaConfiguredCheck(AutomaticCheck):
                 without_mfa,
             )
         return (
-            types.checks.CheckSeverity.MEDIUM,
+            types.checks.CheckSeverity.INFO,
             True,
             _("MFA coverage: {with_mfa}/{total} authenticators have MFA assigned.").format(
                 with_mfa=len(authenticators) - len(without_mfa),
