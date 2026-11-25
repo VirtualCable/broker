@@ -389,10 +389,7 @@ class AuthenticatorSslVerificationDisabledCheck(AutomaticCheck):
                     unverified.append(authenticator.name)
             elif auth_type is SAMLAuthenticator:
                 saml = typing.cast("SAMLAuthenticator", authenticator.get_instance())
-                if (
-                    saml.idp_metadata.value.startswith("https://")
-                    and not saml.check_https_certificate.as_bool()
-                ):
+                if saml.idp_metadata.value.startswith("https://") and not saml.verify_ssl.as_bool():
                     unverified.append(authenticator.name)
 
         if unverified:

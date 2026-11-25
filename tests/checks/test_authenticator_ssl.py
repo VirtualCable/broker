@@ -102,7 +102,7 @@ class AuthenticatorSslVerificationCheckTest(UDSTransactionTestCase):
 
         def configure(saml: "SAMLAuthenticator") -> None:
             saml.idp_metadata.value = "https://idp.example.com/metadata"
-            saml.check_https_certificate.value = False
+            saml.verify_ssl.value = False
 
         self._create("SAML URL", SAMLAuthenticator, configure)
         result = self._run_check()
