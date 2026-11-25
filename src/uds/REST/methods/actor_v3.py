@@ -588,6 +588,14 @@ class BaseReadyChange(ActorV3Action):
         """
         logger.debug("Args: %s,  Params: %s", self._args, sanitize_params(self._params))
         userservice = self.get_userservice()
+        # Generates the certificate FIRST: the comms url must never be stored
+        # without its (pinned) certificate. If the reported ip is not a valid
+        # address, cert generation fails here and nothing is persisted (no
+        # "comms url without cert" half-state can be created).
+        # Password will be removed on a release after 5.0 as it is useful
+        # Currently we have to maintain it for compat with older actors
+        private_key, cert, password = security.create_self_signed_cert(self._params["ip"], with_password=True)
+
         # Stores known IP and notifies it to deployment
         userservice_instance = userservice.get_instance()
         # If instance has an IP, do not change it, otherwise, set the new one
@@ -596,13 +604,17 @@ class BaseReadyChange(ActorV3Action):
         userservice_instance.set_ip(self._params["ip"])
         userservice.update_data(userservice_instance)
 
-        # Store communications url also
+        # Store communications url also (cert is already stored above, so
+        # every actor with a comms url has its pinned certificate)
         ActorV3Action.set_comms_endpoint(
             userservice,
             self._params["ip"],
             int(self._params["port"]),
             self._params["secret"],
         )
+        userservice.properties["cert"] = cert
+        userservice.properties["priv"] = private_key
+        userservice.properties["priv_passwd"] = password
 
         if userservice.os_state != State.USABLE:
             userservice.set_os_state(State.USABLE)
@@ -614,15 +626,6 @@ class BaseReadyChange(ActorV3Action):
                 UserServiceManager.manager().notify_ready_from_os_manager(
                     userservice, ""
                 )  # Currently, no data is received for os manager
-
-        # Generates a certificate and send it to client.
-        # Password will be removed on a release after 5.0 as it is useful
-        # Currently we have to maintain it for compat with older actors
-        private_key, cert, password = security.create_self_signed_cert(self._params["ip"], with_password=True)
-        # Store certificate with userService
-        userservice.properties["cert"] = cert
-        userservice.properties["priv"] = private_key
-        userservice.properties["priv_passwd"] = password
 
         return ActorV3Action.actor_cert_result(private_key, cert, password)
 
