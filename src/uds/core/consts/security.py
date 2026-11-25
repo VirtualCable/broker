@@ -34,10 +34,6 @@ Constants used by the security self-assessment checks and related code.
 import hashlib
 import typing
 
-# Shipped default of ``GlobalConfig.SUPER_USER_PASS`` (see uds.core.util.config).
-# Detects installations where the root password has never been rotated.
-DEFAULT_SUPERUSER_PASSWORD: typing.Final[str] = "udsmam0"
-
 # Shipped default of ``GlobalConfig.PASSWORD_MIN_LENGTH``. Common guidance:
 # 8 characters minimum for administered accounts.
 PASSWORD_MIN_LENGTH: typing.Final[int] = 8

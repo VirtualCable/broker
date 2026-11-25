@@ -83,6 +83,10 @@ class UDSAppConfig(AppConfig):
         from . import plugins as plugins
         from . import REST as REST
 
+        from .core.util import session_samesite
+
+        session_samesite.install()
+
 
 default_app_config = "uds.UDSAppConfig"
 

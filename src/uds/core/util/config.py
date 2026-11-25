@@ -33,6 +33,7 @@ Author: Andres Schumann, aschumann at virtualcable dot es
 import collections.abc
 import enum
 import logging
+import secrets
 import sys
 import typing
 
@@ -431,6 +432,10 @@ _GROUP_LABELS: typing.Final[dict[Config.GroupType, str]] = {
 }
 
 
+SESSION_COOKIE_SAMESITE_VALUES: typing.Final[tuple[str, ...]] = ("Lax", "Strict")
+SESSION_COOKIE_SAMESITE_DEFAULT: typing.Final[str] = "Lax"
+
+
 class GlobalConfig:
     """
     Simple helper to keep track of global configuration
@@ -515,9 +520,13 @@ class GlobalConfig:
         group=Config.GroupType.ACCESS,
     )
     # Superuser password (do not need to be at database!!!)
+    # No default password exists: on first boot (first access to this value on
+    # a fresh database) a random, unrecoverable password is generated and
+    # stored (hashed). Operators set their own with:
+    #   manage.py config Security.rootPass=<new password>
     SUPER_USER_PASS: Config.Value = Config.section(Config.SectionType.SECURITY).value(
         "rootPass",
-        consts.security.DEFAULT_SUPERUSER_PASSWORD,
+        secrets.token_hex(32),
         type=Config.FieldType.PASSWORD,
         help=_("Superuser password"),
         group=Config.GroupType.ACCESS,
@@ -537,6 +546,17 @@ class GlobalConfig:
         "1",
         type=Config.FieldType.BOOLEAN,
         help=_("Enable enhanced security modules"),
+        group=Config.GroupType.HARDENING,
+    )
+    SESSION_COOKIE_SAMESITE: Config.Value = Config.section(Config.SectionType.SECURITY).value(
+        "Session cookie SameSite",
+        SESSION_COOKIE_SAMESITE_DEFAULT,
+        type=Config.FieldType.TEXT,
+        help=_(
+            "SameSite policy of the session cookie: Lax or Strict. Lax is required for SSO "
+            "logins (SAML, OAuth2, EntraID) to keep the session after the identity provider redirects back. "
+            "Changes apply after restarting uds and udsweb on every server"
+        ),
         group=Config.GroupType.HARDENING,
     )
     # Password complexity enforcement. Applies when an

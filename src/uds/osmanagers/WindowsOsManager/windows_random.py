@@ -110,10 +110,17 @@ class WinRandomPassManager(WindowsOsManager):
             pos = rnd.randrange(0, len(rnd_password))
             rnd_password = rnd_password[:pos] + base + rnd_password[pos:]
             userservice.store_value("winOsRandomPass", rnd_password)
+            # Mask the password on the log: the plaintext lives on the user
+            # service properties (winOsRandomPass) and is delivered to the
+            # actor, but must not linger on the (staff readable) service log.
+            # NOTE: In the future we may provide a mechanism to the admin, on
+            # the admin interface, to recover the assigned password for an user
+            # service, but currently it's not considered necesary at all, (and
+            # maybe never) :)
             log.log(
                 userservice,
                 types.log.LogLevel.INFO,
-                f'Password set to "{rnd_password}"',
+                f'Password set to "{rnd_password[:2]}***"',
                 types.log.LogSource.OSMANAGER,
             )
         return rnd_password

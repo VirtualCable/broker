@@ -75,30 +75,39 @@ def _execute_actor_request(
             )
         )
 
+    # Fail closed: no pinned certificate, no request. With the atomic
+    # ready/ipchange flow (the certificate is generated BEFORE the comms url
+    # is persisted), a comms url without its pinned certificate is an
+    # anomalous state (a partial commit from older versions, or tampering):
+    # there is no machine identity to trust, so the request is not performed.
+    # The actor will re-run ready/ipchange by itself and heal the state (new
+    # flows persist url and certificate atomically). Raised OUTSIDE the
+    # request try/except so it always propagates to the callers.
+    cert = userservice.properties.get("cert", "")
+    if not cert:
+        logger.warning(
+            "Actor request %s for %s: no pinned certificate stored for its comms url. "
+            "Failing closed; the actor should recover by re-running ready/ipchange",
+            method,
+            userservice.friendly_name,
+        )
+        raise exceptions.actor.NoActorComms(
+            f"No pinned certificate for {userservice.friendly_name} comms"
+        )
+
     url += "/" + method
 
     try:
-        verify: bool | str
-        cert = userservice.properties.get("cert", "")
-        # cert = ''  # Uncomment to test without cert
-        if cert:
-            # Certificate pinning: the broker only trusts the exact
-            # self-signed cert it issued for this userservice at "ready"
-            # time. This is the real machine-identity check: a different
-            # machine on the same IP fails TLS verification before any
-            # data is exchanged.
-            # Generate temp file, and delete it after
-            with tempfile.NamedTemporaryFile("wb", delete=False) as f:
-                f.write(cert.encode())  # Save cert
-                verify = f.name
-        else:
-            # No cert stored (actor never completed "ready", or it is an
-            # older actor): no pinning. The uuid check in
-            # check_user_service_uuid is the only identity verification
-            # left, which is why we keep it (see its docstring).
-            # Requiring the stored cert would stop older actors (4.0) from
-            # connecting.
-            verify = False
+        verify: str
+        # Certificate pinning: the broker only trusts the exact
+        # self-signed cert it issued for this userservice at "ready"
+        # time. This is the real machine-identity check: a different
+        # machine on the same IP fails TLS verification before any
+        # data is exchanged.
+        # Generate temp file, and delete it after
+        with tempfile.NamedTemporaryFile("wb", delete=False) as f:
+            f.write(cert.encode())  # Save cert
+            verify = f.name
         session = secure_requests_session(verify=cert)
         if data is None:
             headers = {

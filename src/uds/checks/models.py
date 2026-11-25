@@ -36,6 +36,7 @@ Grouped here because they all inspect stored configuration rows
 or the admin-editable global config.
 """
 
+import collections.abc
 import typing
 
 from django.db.models import Q
@@ -45,6 +46,9 @@ from django.utils.translation import gettext_noop
 from uds import models
 from uds.core import consts, types
 from uds.core.checks import AutomaticCheck, CheckOutcome
+
+if typing.TYPE_CHECKING:
+    from uds.core import auths
 
 
 class SamlAssertionsSignedCheck(AutomaticCheck):
@@ -161,17 +165,20 @@ class NoMfaConfiguredCheck(AutomaticCheck):
 
     @typing.override
     def run(self) -> CheckOutcome:
+        # Informational by design: many environments deliberately run without
+        # MFA (e.g. IP authenticators for large student populations), so this
+        # is an inventory hint, not a weakness by itself.
         authenticators = list(models.Authenticator.objects.all())
         if not authenticators:
             return (
-                types.checks.CheckSeverity.MEDIUM,
+                types.checks.CheckSeverity.INFO,
                 True,
                 _("No authenticators configured (nothing to enforce MFA on)."),
             )
         without_mfa = [a.name for a in authenticators if a.mfa is None]
         if len(without_mfa) == len(authenticators):
             return (
-                types.checks.CheckSeverity.MEDIUM,
+                types.checks.CheckSeverity.INFO,
                 False,
                 _(
                     "No authenticator has MFA configured: {names}. Assign at least one MFA per authenticator."
@@ -179,13 +186,64 @@ class NoMfaConfiguredCheck(AutomaticCheck):
                 without_mfa,
             )
         return (
-            types.checks.CheckSeverity.MEDIUM,
+            types.checks.CheckSeverity.INFO,
             True,
             _("MFA coverage: {with_mfa}/{total} authenticators have MFA assigned.").format(
                 with_mfa=len(authenticators) - len(without_mfa),
                 total=len(authenticators),
             ),
             without_mfa,
+        )
+
+
+class IPAuthProxyUnrestrictedCheck(AutomaticCheck):
+    """IP authenticators accepting forwarded ips from any peer."""
+
+    id: typing.ClassVar[str] = "ipauth-proxy-unrestricted"
+    category: typing.ClassVar[types.checks.CheckCategory] = types.checks.CheckCategory.SECURITY
+    description: typing.ClassVar[str] = gettext_noop(
+        "Verifies that IP authenticators with 'Accept proxy' enabled restrict the networks from which "
+        "forwarded addresses are accepted. Without that restriction, any client can claim any ip "
+        "(X-Forwarded-For header) and authenticate as it. Configure the trusted proxy networks on the "
+        "listed authenticators."
+    )
+
+    @typing.override
+    def run(self) -> CheckOutcome:
+        from uds.auths.IP.authenticator import IPAuth
+
+        problematic: list[str] = []
+        found = False
+        authenticator: models.Authenticator
+        for authenticator in models.Authenticator.objects.all():
+            if authenticator.get_type() is not IPAuth:
+                continue
+            found = True
+            instance = typing.cast("IPAuth", authenticator.get_instance())
+            trusted_networks = instance.trusted_proxies.value.strip()
+            if instance.accepts_proxy.as_bool() and (not trusted_networks or trusted_networks == "*"):
+                problematic.append(authenticator.name)
+
+        if problematic:
+            return (
+                types.checks.CheckSeverity.HIGH,
+                False,
+                _(
+                    "IP authenticators accepting forwarded addresses from any peer: {names}."
+                    " Any client can claim any ip (X-Forwarded-For header) and authenticate as it."
+                ).format(names=", ".join(problematic)),
+                problematic,
+            )
+        if found:
+            return (
+                types.checks.CheckSeverity.HIGH,
+                True,
+                _("IP authenticators restrict forwarded addresses to the configured trusted proxies."),
+            )
+        return (
+            types.checks.CheckSeverity.MEDIUM,
+            True,
+            _("No IP authenticators configured."),
         )
 
 
@@ -207,7 +265,7 @@ class ServerCertificatesExpiringCheck(AutomaticCheck):
         import datetime as _dt
         from cryptography import x509 as _x509
 
-        now = _dt.datetime.now(_dt.timezone.utc)
+        now = _dt.datetime.now(_dt.UTC)
         horizon = now + _dt.timedelta(days=30)
         expired: list[str] = []
         expiring: list[str] = []
@@ -231,7 +289,7 @@ class ServerCertificatesExpiringCheck(AutomaticCheck):
             except AttributeError:
                 expires_at = cert.not_valid_after
                 if expires_at.tzinfo is None:
-                    expires_at = expires_at.replace(tzinfo=_dt.timezone.utc)
+                    expires_at = expires_at.replace(tzinfo=_dt.UTC)
             label = (
                 server.hostname
                 or server.register_username
@@ -329,19 +387,49 @@ class AuthenticatorSslVerificationDisabledCheck(AutomaticCheck):
         from uds.auths.SAML import SAMLAuthenticator
         from uds.auths.SimpleLDAP import SimpleLDAPAuthenticator
 
+        # Registry of the TLS channels used by authenticators, so verifying
+        # them is data-driven: register one (authenticator type, gate, field)
+        # triple per channel and the loop below loads and checks every one.
+        #   - auth_type: the Authenticator subclass this requirement applies to
+        #   - applies: instance -> whether this TLS channel is actually used
+        #     (the verification field is only relevant then)
+        #   - verify_field: name of the boolean gui field that must be enabled
+        #   - protects: what the verified channel protects (for messages)
+        ssl_requirements: typing.Final[
+            list[tuple[type[auths.Authenticator], collections.abc.Callable[[typing.Any], bool], str, str]]
+        ] = [
+            (
+                SimpleLDAPAuthenticator,
+                lambda instance: typing.cast("SimpleLDAPAuthenticator", instance).use_ssl.as_bool(),
+                "verify_ssl",
+                "the LDAP directory connection",
+            ),
+            (
+                RegexLdap,
+                lambda instance: typing.cast("RegexLdap", instance).use_ssl.as_bool(),
+                "verify_ssl",
+                "the LDAP directory connection",
+            ),
+            (
+                SAMLAuthenticator,
+                lambda instance: typing.cast("SAMLAuthenticator", instance).idp_metadata.value.startswith(
+                    "https://"
+                ),
+                "verify_ssl",
+                "the IdP metadata fetch",
+            ),
+        ]
+
         unverified: list[str] = []
         for authenticator in models.Authenticator.objects.all():
             auth_type = authenticator.get_type()
-            if auth_type in (SimpleLDAPAuthenticator, RegexLdap):
-                ldap = typing.cast("SimpleLDAPAuthenticator | RegexLdap", authenticator.get_instance())
-                if ldap.use_ssl.as_bool() and not ldap.verify_ssl.as_bool():
-                    unverified.append(authenticator.name)
-            elif auth_type is SAMLAuthenticator:
-                saml = typing.cast("SAMLAuthenticator", authenticator.get_instance())
-                if (
-                    saml.idp_metadata.value.startswith("https://")
-                    and not saml.check_https_certificate.as_bool()
-                ):
+            for req_type, applies, verify_field, _protects in ssl_requirements:
+                if auth_type is not req_type:
+                    continue
+                instance = authenticator.get_instance()
+                if not applies(instance):
+                    continue
+                if not getattr(instance, verify_field).as_bool():
                     unverified.append(authenticator.name)
 
         if unverified:

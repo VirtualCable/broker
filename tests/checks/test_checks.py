@@ -50,7 +50,6 @@ from ..utils.test import UDSTransactionTestCase
 ALL_CHECK_IDS: typing.Final[frozenset[str]] = frozenset(
     (
         # B-family (global_config.py)
-        "default-superuser-credentials",
         "superuser-web-access",
         "trusted-sources-wildcard",
         "ip-forwarders-wildcard",
@@ -73,6 +72,7 @@ ALL_CHECK_IDS: typing.Final[frozenset[str]] = frozenset(
         "no-mfa-configured",
         "server-certificates-expiring",
         "restrained-service-pools",
+        "ipauth-proxy-unrestricted",
         # C-family (logs.py)
         "failed-logins-24h",
         "brute-force-by-ip",
@@ -107,7 +107,7 @@ class ChecksTest(UDSTransactionTestCase):
     def setUp(self) -> None:
         super().setUp()
         # Normalize the security configuration to a known baseline
-        GlobalConfig.SUPER_USER_PASS.set(consts.security.DEFAULT_SUPERUSER_PASSWORD)
+        GlobalConfig.SUPER_USER_PASS.set("test-root-password")  # nosec: fixed test password
         GlobalConfig.SUPER_USER_ALLOW_WEBACCESS.set(True)
         GlobalConfig.TRUSTED_SOURCES.set("*")
         GlobalConfig.ADMIN_TRUSTED_SOURCES.set("*")
@@ -120,7 +120,7 @@ class ChecksTest(UDSTransactionTestCase):
         # Restore the shipped defaults: config values keep an in-memory copy
         # that outlives the (truncated) test database and would leak into
         # other tests running on the same process.
-        GlobalConfig.SUPER_USER_PASS.set(consts.security.DEFAULT_SUPERUSER_PASSWORD)
+        GlobalConfig.SUPER_USER_PASS.set("test-root-password")  # nosec: fixed test password
         GlobalConfig.SUPER_USER_ALLOW_WEBACCESS.set(True)
         GlobalConfig.TRUSTED_SOURCES.set("*")
         GlobalConfig.ADMIN_TRUSTED_SOURCES.set("*")
@@ -156,22 +156,7 @@ class ChecksTest(UDSTransactionTestCase):
         return authenticator
 
     # ------------------------------------------------------------------
-    # Check 1: default superuser credentials
-    # ------------------------------------------------------------------
-    def test_default_superuser_credentials_detected(self) -> None:
-        result = self._run_check("default-superuser-credentials")
-        self.assertFalse(result.ok, result.message)
-        self.assertEqual(result.severity, types.checks.CheckSeverity.CRITICAL)
-        self.assertIn("root password", result.message.lower())
-
-    def test_rotated_superuser_credentials_pass(self) -> None:
-        GlobalConfig.SUPER_USER_PASS.set("a-rotated-not-default-password")
-        result = self._run_check("default-superuser-credentials")
-        self.assertTrue(result.ok, result.message)
-        self.assertEqual(result.severity, types.checks.CheckSeverity.CRITICAL)
-
-    # ------------------------------------------------------------------
-    # Check 2: root account web/API access
+    # Check 1: root account web/API access
     # ------------------------------------------------------------------
     def test_superuser_web_access_enabled_fails(self) -> None:
         GlobalConfig.SUPER_USER_ALLOW_WEBACCESS.set(True)
@@ -276,6 +261,47 @@ class ChecksTest(UDSTransactionTestCase):
         # Requiring signed messages is also accepted as signature enforcement
         self._create_saml_authenticator("Messages SAML", messages_signed=True)
         result = self._run_check("saml-assertions-signed")
+        self.assertTrue(result.ok, result.message)
+
+    def _create_ip_authenticator(
+        self,
+        name: str,
+        accepts_proxy: bool = False,
+        trusted_proxies: str = "*",
+    ) -> None:
+        from uds.auths.IP.authenticator import IPAuth
+
+        authenticator = models.Authenticator()
+        authenticator.name = name
+        authenticator.data_type = IPAuth.type_type
+        authenticator.save()
+        instance = typing.cast("IPAuth", authenticator.get_instance())
+        instance.accepts_proxy.value = accepts_proxy
+        instance.trusted_proxies.value = trusted_proxies
+        authenticator.data = instance.serialize()
+        authenticator.save()
+
+    def test_ipauth_check_passes_without_ip_authenticators(self) -> None:
+        result = self._run_check("ipauth-proxy-unrestricted")
+        self.assertTrue(result.ok, result.message)
+        self.assertIn("No IP authenticators", result.message)
+
+    def test_ipauth_proxy_unrestricted_detected(self) -> None:
+        self._create_ip_authenticator("Any peer IPAuth", accepts_proxy=True)
+        result = self._run_check("ipauth-proxy-unrestricted")
+        self.assertFalse(result.ok, result.message)
+        self.assertEqual(result.severity, types.checks.CheckSeverity.HIGH)
+        self.assertIn("Any peer IPAuth", result.message)
+
+    def test_ipauth_proxy_restricted_pass(self) -> None:
+        self._create_ip_authenticator("Restricted IPAuth", accepts_proxy=True, trusted_proxies="10.0.0.0/8")
+        result = self._run_check("ipauth-proxy-unrestricted")
+        self.assertTrue(result.ok, result.message)
+
+    def test_ipauth_proxy_not_accepting_pass(self) -> None:
+        # accepts_proxy disabled: no forwarded values are used at all
+        self._create_ip_authenticator("No proxy IPAuth", accepts_proxy=False, trusted_proxies="*")
+        result = self._run_check("ipauth-proxy-unrestricted")
         self.assertTrue(result.ok, result.message)
 
     # ------------------------------------------------------------------
@@ -758,7 +784,10 @@ class ChecksTest(UDSTransactionTestCase):
         try:
             result = self._run_check("no-mfa-configured")
             self.assertFalse(result.ok, result.message)
-            self.assertEqual(result.severity, types.checks.CheckSeverity.MEDIUM)
+            # Informational by design: not having MFA is an environment
+            # decision (e.g. IP auth for large student populations), not a
+            # weakness by itself
+            self.assertEqual(result.severity, types.checks.CheckSeverity.INFO)
             self.assertIn("no-mfa-auth", result.message)
         finally:
             models.Authenticator.objects.all().delete()
@@ -801,7 +830,7 @@ class ChecksTest(UDSTransactionTestCase):
 
         key = rsa.generate_private_key(public_exponent=65537, key_size=2048)
         subject = issuer = x509.Name([x509.NameAttribute(x509.oid.NameOID.COMMON_NAME, "uds-test")])
-        now = _dt.datetime.now(_dt.timezone.utc)
+        now = _dt.datetime.now(_dt.UTC)
         not_before = now + _dt.timedelta(days=days_from_now) - _dt.timedelta(days=365)
         not_after = now + _dt.timedelta(days=days_from_now)
         cert = (

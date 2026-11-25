@@ -227,9 +227,9 @@ class SAMLAuthenticator(auths.Authenticator):
         old_field_name="mfaAttr",
     )
 
-    check_https_certificate = gui.CheckBoxField(
+    verify_ssl = gui.CheckBoxField(
         label=_("Check SSL certificate"),
-        default=False,  # For compatibility with previous versions
+        default=True,  # The IdP metadata defines the IdP signing keys: verify the TLS channel by default
         order=23,
         tooltip=_("If set, check SSL certificate on requests for IDP Metadata"),
         tab=_("Security"),
@@ -427,7 +427,7 @@ class SAMLAuthenticator(auths.Authenticator):
             try:
                 resp = requests.get(
                     idp_metadata.split("\n")[0],
-                    verify=self.check_https_certificate.as_bool(),
+                    verify=self.verify_ssl.as_bool(),
                     timeout=10,
                 )
                 idp_metadata = resp.content.decode()
@@ -499,7 +499,7 @@ class SAMLAuthenticator(auths.Authenticator):
                 try:
                     resp = requests.get(
                         self.idp_metadata.value.split("\n")[0],
-                        verify=self.check_https_certificate.as_bool(),
+                        verify=self.verify_ssl.as_bool(),
                         timeout=10,
                     )
                     if resp.status_code != 200:
@@ -635,7 +635,9 @@ class SAMLAuthenticator(auths.Authenticator):
             metadata
         )
         if len(errors) > 0:
-            raise exceptions.auth.AuthenticatorException(gettext("Error validating SP metadata: ") + str(errors))
+            raise exceptions.auth.AuthenticatorException(
+                gettext("Error validating SP metadata: ") + str(errors)
+            )
         if isinstance(metadata, str):
             return metadata
         return typing.cast(bytes, metadata).decode()
@@ -821,7 +823,9 @@ class SAMLAuthenticator(auths.Authenticator):
 
         groups_manager.validate(groups)
 
-        return types.auth.AuthenticationResult(success=types.auth.AuthenticationState.SUCCESS, username=username)
+        return types.auth.AuthenticationResult(
+            success=types.auth.AuthenticationState.SUCCESS, username=username
+        )
 
     @typing.override
     def logout(self, request: "ExtendedHttpRequest", username: str) -> types.auth.AuthenticationResult:

@@ -74,7 +74,7 @@ def mfa(
         stored_data = store.read_pickled(mfa_cookie) or (None, None, None)
         stored_user_id, created, ip = (stored_data + (None,))[:3]
         if (
-            stored_user_id
+            stored_user_id == mfa_user_id  # Bind the record to the user being authenticated
             and created
             and (
                 timezone.make_aware(datetime.datetime.fromtimestamp(created))
@@ -153,7 +153,11 @@ def mfa(
                     mfa_cookie = CryptoManager.manager().random_string(96)
                     store.save_pickled(
                         mfa_cookie,
-                        (mfa_user_id, now, request.ip),  # MFA will only be valid for this user and this ip
+                        # MFA will only be valid for this user and this ip. The 4th
+                        # field is the expiry instant, used by the periodic
+                        # remember-device cleaner (uds.workers) to purge expired
+                        # records.
+                        (mfa_user_id, now, request.ip, now + mfa_provider.remember_device * 3600),
                     )
                     response.set_cookie(
                         consts.auth.MFA_COOKIE_NAME,

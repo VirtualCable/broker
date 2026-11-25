@@ -45,6 +45,7 @@ from uds.core.auths.auth import log_login
 from uds.core.managers.crypto import CryptoManager
 from uds.core.types.states import State
 from uds.core.ui import gui
+from uds.core.util import net
 
 # Not imported at runtime, just for type checking
 if typing.TYPE_CHECKING:
@@ -99,8 +100,32 @@ class InternalDBAuth(auths.Authenticator):
         old_field_name="acceptProxy",
     )
 
+    trusted_proxies = gui.TextField(
+        label=_("Trusted proxy networks"),
+        default="*",
+        tooltip=_(
+            "Networks of the proxies allowed to report FORWARDED ip addresses (when 'Accept proxy' is"
+            " checked). The direct client address must belong to one of these networks for the forwarded"
+            " value to be used. Use * (not recommended) to accept forwarded values from any peer"
+        ),
+        tab=types.ui.Tab.ADVANCED,
+    )
+
+    def _identity_ip(self, request: "ExtendedHttpRequest") -> str:
+        """Client ip to use for identity decisions.
+
+        The forwarded value (ip_proxy) is only honored when 'Accept proxy' is
+        checked AND the direct peer address belongs to the trusted proxy
+        networks configured (the default '*' keeps the pre-existing behavior
+        of accepting forwarded values from any peer)."""
+        if self.accepts_proxy.as_bool():
+            trusted_networks = self.trusted_proxies.value.strip()
+            if not trusted_networks or net.contains(trusted_networks, request.ip):
+                return request.ip_proxy
+        return request.ip
+
     def get_ip(self, request: "ExtendedHttpRequest") -> str:
-        ip = request.ip_proxy if self.accepts_proxy.as_bool() else request.ip  # pylint: disable=maybe-no-member
+        ip = self._identity_ip(request)
         if self.reverse_dns.as_bool():
             try:
                 ptr_resolv = dns.resolver.query(dns.reversename.from_address(ip).to_text(), "PTR")
@@ -122,7 +147,7 @@ class InternalDBAuth(auths.Authenticator):
     def transformed_username(self, username: str, request: "ExtendedHttpRequest") -> str:
         username = username.lower()
         if self.unique_by_host.as_bool():
-            ip_username = (request.ip_proxy if self.accepts_proxy.as_bool() else request.ip) + "-" + username
+            ip_username = self._identity_ip(request) + "-" + username
             # Duplicate basic user into username.
             auth = self.db_obj()
             # "Derived" users will belong to no group at all, because we will extract groups from "base" user
