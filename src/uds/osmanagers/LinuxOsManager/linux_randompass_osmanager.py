@@ -88,10 +88,17 @@ class LinuxRandomPassManager(LinuxOsManager):
                 random.SystemRandom().choice(string.ascii_letters + string.digits) for _ in range(16)
             )
             service.store_value("linOsRandomPass", random_password)
+            # Mask the password on the log: the plaintext lives on the user
+            # service properties (linOsRandomPass) and is delivered to the
+            # actor, but must not linger on the (staff readable) service log.
+            # NOTE: In the future we may provide a mechanism to the admin, on
+            # the admin interface, to recover the assigned password for an user
+            # service, but currently it's not considered necesary at all, (and
+            # maybe never) :)
             log.log(
                 service,
                 types.log.LogLevel.INFO,
-                f'Password set to "{random_password}"',
+                f'Password set to "{random_password[:2]}***"',
                 types.log.LogSource.OSMANAGER,
             )
 
