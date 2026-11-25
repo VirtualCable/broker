@@ -78,13 +78,40 @@ class IPAuth(auths.Authenticator):
         order=50,
         label=_("Allowed only from this networks"),
         default="",
-        tooltip=_("This authenticator will be allowed only from these networks. Leave empty to allow all networks"),
+        tooltip=_(
+            "This authenticator will be allowed only from these networks. Leave empty to allow all networks"
+        ),
         tab=types.ui.Tab.ADVANCED,
         old_field_name="visibleFromNets",
     )
 
+    trusted_proxies = gui.TextField(
+        order=50,
+        label=_("Trusted proxy networks"),
+        default="*",
+        tooltip=_(
+            "Networks of the proxies allowed to report FORWARDED ip addresses (when 'Accept proxy' is"
+            " checked). The direct client address must belong to one of these networks for the forwarded"
+            " value to be used. Use * (not recommended) to accept forwarded values from any peer"
+        ),
+        tab=types.ui.Tab.ADVANCED,
+    )
+
+    def _identity_ip(self, request: "types.requests.ExtendedHttpRequest") -> str:
+        """Client ip to use for identity decisions.
+
+        The forwarded value (ip_proxy) is only honored when 'Accept proxy' is
+        checked AND the direct peer address belongs to the trusted proxy
+        networks configured (the default '*' keeps the pre-existing behavior
+        of accepting forwarded values from any peer)."""
+        if self.accepts_proxy.as_bool():
+            trusted_networks = self.trusted_proxies.value.strip()
+            if not trusted_networks or net.contains(trusted_networks, request.ip):
+                return request.ip_proxy
+        return request.ip
+
     def get_ip(self, request: "types.requests.ExtendedHttpRequest") -> str:
-        ip = request.ip_proxy if self.accepts_proxy.as_bool() else request.ip
+        ip = self._identity_ip(request)
         logger.debug("Client IP: %s", ip)
         # If ipv4 on ipv6, we must remove the ipv6 prefix
         if ":" in ip and "." in ip:

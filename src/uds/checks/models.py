@@ -189,6 +189,57 @@ class NoMfaConfiguredCheck(AutomaticCheck):
         )
 
 
+class IPAuthProxyUnrestrictedCheck(AutomaticCheck):
+    """IP authenticators accepting forwarded ips from any peer."""
+
+    id: typing.ClassVar[str] = "ipauth-proxy-unrestricted"
+    category: typing.ClassVar[types.checks.CheckCategory] = types.checks.CheckCategory.SECURITY
+    description: typing.ClassVar[str] = gettext_noop(
+        "Verifies that IP authenticators with 'Accept proxy' enabled restrict the networks from which "
+        "forwarded addresses are accepted. Without that restriction, any client can claim any ip "
+        "(X-Forwarded-For header) and authenticate as it. Configure the trusted proxy networks on the "
+        "listed authenticators."
+    )
+
+    @typing.override
+    def run(self) -> CheckOutcome:
+        from uds.auths.IP.authenticator import IPAuth
+
+        problematic: list[str] = []
+        found = False
+        authenticator: models.Authenticator
+        for authenticator in models.Authenticator.objects.all():
+            if authenticator.get_type() is not IPAuth:
+                continue
+            found = True
+            instance = typing.cast("IPAuth", authenticator.get_instance())
+            trusted_networks = instance.trusted_proxies.value.strip()
+            if instance.accepts_proxy.as_bool() and (not trusted_networks or trusted_networks == "*"):
+                problematic.append(authenticator.name)
+
+        if problematic:
+            return (
+                types.checks.CheckSeverity.HIGH,
+                False,
+                _(
+                    "IP authenticators accepting forwarded addresses from any peer: {names}."
+                    " Any client can claim any ip (X-Forwarded-For header) and authenticate as it."
+                ).format(names=", ".join(problematic)),
+                problematic,
+            )
+        if found:
+            return (
+                types.checks.CheckSeverity.HIGH,
+                True,
+                _("IP authenticators restrict forwarded addresses to the configured trusted proxies."),
+            )
+        return (
+            types.checks.CheckSeverity.MEDIUM,
+            True,
+            _("No IP authenticators configured."),
+        )
+
+
 class ServerCertificatesExpiringCheck(AutomaticCheck):
     """Server certificates expired or expiring within 30 days."""
 
@@ -207,7 +258,7 @@ class ServerCertificatesExpiringCheck(AutomaticCheck):
         import datetime as _dt
         from cryptography import x509 as _x509
 
-        now = _dt.datetime.now(_dt.timezone.utc)
+        now = _dt.datetime.now(_dt.UTC)
         horizon = now + _dt.timedelta(days=30)
         expired: list[str] = []
         expiring: list[str] = []
@@ -231,7 +282,7 @@ class ServerCertificatesExpiringCheck(AutomaticCheck):
             except AttributeError:
                 expires_at = cert.not_valid_after
                 if expires_at.tzinfo is None:
-                    expires_at = expires_at.replace(tzinfo=_dt.timezone.utc)
+                    expires_at = expires_at.replace(tzinfo=_dt.UTC)
             label = (
                 server.hostname
                 or server.register_username

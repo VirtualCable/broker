@@ -72,6 +72,7 @@ ALL_CHECK_IDS: typing.Final[frozenset[str]] = frozenset(
         "no-mfa-configured",
         "server-certificates-expiring",
         "restrained-service-pools",
+        "ipauth-proxy-unrestricted",
         # C-family (logs.py)
         "failed-logins-24h",
         "brute-force-by-ip",
@@ -260,6 +261,47 @@ class ChecksTest(UDSTransactionTestCase):
         # Requiring signed messages is also accepted as signature enforcement
         self._create_saml_authenticator("Messages SAML", messages_signed=True)
         result = self._run_check("saml-assertions-signed")
+        self.assertTrue(result.ok, result.message)
+
+    def _create_ip_authenticator(
+        self,
+        name: str,
+        accepts_proxy: bool = False,
+        trusted_proxies: str = "*",
+    ) -> None:
+        from uds.auths.IP.authenticator import IPAuth
+
+        authenticator = models.Authenticator()
+        authenticator.name = name
+        authenticator.data_type = IPAuth.type_type
+        authenticator.save()
+        instance = typing.cast("IPAuth", authenticator.get_instance())
+        instance.accepts_proxy.value = accepts_proxy
+        instance.trusted_proxies.value = trusted_proxies
+        authenticator.data = instance.serialize()
+        authenticator.save()
+
+    def test_ipauth_check_passes_without_ip_authenticators(self) -> None:
+        result = self._run_check("ipauth-proxy-unrestricted")
+        self.assertTrue(result.ok, result.message)
+        self.assertIn("No IP authenticators", result.message)
+
+    def test_ipauth_proxy_unrestricted_detected(self) -> None:
+        self._create_ip_authenticator("Any peer IPAuth", accepts_proxy=True)
+        result = self._run_check("ipauth-proxy-unrestricted")
+        self.assertFalse(result.ok, result.message)
+        self.assertEqual(result.severity, types.checks.CheckSeverity.HIGH)
+        self.assertIn("Any peer IPAuth", result.message)
+
+    def test_ipauth_proxy_restricted_pass(self) -> None:
+        self._create_ip_authenticator("Restricted IPAuth", accepts_proxy=True, trusted_proxies="10.0.0.0/8")
+        result = self._run_check("ipauth-proxy-unrestricted")
+        self.assertTrue(result.ok, result.message)
+
+    def test_ipauth_proxy_not_accepting_pass(self) -> None:
+        # accepts_proxy disabled: no forwarded values are used at all
+        self._create_ip_authenticator("No proxy IPAuth", accepts_proxy=False, trusted_proxies="*")
+        result = self._run_check("ipauth-proxy-unrestricted")
         self.assertTrue(result.ok, result.message)
 
     # ------------------------------------------------------------------
