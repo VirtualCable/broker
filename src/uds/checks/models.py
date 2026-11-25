@@ -36,6 +36,7 @@ Grouped here because they all inspect stored configuration rows
 or the admin-editable global config.
 """
 
+import collections.abc
 import typing
 
 from django.db.models import Q
@@ -45,6 +46,9 @@ from django.utils.translation import gettext_noop
 from uds import models
 from uds.core import consts, types
 from uds.core.checks import AutomaticCheck, CheckOutcome
+
+if typing.TYPE_CHECKING:
+    from uds.core import auths
 
 
 class SamlAssertionsSignedCheck(AutomaticCheck):
@@ -380,16 +384,49 @@ class AuthenticatorSslVerificationDisabledCheck(AutomaticCheck):
         from uds.auths.SAML import SAMLAuthenticator
         from uds.auths.SimpleLDAP import SimpleLDAPAuthenticator
 
+        # Registry of the TLS channels used by authenticators, so verifying
+        # them is data-driven: register one (authenticator type, gate, field)
+        # triple per channel and the loop below loads and checks every one.
+        #   - auth_type: the Authenticator subclass this requirement applies to
+        #   - applies: instance -> whether this TLS channel is actually used
+        #     (the verification field is only relevant then)
+        #   - verify_field: name of the boolean gui field that must be enabled
+        #   - protects: what the verified channel protects (for messages)
+        ssl_requirements: typing.Final[
+            list[tuple[type[auths.Authenticator], collections.abc.Callable[[typing.Any], bool], str, str]]
+        ] = [
+            (
+                SimpleLDAPAuthenticator,
+                lambda instance: typing.cast("SimpleLDAPAuthenticator", instance).use_ssl.as_bool(),
+                "verify_ssl",
+                "the LDAP directory connection",
+            ),
+            (
+                RegexLdap,
+                lambda instance: typing.cast("RegexLdap", instance).use_ssl.as_bool(),
+                "verify_ssl",
+                "the LDAP directory connection",
+            ),
+            (
+                SAMLAuthenticator,
+                lambda instance: typing.cast("SAMLAuthenticator", instance).idp_metadata.value.startswith(
+                    "https://"
+                ),
+                "verify_ssl",
+                "the IdP metadata fetch",
+            ),
+        ]
+
         unverified: list[str] = []
         for authenticator in models.Authenticator.objects.all():
             auth_type = authenticator.get_type()
-            if auth_type in (SimpleLDAPAuthenticator, RegexLdap):
-                ldap = typing.cast("SimpleLDAPAuthenticator | RegexLdap", authenticator.get_instance())
-                if ldap.use_ssl.as_bool() and not ldap.verify_ssl.as_bool():
-                    unverified.append(authenticator.name)
-            elif auth_type is SAMLAuthenticator:
-                saml = typing.cast("SAMLAuthenticator", authenticator.get_instance())
-                if saml.idp_metadata.value.startswith("https://") and not saml.verify_ssl.as_bool():
+            for req_type, applies, verify_field, _protects in ssl_requirements:
+                if auth_type is not req_type:
+                    continue
+                instance = authenticator.get_instance()
+                if not applies(instance):
+                    continue
+                if not getattr(instance, verify_field).as_bool():
                     unverified.append(authenticator.name)
 
         if unverified:
