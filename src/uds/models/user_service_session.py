@@ -27,6 +27,7 @@
 
 """
 Author: Adolfo Gómez, dkmaster at dkmon dot com
+Author: Andres Schumann, aschumann at virtualcable dot es
 """
 
 import logging
@@ -80,7 +81,7 @@ class UserServiceSession(models.Model):  # pylint: disable=too-many-public-metho
 
     def close(self) -> None:
         """
-        Ends the session
+        Ends the session, keeping the end time of a session that is already closed
         """
-        self.end = sql_now()
-        self.save(update_fields=["end"])
+        type(self).objects.filter(pk=self.pk, end__isnull=True).update(end=sql_now())
+        self.refresh_from_db(fields=["end"])

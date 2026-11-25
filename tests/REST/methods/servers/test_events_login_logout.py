@@ -26,12 +26,15 @@
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 """
 Author: Adolfo Gómez, dkmaster at dkmon dot com
+Author: Andres Schumann, aschumann at virtualcable dot es
 """
 
 import logging
 import typing
+from datetime import UTC, datetime
 
 from uds import models
+from uds.core import consts
 
 from ....fixtures import servers as servers_fixtures
 from ....utils import rest
@@ -196,6 +199,115 @@ class ServerEventsLoginLogoutTest(rest.test.RESTTestCase):
         )
         self.assertEqual(response.status_code, 200)
         self.assertEqual(self.user_service_managed.in_use, False)
+
+    def test_logout_closes_the_session_named_by_the_server(self) -> None:
+        session_id = self.user_service_managed.start_session()
+        response = self.client.rest_post(
+            "/servers/event",
+            data={
+                "token": servers_fixtures.raw_token(self.server),
+                "type": "logout",
+                "userservice_uuid": self.user_service_managed.uuid,
+                "username": "local_user_name",
+                "session_id": session_id,
+            },
+        )
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.json()["result"], consts.OK)
+        session = self.user_service_managed.sessions.get(session_id=session_id)
+        self.assertIsNotNone(session.end)
+
+    def test_logout_keeps_other_sessions_of_the_same_user_service_open(self) -> None:
+        closing_session_id = self.user_service_managed.start_session()
+        open_session_id = self.user_service_managed.start_session()
+        response = self.client.rest_post(
+            "/servers/event",
+            data={
+                "token": servers_fixtures.raw_token(self.server),
+                "type": "logout",
+                "userservice_uuid": self.user_service_managed.uuid,
+                "username": "local_user_name",
+                "session_id": closing_session_id,
+            },
+        )
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.json()["result"], consts.OK)
+        self.assertIsNotNone(self.user_service_managed.sessions.get(session_id=closing_session_id).end)
+        self.assertIsNone(self.user_service_managed.sessions.get(session_id=open_session_id).end)
+
+    def test_logout_keeps_the_end_time_of_a_session_already_closed(self) -> None:
+        session_id = self.user_service_managed.start_session()
+        session = self.user_service_managed.sessions.get(session_id=session_id)
+        first_end = datetime(2026, 11, 24, 10, 0, tzinfo=UTC)
+        session.end = first_end
+        session.save(update_fields=["end"])
+        response = self.client.rest_post(
+            "/servers/event",
+            data={
+                "token": servers_fixtures.raw_token(self.server),
+                "type": "logout",
+                "userservice_uuid": self.user_service_managed.uuid,
+                "username": "local_user_name",
+                "session_id": session_id,
+            },
+        )
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.json()["result"], consts.OK)
+        session.refresh_from_db()
+        self.assertEqual(session.end, first_end)
+
+    def test_closing_from_a_stale_instance_keeps_the_first_end_time(self) -> None:
+        session_id = self.user_service_managed.start_session()
+        stale = self.user_service_managed.sessions.get(session_id=session_id)
+        first_end = datetime(2026, 11, 24, 10, 0, tzinfo=UTC)
+        self.user_service_managed.sessions.filter(session_id=session_id).update(end=first_end)
+        stale.close()
+        self.assertEqual(stale.end, first_end)
+        self.assertEqual(self.user_service_managed.sessions.get(session_id=session_id).end, first_end)
+
+    def test_logout_with_empty_session_id_keeps_open_sessions(self) -> None:
+        session_id = self.user_service_managed.start_session()
+        response = self.client.rest_post(
+            "/servers/event",
+            data={
+                "token": servers_fixtures.raw_token(self.server),
+                "type": "logout",
+                "userservice_uuid": self.user_service_managed.uuid,
+                "username": "local_user_name",
+                "session_id": "",
+            },
+        )
+        self.assertEqual(response.json()["result"], consts.OK)
+        self.assertIsNone(self.user_service_managed.sessions.get(session_id=session_id).end)
+
+    def test_logout_without_username_is_refused_and_keeps_sessions_open(self) -> None:
+        session_id = self.user_service_managed.start_session()
+        response = self.client.rest_post(
+            "/servers/event",
+            data={
+                "token": servers_fixtures.raw_token(self.server),
+                "type": "logout",
+                "userservice_uuid": self.user_service_managed.uuid,
+                "session_id": session_id,
+            },
+        )
+        self.assertIn("error", response.json())
+        self.assertIsNone(self.user_service_managed.sessions.get(session_id=session_id).end)
+
+    def test_logout_without_session_id_is_refused_and_keeps_sessions_open(self) -> None:
+        session_id = self.user_service_managed.start_session()
+        response = self.client.rest_post(
+            "/servers/event",
+            data={
+                "token": servers_fixtures.raw_token(self.server),
+                "type": "logout",
+                "userservice_uuid": self.user_service_managed.uuid,
+                "username": "local_user_name",
+            },
+        )
+        self.assertEqual(response.status_code, 200)
+        self.assertIn("error", response.json())
+        self.assertIsNone(self.user_service_managed.sessions.get(session_id=session_id).end)
 
     def test_logout_fail(self) -> None:
         response = self.client.rest_post(

@@ -26,6 +26,7 @@
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 """
 Author: Adolfo Gómez, dkmaster at dkmon dot com
+Author: Andres Schumann, aschumann at virtualcable dot es
 """
 
 import collections.abc
@@ -154,12 +155,16 @@ def process_logout(server: "models.Server", data: dict[str, typing.Any]) -> typi
     Returns 'OK' if all went ok ({'result': 'OK', 'stamp': 'stamp'}), or an error if not ({'result': 'error', 'error': 'error description'}})
     """
     userservice = models.UserService.objects.get(uuid=data["userservice_uuid"])
+    session_id = data["session_id"]
+    username = data["username"]
 
-    session_id = data["userservice_uuid"]
-    userservice.end_session(session_id)
+    # An empty session_id means the sender does not know which session ended: closing
+    # every open session would also close unrelated ones.
+    if session_id:
+        userservice.end_session(session_id)
 
     if userservice.in_use:  # If already logged out, do not add a second logout (windows does this i.e.)
-        osmanagers.OSManager.logged_out(userservice, data["username"])
+        osmanagers.OSManager.logged_out(userservice, username)
         osmanager = userservice.get_osmanager_instance()
         if not osmanager or osmanager.is_removable_on_logout(userservice):
             logger.debug("Removable on logout: %s", osmanager)
