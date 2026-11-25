@@ -253,6 +253,23 @@ class Login(Handler):
 
                 return Login.result(error=auth_result.errstr or "Invalid credentials")
 
+            # If the user requires MFA, deny the login: this direct login does
+            # not support the MFA challenge (it is a web-only flow), so no
+            # session token must be issued without the second factor.
+            if (
+                auth_result.user.manager.get_type().provides_mfa_identifier()
+                and auth_result.user.manager.mfa
+                and auth_result.user.groups.filter(skip_mfa=types.states.State.ACTIVE).count() == 0
+            ):
+                logger.info(
+                    "Denied REST login for MFA-protected user %s (from %s)",
+                    auth_result.user.name,
+                    self._request.ip,
+                )
+                return Login.result(
+                    error="MFA required for this user. This login method does not support MFA, use the web login"
+                )
+
             # Register the login on the common login log (audit + events)
             log_login(self._request, auth, auth_result.user.name)
 
