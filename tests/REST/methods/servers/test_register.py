@@ -176,6 +176,115 @@ class ServerRegisterTest(rest.test.RESTTestCase):
         server = models.Server.objects.get(token_hash=models.Server.hash_token(token2))
         self.assertEqual(server.properties.get("timezone"), "Europe/Madrid")
 
+    def test_register_broker_generated_certificate(self) -> None:
+        """
+        request_certificate=True without a client cert: the broker generates
+        the keypair (actor model), stores the cert for pinning, and returns
+        private/public/password to the registering server.
+        """
+        self._data["hostname"] = random_hostname()
+        self._data["ip"] = random_ip_v4()
+        self._data["type"] = types.servers.ServerType.SERVER.value
+        self._data["request_certificate"] = True
+
+        response = self.client.rest_post(
+            "servers/register",
+            data=self._data,
+            content_type="application/json",
+        )
+        self.assertEqual(response.status_code, 200)
+        body = response.json()
+        token = body["result"]
+        cert_info = body["certificate"]
+        self.assertIn("private", cert_info)
+        self.assertIn("public", cert_info)
+        self.assertIn("password", cert_info)
+        self.assertTrue(cert_info["public"].startswith("-----BEGIN CERTIFICATE-----"))
+        self.assertTrue(cert_info["private"].startswith("-----BEGIN ENCRYPTED PRIVATE KEY-----"))
+        self.assertTrue(cert_info["password"])
+
+        server = models.Server.objects.get(token_hash=models.Server.hash_token(token))
+        # The generated cert is stored for broker->server pinning
+        self.assertEqual(server.certificate, cert_info["public"])
+
+        # The private key must be encrypted with the returned password and
+        # must match the certificate public key.
+        from cryptography.hazmat.primitives import serialization
+        from cryptography import x509
+
+        key = serialization.load_pem_private_key(
+            cert_info["private"].encode(), password=cert_info["password"].encode()
+        )
+        cert = x509.load_pem_x509_certificate(cert_info["public"].encode())
+        self.assertEqual(
+            key.public_key().public_numbers(),  # type: ignore[attr-defined]
+            cert.public_key().public_numbers(),  # type: ignore[attr-defined]
+        )
+        # Hostname is present as DNS SAN (clients may connect by name)
+        san = cert.extensions.get_extension_for_class(x509.SubjectAlternativeName).value
+        self.assertIn(self._data["hostname"], san.get_values_for_type(x509.DNSName))
+
+    def test_register_client_certificate_unchanged(self) -> None:
+        """
+        Legacy 4.0-style clients send their own certificate: it is stored
+        as-is and NO key material is returned (compat path).
+        """
+        from uds.core.util import security
+
+        _key, cert_pem, _pw = security.create_self_signed_cert(random_ip_v4(), with_password=True)
+        self._data["hostname"] = random_hostname()
+        self._data["ip"] = random_ip_v4()
+        self._data["type"] = types.servers.ServerType.SERVER.value
+        self._data["certificate"] = cert_pem
+        self._data["request_certificate"] = True  # even if asked, client cert wins
+
+        response = self.client.rest_post(
+            "servers/register",
+            data=self._data,
+            content_type="application/json",
+        )
+        self.assertEqual(response.status_code, 200)
+        body = response.json()
+        self.assertNotIn("certificate", body)
+        server = models.Server.objects.get(token_hash=models.Server.hash_token(body["result"]))
+        self.assertEqual(server.certificate, cert_pem)
+
+    def test_register_no_certificate_legacy_and_tunnel(self) -> None:
+        """
+        Without request_certificate and without a client cert, registration
+        stays valid with empty certificate (legacy servers), and tunnels
+        never get a generated cert even if they (wrongly) ask for one.
+        """
+        self._data["hostname"] = random_hostname()
+        self._data["ip"] = random_ip_v4()
+        self._data["type"] = types.servers.ServerType.SERVER.value
+
+        response = self.client.rest_post(
+            "servers/register",
+            data=self._data,
+            content_type="application/json",
+        )
+        self.assertEqual(response.status_code, 200)
+        body = response.json()
+        self.assertNotIn("certificate", body)
+        server = models.Server.objects.get(token_hash=models.Server.hash_token(body["result"]))
+        self.assertEqual(server.certificate, "")
+
+        # Tunnel asking for a cert: still no generation, registration valid
+        self._data["ip"] = random_ip_v4()
+        self._data["type"] = types.servers.ServerType.TUNNEL.value
+        self._data["request_certificate"] = True
+        response = self.client.rest_post(
+            "servers/register",
+            data=self._data,
+            content_type="application/json",
+        )
+        self.assertEqual(response.status_code, 200)
+        body = response.json()
+        self.assertNotIn("certificate", body)
+        server = models.Server.objects.get(token_hash=models.Server.hash_token(body["result"]))
+        self.assertEqual(server.certificate, "")
+
     def test_invalid_register(self) -> None:
         def _do_test(where: str) -> None:
             response = self.client.rest_post(

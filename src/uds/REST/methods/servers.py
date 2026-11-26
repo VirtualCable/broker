@@ -40,6 +40,7 @@ from uds.core import consts
 from uds.core import types
 from uds.core.exceptions import rest as rest_exceptions
 from uds.core.util import decorators
+from uds.core.util import security
 from uds.core.util import model
 from uds.core.util import validators
 from uds.REST import Handler
@@ -97,6 +98,32 @@ class ServerRegisterBase(Handler):
                 validators.validate_certificate(certificate)
         except Exception as e:
             raise rest_exceptions.RequestError(str(e)) from e
+
+        # Broker-generated certificate (RDS/app servers, actor model):
+        # when the registering server asks for one (request_certificate)
+        # and does not provide its own cert (legacy 4.0-style clients
+        # send theirs), generate the keypair here so the certificate
+        # policy (key type/size, SANs, future own CA) is controlled
+        # centrally. Tunnel registrations never get one (they do not
+        # need it and must stay unchanged); servers that neither send nor
+        # request a cert keep the legacy no-cert behavior. The private
+        # key is returned to the registering server over this
+        # authenticated TLS channel, exactly like the actor flow.
+        generated_cert: dict[str, str] = {}
+        request_certificate = self._params.get("request_certificate", False)
+        if request_certificate and not certificate and type == types.servers.ServerType.SERVER:
+            try:
+                private_key, cert_pem, password = security.create_self_signed_cert(
+                    ip, with_password=True, hostname=hostname
+                )
+            except Exception as e:
+                return rest_result("error", error=str(e))
+            certificate = cert_pem
+            generated_cert = {
+                "private": private_key,
+                "public": cert_pem,
+                "password": password,
+            }
 
         try:
             # If already exists a token for this, return it instead of creating a new one, and update the information...
@@ -159,6 +186,8 @@ class ServerRegisterBase(Handler):
                     server_token.properties["timezone"] = timezone_param
             except Exception as e:
                 return rest_result("error", error=str(e))
+        if generated_cert:
+            return rest_result(result=raw_token, certificate=generated_cert)
         return rest_result(result=raw_token)
 
 
