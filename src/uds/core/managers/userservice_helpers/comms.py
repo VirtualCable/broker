@@ -91,14 +91,12 @@ def _execute_actor_request(
             method,
             userservice.friendly_name,
         )
-        raise exceptions.actor.NoActorComms(
-            f"No pinned certificate for {userservice.friendly_name} comms"
-        )
+        raise exceptions.actor.NoActorComms(f"No pinned certificate for {userservice.friendly_name} comms")
 
     url += "/" + method
 
+    verify: str = ""
     try:
-        verify: str
         # Certificate pinning: the broker only trusts the exact
         # self-signed cert it issued for this userservice at "ready"
         # time. This is the real machine-identity check: a different
@@ -124,11 +122,6 @@ def _execute_actor_request(
                 verify=verify,
                 timeout=TIMEOUT,
             )
-        if not (isinstance(verify, bool)):
-            try:
-                os.remove(verify)
-            except Exception:
-                logger.exception("removing verify")
         js = r.json()
 
         if version >= "3.0.0":
@@ -142,6 +135,12 @@ def _execute_actor_request(
             url,
         )
         js = None
+    finally:
+        if verify:
+            try:
+                os.remove(verify)
+            except Exception:
+                logger.exception("removing verify")
 
     return js
 

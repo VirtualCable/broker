@@ -86,7 +86,9 @@ class TestTransport(transports.Transport):
     force_new_window = gui.CheckBoxField(
         label=_("Force new HTML Window"),
         order=91,
-        tooltip=_('If checked, every connection will try to open its own window instead of reusing the "global" one.'),
+        tooltip=_(
+            'If checked, every connection will try to open its own window instead of reusing the "global" one.'
+        ),
         default=False,
         tab=types.ui.Tab.ADVANCED,
     )
@@ -99,11 +101,7 @@ class TestTransport(transports.Transport):
         if not (self.test_url.value.startswith("http://") or self.test_url.value.startswith("https://")):
             raise exceptions.ui.ValidationError(_("The url must be http or https"))
 
-    # Same check as normal RDP transport
-    @typing.override
-    def is_ip_allowed(self, userservice: "models.UserService", ip: str) -> bool:
-        # No check is done for URL transport
-        return True
+    # No reachability check for this test transport: base is_ip_reachable defaults to True
 
     @typing.override
     def get_link(

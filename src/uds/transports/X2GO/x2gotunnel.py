@@ -90,6 +90,8 @@ class TX2GOTransport(BaseX2GOTransport):
     pack = BaseX2GOTransport.pack
     quality = BaseX2GOTransport.quality
 
+    allow_ip_check = BaseX2GOTransport.allow_ip_check
+
     @typing.override
     def initialize(self, values: "types.core.ValuesType") -> None:
         pass

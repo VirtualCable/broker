@@ -50,6 +50,32 @@ if typing.TYPE_CHECKING:
 logger: logging.Logger = logging.getLogger(__name__)
 
 # ******************************************************
+# Transport related common use fields
+# ******************************************************
+
+
+def allow_ip_check_field(
+    order: int = 99, tab: "types.ui.Tab | None" = types.ui.Tab.ADVANCED
+) -> ui.gui.CheckBoxField:
+    """Field to let admins disable the transport pre-connection reachability check.
+
+    Transports that check reachability (see ``Transport.is_ip_reachable``) declare
+    ``allow_ip_check = fields.allow_ip_check_field()`` so the check can be turned
+    off when the broker has no network visibility of the user service machines.
+    """
+    return ui.gui.CheckBoxField(
+        label=_("Connectivity check"),
+        order=order,
+        tooltip=_(
+            "If enabled, transport will check the connectivity with the user service before "
+            "allowing the user to connect, reducing possible user connection errors"
+        ),
+        default=True,
+        tab=tab,
+    )
+
+
+# ******************************************************
 # Tunnel related common use fields and related functions
 # ******************************************************
 

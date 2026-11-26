@@ -37,14 +37,13 @@ from django.utils.translation import gettext_noop as _
 from uds.core import transports
 from uds.core import types
 from uds.core.ui import gui
+from uds.core.util import fields
 
 # Not imported at runtime, just for type checking
 if typing.TYPE_CHECKING:
     from uds import models
 
 logger: logging.Logger = logging.getLogger(__name__)
-
-READY_CACHE_TIMEOUT = 30
 
 
 class BaseSpiceTransport(transports.Transport):
@@ -142,42 +141,39 @@ class BaseSpiceTransport(transports.Transport):
         old_field_name="overridedProxy",
     )
 
+    allow_ip_check = fields.allow_ip_check_field()
+
     @typing.override
-    def is_ip_allowed(self, userservice: "models.UserService", ip: str) -> bool:
+    def is_ip_reachable(self, userservice: "models.UserService", ip: str) -> bool:
         """
-        Checks if the transport is available for the requested destination ip
+        Checks that the SPICE console of the destination is reachable from the broker.
+        Uses the console connection data (address/port), not the service ip itself.
         """
-        ready = self.cache.get(ip)
-        if ready is None:
-            userservice_instance = userservice.get_instance()
-            con = userservice_instance.get_console_connection()
+        userservice_instance = userservice.get_instance()
+        con = userservice_instance.get_console_connection()
 
-            if con is None:
-                return False
+        if con is None:
+            return False
 
-            if con.proxy:  # if proxy is set, we can't use it
-                return True
+        if con.proxy:  # if proxy is set, we can't use it
+            return True
 
-            # test ANY of the ports
-            port_to_test = con.port if con.port != -1 else con.secure_port
-            if port_to_test == -1:
-                self.cache.put(
-                    "cached_message", "Could not find the PORT for connection", 120
-                )  # Write a message, that will be used from getCustom
-                logger.info("SPICE didn't find any port for %s", con.address)
-                return False
-
+        # test ANY of the ports
+        port_to_test = con.port if con.port != -1 else con.secure_port
+        if port_to_test == -1:
             self.cache.put(
-                "cached_message",
-                f'Could not reach server "{con.address}" on port "{port_to_test}" from broker (prob. causes are name resolution & firewall rules)',
-                120,
-            )
+                "cached_message", "Could not find the PORT for connection", 120
+            )  # Write a message, that will be used from getCustom
+            logger.info("SPICE didn't find any port for %s", con.address)
+            return False
 
-            if self.test_connectivity(userservice, con.address, port_to_test) is True:
-                self.cache.put(ip, "Y", READY_CACHE_TIMEOUT)
-                ready = "Y"
+        self.cache.put(
+            "cached_message",
+            f'Could not reach server "{con.address}" on port "{port_to_test}" from broker (prob. causes are name resolution & firewall rules)',
+            120,
+        )
 
-        return ready == "Y"
+        return self.test_connectivity(userservice, con.address, port_to_test)
 
     @typing.override
     def get_available_error_msg(self, userservice: "models.UserService", ip: str) -> str:
@@ -193,7 +189,7 @@ class BaseSpiceTransport(transports.Transport):
 
     def process_user_password(
         self,
-        userservice: typing.Union["models.UserService", "models.ServicePool"],
+        userservice: "models.UserService | models.ServicePool",
         user: "models.User",
         password: str,
     ) -> types.connections.ConnectionData:
@@ -221,7 +217,7 @@ class BaseSpiceTransport(transports.Transport):
     @typing.override
     def get_connection_info(
         self,
-        userservice: typing.Union["models.UserService", "models.ServicePool"],
+        userservice: "models.UserService | models.ServicePool",
         user: "models.User",
         password: str,
         *,

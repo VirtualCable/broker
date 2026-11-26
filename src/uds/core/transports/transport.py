@@ -41,6 +41,7 @@ from uds.core import consts
 from uds.core import types
 from uds.core.managers.crypto import CryptoManager
 from uds.core.module import Module
+from uds.core.ui import gui
 from uds.core.util import net
 
 from .default_script import get_default_script
@@ -81,6 +82,12 @@ class Transport(Module):
 
     # For allowing grouping transport on dashboard "new" menu, and maybe other places
     group: typing.ClassVar[types.transports.Grouping] = types.transports.Grouping.DIRECT
+
+    # Pre-connection reachability check switch. Plain True means "check enabled,
+    # not configurable". Transports that implement is_ip_reachable() override this
+    # with fields.allow_ip_check_field() so admins can disable the check (useful
+    # when the broker has no network visibility of the user service machines).
+    allow_ip_check: typing.ClassVar[bool | gui.CheckBoxField] = True
 
     _db_obj: "models.Transport|None" = None
 
@@ -129,16 +136,43 @@ class Transport(Module):
         userservice: "models.UserService",
         ip: str,
         port: str | int,
-        timeout: float = 4,
+        timeout: float = consts.net.REACHABILITY_CHECK_TIMEOUT,
     ) -> bool:
         return net.test_connectivity(ip, int(port), timeout)
 
+    @typing.final
     def is_ip_allowed(self, userservice: "models.UserService", ip: str) -> bool:
         """
-        Checks if the transport is available for the requested destination ip
-        Override this in yours transports
+        Checks if the transport is available for the requested destination ip.
+
+        Common, non-overridable entry point: honors the ``allow_ip_check`` switch
+        and caches the reachability result for a very short time (both success and
+        failure), then delegates the real check to :meth:`is_ip_reachable`.
+        Transports must override :meth:`is_ip_reachable`, never this method.
         """
-        return False
+        allow = self.allow_ip_check
+        if isinstance(allow, gui.CheckBoxField):
+            allow = allow.as_bool()
+        if not allow:
+            return True
+
+        cached = self.cache.get(f"reachability:{ip}")
+        if cached is not None:
+            return cached == "Y"
+
+        reachable = self.is_ip_reachable(userservice, ip)
+        self.cache.put(f"reachability:{ip}", "Y" if reachable else "N", consts.net.REACHABILITY_CACHE_TIMEOUT)
+        return reachable
+
+    def is_ip_reachable(self, userservice: "models.UserService", ip: str) -> bool:
+        """
+        Real reachability check of the destination, invoked by :meth:`is_ip_allowed`.
+
+        Override this in transports that can check connectivity from the broker.
+        Default is True: transports with no possible check (URL, gateway-based, ...)
+        are considered reachable without testing anything.
+        """
+        return True
 
     def get_available_error_msg(self, userservice: "models.UserService", ip: str) -> str:
         """
@@ -254,7 +288,9 @@ class Transport(Module):
         # Reads script and signature
         import os  # pylint: disable=import-outside-toplevel
 
-        base_path = os.path.dirname(sys.modules[self.__module__].__file__ or "not_found")  # Will raise if not found
+        base_path = os.path.dirname(
+            sys.modules[self.__module__].__file__ or "not_found"
+        )  # Will raise if not found
 
         with open(os.path.join(base_path, scriptname), "r", encoding="utf8") as script_file:
             script = script_file.read()

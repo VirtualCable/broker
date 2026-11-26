@@ -45,8 +45,6 @@ if typing.TYPE_CHECKING:
 
 logger: logging.Logger = logging.getLogger(__name__)
 
-READY_CACHE_TIMEOUT = 30
-
 
 class UdsRPTransport(BaseUdsRPTransport):
     """
@@ -89,19 +87,7 @@ class UdsRPTransport(BaseUdsRPTransport):
     console_conflict_timeout = BaseUdsRPTransport.console_conflict_timeout
     ticket_validity = BaseUdsRPTransport.ticket_validity
 
-    @typing.override
-    def is_ip_allowed(self, userservice: "models.UserService", ip: str) -> bool:
-        """
-        Checks if the URP service is reachable on the destination ip.
-        """
-        logger.debug("Checking URP availability for %s", ip)
-        ready = self.cache.get(ip)
-        if not ready:
-            if self.test_connectivity(userservice, ip, self.server_port.as_int()) is True:
-                self.cache.put(ip, "Y", READY_CACHE_TIMEOUT)
-                return True
-            self.cache.put(ip, "N", READY_CACHE_TIMEOUT)
-        return ready == "Y"
+    allow_ip_check = BaseUdsRPTransport.allow_ip_check
 
     @typing.override
     def get_transport_script(

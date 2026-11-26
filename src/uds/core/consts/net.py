@@ -1,4 +1,3 @@
-
 #
 # Copyright (c) 2024 Virtual Cable S.L.
 # All rights reserved.
@@ -36,6 +35,13 @@ import typing
 DEFAULT_REQUEST_TIMEOUT: typing.Final[int] = 20  # In seconds
 DEFAULT_CONNECT_TIMEOUT: typing.Final[int] = 4  # In seconds
 SHORT_REQUEST_TIMEOUT: typing.Final[int] = 3  # In seconds
+
+# Transports pre-connection reachability check (Transport.is_ip_allowed).
+# Short timeout so a failing check barely delays the launch polling loop.
+REACHABILITY_CHECK_TIMEOUT: typing.Final[float] = 1.0  # In seconds
+# Results (both reachable and unreachable) are cached for a very short time,
+# just to absorb consecutive polls of the launch progress loop.
+REACHABILITY_CACHE_TIMEOUT: typing.Final[int] = 5  # In seconds
 
 # Default UDS Registerd Server listen port
 SERVER_DEFAULT_LISTEN_PORT: typing.Final[int] = 43910

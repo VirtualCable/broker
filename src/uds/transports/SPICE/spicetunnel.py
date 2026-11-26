@@ -84,6 +84,8 @@ class TSPICETransport(BaseSpiceTransport):
     allow_smartcards = BaseSpiceTransport.allow_smartcards
     ssl_connection = BaseSpiceTransport.ssl_connection
 
+    allow_ip_check = BaseSpiceTransport.allow_ip_check
+
     @typing.override
     def initialize(self, values: "types.core.ValuesType") -> None:
         pass
@@ -125,14 +127,14 @@ class TSPICETransport(BaseSpiceTransport):
         if con.port:
             ticket = TicketStore.create_for_tunnel(
                 userservice=userservice,
-                port=int(con.port),
+                port=con.port,
                 validity=self.startup_time.as_int() + 60,  # Ticket overtime
             )
 
         if con.secure_port:
             ticket_secure = TicketStore.create_for_tunnel(
                 userservice=userservice,
-                port=int(con.secure_port),
+                port=con.secure_port,
                 host=con.address,
                 validity=self.startup_time.as_int() + 60,  # Ticket overtime
             )
