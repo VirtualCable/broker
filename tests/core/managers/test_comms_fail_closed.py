@@ -28,6 +28,7 @@ commit from older versions) must not be contacted with TLS verification
 disabled. Every caller treats NoActorComms gracefully.
 """
 
+import os
 from unittest import mock
 
 from tests.fixtures import authenticators as authenticators_fixtures
@@ -100,3 +101,48 @@ class CommsFailClosedTest(UDSTestCase):
             UserServiceManager.manager().request_logoff(userservice)
             UserServiceManager.manager().send_message(userservice, "message")
         session_factory.assert_not_called()
+
+    def _cert_state(self, userservice: "models.UserService") -> None:
+        userservice.set_comms_info("https://10.0.0.5:43910/actor/testsecret", "testsecret")
+        userservice.properties["actor_version"] = "4.1.0"
+        userservice.properties["cert"] = "-----BEGIN CERTIFICATE-----\ntestcert\n-----END CERTIFICATE-----"
+
+    def _run_capturing_verify(self, userservice: "models.UserService", session: mock.Mock) -> str:
+        # Run a GET request with the mocked session and capture the temp
+        # certificate file path handed to requests as "verify"
+        with mock.patch.object(comms, "secure_requests_session", return_value=session):
+            self.assertEqual(comms._execute_actor_request(userservice, "uuid"), "ok")
+        verify = session.get.call_args.kwargs["verify"]
+        self.assertIsInstance(verify, str)
+        return verify
+
+    def test_verify_tempfile_removed_on_success(self) -> None:
+        userservice = self._userservice()
+        self._cert_state(userservice)
+        session = mock.Mock()
+        session.get.return_value.json.return_value = {"result": "ok"}
+        verify = self._run_capturing_verify(userservice, session)
+        self.assertFalse(os.path.exists(verify))
+
+    def test_verify_tempfile_removed_on_request_failure(self) -> None:
+        # Even when the request fails (exception path), the temp certificate
+        # file must not be left behind
+        userservice = self._userservice()
+        self._cert_state(userservice)
+        session = mock.Mock()
+        session.get.side_effect = OSError("connection refused")
+        with mock.patch.object(comms, "secure_requests_session", return_value=session):
+            self.assertIsNone(comms._execute_actor_request(userservice, "uuid"))
+        verify = session.get.call_args.kwargs["verify"]
+        self.assertFalse(os.path.exists(verify))
+
+    def test_verify_tempfile_removed_on_invalid_json(self) -> None:
+        # A failure after the request succeeded (bad json) must also clean up
+        userservice = self._userservice()
+        self._cert_state(userservice)
+        session = mock.Mock()
+        session.get.return_value.json.side_effect = ValueError("not json")
+        with mock.patch.object(comms, "secure_requests_session", return_value=session):
+            self.assertIsNone(comms._execute_actor_request(userservice, "uuid"))
+        verify = session.get.call_args.kwargs["verify"]
+        self.assertFalse(os.path.exists(verify))
