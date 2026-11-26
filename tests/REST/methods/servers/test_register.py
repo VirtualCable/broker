@@ -285,6 +285,45 @@ class ServerRegisterTest(rest.test.RESTTestCase):
         server = models.Server.objects.get(token_hash=models.Server.hash_token(body["result"]))
         self.assertEqual(server.certificate, "")
 
+    def test_register_empty_certificate_field(self) -> None:
+        """
+        An explicitly empty certificate field behaves like absence:
+        without request_certificate the registration stays valid with no
+        cert stored; with request_certificate the broker generates one.
+        """
+        self._data["hostname"] = random_hostname()
+        self._data["ip"] = random_ip_v4()
+        self._data["type"] = types.servers.ServerType.SERVER.value
+        self._data["certificate"] = ""
+
+        # Empty cert, no request: legacy no-cert path, nothing returned
+        response = self.client.rest_post(
+            "servers/register",
+            data=self._data,
+            content_type="application/json",
+        )
+        self.assertEqual(response.status_code, 200)
+        body = response.json()
+        self.assertNotIn("certificate", body)
+        server = models.Server.objects.get(token_hash=models.Server.hash_token(body["result"]))
+        self.assertEqual(server.certificate, "")
+
+        # Empty cert + request: broker generates and returns key material
+        self._data["request_certificate"] = True
+        response = self.client.rest_post(
+            "servers/register",
+            data=self._data,
+            content_type="application/json",
+        )
+        self.assertEqual(response.status_code, 200)
+        body = response.json()
+        cert_info = body["certificate"]
+        self.assertTrue(cert_info["private"])
+        self.assertTrue(cert_info["public"])
+        self.assertTrue(cert_info["password"])
+        server = models.Server.objects.get(token_hash=models.Server.hash_token(body["result"]))
+        self.assertEqual(server.certificate, cert_info["public"])
+
     def test_invalid_register(self) -> None:
         def _do_test(where: str) -> None:
             response = self.client.rest_post(
