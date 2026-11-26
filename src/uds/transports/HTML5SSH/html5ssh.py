@@ -47,8 +47,6 @@ if typing.TYPE_CHECKING:
 
 logger: logging.Logger = logging.getLogger(__name__)
 
-READY_CACHE_TIMEOUT = 30
-
 
 class HTML5SSHTransport(transports.Transport):
     """
@@ -78,7 +76,9 @@ class HTML5SSHTransport(transports.Transport):
     ssh_command = gui.TextField(
         label=_("SSH Command (not used right now)"),
         order=30,
-        tooltip=_("Command to execute on the remote server. If not provided, an interactive shell will be executed."),
+        tooltip=_(
+            "Command to execute on the remote server. If not provided, an interactive shell will be executed."
+        ),
         tab=types.ui.Tab.PARAMETERS,
     )
 
@@ -144,7 +144,9 @@ class HTML5SSHTransport(transports.Transport):
     enable_clipboard = gui.CheckBoxField(
         label=_("Enable Clipboard"),
         order=25,
-        tooltip=_("If checked, the clipboard will be redirected to remote session (if client browser supports it)"),
+        tooltip=_(
+            "If checked, the clipboard will be redirected to remote session (if client browser supports it)"
+        ),
         tab=types.ui.Tab.PARAMETERS,
         default=True,
     )
@@ -164,21 +166,12 @@ class HTML5SSHTransport(transports.Transport):
         tab=types.ui.Tab.PARAMETERS,
     )
 
+    allow_ip_check = fields.allow_ip_check_field()
+
     @typing.override
-    def is_ip_allowed(self, userservice: "models.UserService", ip: str) -> bool:
-        """
-        Checks if the transport is available for the requested destination ip
-        Override this in yours transports
-        """
-        logger.debug("Checking availability for %s", ip)
-        ready = self.cache.get(ip)
-        if not ready:
-            # Check again for readyness
-            if self.test_connectivity(userservice, ip, self.ssh_port.value) is True:
-                self.cache.put(ip, "Y", READY_CACHE_TIMEOUT)
-                return True
-            self.cache.put(ip, "N", READY_CACHE_TIMEOUT)
-        return ready == "Y"
+    def is_ip_reachable(self, userservice: "models.UserService", ip: str) -> bool:
+        """Checks that the SSH port of the destination is reachable from the broker"""
+        return self.test_connectivity(userservice, ip, self.ssh_port.as_int())
 
     @typing.override
     def get_link(

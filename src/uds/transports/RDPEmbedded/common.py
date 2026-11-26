@@ -39,6 +39,7 @@ from django.utils.translation import gettext_noop as _
 from uds.core import transports
 from uds.core import types
 from uds.core.ui import gui
+from uds.core.util import fields
 from uds.core.util.security import convert_to_credential_token
 from uds.models import UserService
 
@@ -48,7 +49,6 @@ if typing.TYPE_CHECKING:
 
 logger: logging.Logger = logging.getLogger(__name__)
 
-READY_CACHE_TIMEOUT = 30
 
 @dataclasses.dataclass
 class RDPTunnelParams:
@@ -155,7 +155,9 @@ class BaseRDPEmbeddedTransport(transports.Transport):
     force_no_domain = gui.CheckBoxField(
         label=_("Without Domain"),
         order=14,
-        tooltip=_("If checked, the domain part will always be emptied (to connect to xrdp for example is needed)"),
+        tooltip=_(
+            "If checked, the domain part will always be emptied (to connect to xrdp for example is needed)"
+        ),
         tab=types.ui.Tab.CREDENTIALS,
     )
     forced_domain = gui.TextField(
@@ -369,6 +371,8 @@ class BaseRDPEmbeddedTransport(transports.Transport):
         tab=types.ui.Tab.DISPLAY,
     )
 
+    allow_ip_check = fields.allow_ip_check_field()
+
     @typing.override
     def initialize(self, values: types.core.ValuesType) -> None:
         if not values:
@@ -378,20 +382,9 @@ class BaseRDPEmbeddedTransport(transports.Transport):
             self.use_nla.value = False  # NLA and SSO are mutually exclusive
 
     @typing.override
-    def is_ip_allowed(self, userservice: "models.UserService", ip: str) -> bool:
-        """
-        Checks if the transport is available for the requested destination ip
-        Override this in yours transports
-        """
-        logger.debug("Checking availability for %s", ip)
-        ready = self.cache.get(ip)
-        if ready is None:
-            # Check again for ready
-            if self.test_connectivity(userservice, ip, self.rdp_port.as_int()) is True:
-                self.cache.put(ip, "Y", READY_CACHE_TIMEOUT)
-                return True
-            self.cache.put(ip, "N", READY_CACHE_TIMEOUT)
-        return ready == "Y"
+    def is_ip_reachable(self, userservice: "models.UserService", ip: str) -> bool:
+        """Checks that the RDP port of the destination is reachable from the broker"""
+        return self.test_connectivity(userservice, ip, self.rdp_port.as_int())
 
     @typing.override
     def processed_username(self, userservice: "models.UserService", user: "models.User") -> str:

@@ -71,6 +71,8 @@ class SPICETransport(BaseSpiceTransport):
     ssl_connection = BaseSpiceTransport.ssl_connection
     overrided_proxy = BaseSpiceTransport.overrided_proxy
 
+    allow_ip_check = BaseSpiceTransport.allow_ip_check
+
     @typing.override
     def get_transport_script(
         self,

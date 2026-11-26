@@ -43,12 +43,11 @@ from uds.core import types
 from uds.core.managers.userservice import UserServiceManager
 from uds.core.types.preferences import CommonPrefs
 from uds.core.ui import gui
-from uds.core.util import net
+from uds.core.util import fields
 from uds.core.util import security
 
 logger: logging.Logger = logging.getLogger(__name__)
 
-READY_CACHE_TIMEOUT = 30
 SSH_KEY_LENGTH = 2048
 
 
@@ -203,21 +202,15 @@ class BaseX2GOTransport(transports.Transport):
         tab=types.ui.Tab.ADVANCED,
     )
 
+    allow_ip_check = fields.allow_ip_check_field()
+
     @typing.override
-    def is_ip_allowed(self, userservice: "models.UserService", ip: str) -> bool:
+    def is_ip_reachable(self, userservice: "models.UserService", ip: str) -> bool:
+        """Checks that the SSH port of the destination is reachable from the broker.
+
+        Note: port 22 is hardcoded, as the X2Go connection scripts also do.
         """
-        Checks if the transport is available for the requested destination ip
-        Override this in yours transports
-        """
-        logger.debug("Checking availability for %s", ip)
-        ready = self.cache.get(ip)
-        if ready is None:
-            # Check again for ready
-            if net.test_connectivity(ip, 22):
-                self.cache.put(ip, "Y", READY_CACHE_TIMEOUT)
-                return True
-            self.cache.put(ip, "N", READY_CACHE_TIMEOUT)
-        return ready == "Y"
+        return self.test_connectivity(userservice, ip, 22)
 
     def get_screen_size(self) -> tuple[int, int]:
         return CommonPrefs.get_wh(self.screen_size.value)

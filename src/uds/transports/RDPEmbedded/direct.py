@@ -45,8 +45,6 @@ if typing.TYPE_CHECKING:
 
 logger: logging.Logger = logging.getLogger(__name__)
 
-READY_CACHE_TIMEOUT = 30
-
 
 class RDPEmbeddedTransport(BaseRDPEmbeddedTransport):
     """
@@ -88,6 +86,8 @@ class RDPEmbeddedTransport(BaseRDPEmbeddedTransport):
     use_local_scaler = BaseRDPEmbeddedTransport.use_local_scaler
 
     screen_size = BaseRDPEmbeddedTransport.screen_size
+
+    allow_ip_check = BaseRDPEmbeddedTransport.allow_ip_check
 
     @typing.override
     def get_transport_script(  # pylint: disable=too-many-locals

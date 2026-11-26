@@ -40,6 +40,7 @@ from uds.core import transports
 from uds.core import types
 from uds.core.managers import crypto
 from uds.core.ui import gui
+from uds.core.util import fields
 from uds.core.util.security import convert_to_credential_token
 from uds.models import UserService
 
@@ -48,8 +49,6 @@ if typing.TYPE_CHECKING:
     from uds import models
 
 logger: logging.Logger = logging.getLogger(__name__)
-
-READY_CACHE_TIMEOUT = 30
 
 
 class BaseRDPTransport(transports.Transport):
@@ -87,7 +86,9 @@ class BaseRDPTransport(transports.Transport):
     force_no_domain = gui.CheckBoxField(
         label=_("Without Domain"),
         order=14,
-        tooltip=_("If checked, the domain part will always be emptied (to connect to xrdp for example is needed)"),
+        tooltip=_(
+            "If checked, the domain part will always be emptied (to connect to xrdp for example is needed)"
+        ),
         tab=types.ui.Tab.CREDENTIALS,
         old_field_name="withoutDomain",
     )
@@ -272,7 +273,9 @@ class BaseRDPTransport(transports.Transport):
     multimon = gui.CheckBoxField(
         label=_("Multiple monitors"),
         order=34,
-        tooltip=_("If checked, all client monitors will be used for displaying (only works on windows clients)"),
+        tooltip=_(
+            "If checked, all client monitors will be used for displaying (only works on windows clients)"
+        ),
         tab=types.ui.Tab.DISPLAY,
         old_field_name="multimon",
     )
@@ -396,6 +399,8 @@ class BaseRDPTransport(transports.Transport):
         default=False,
     )
 
+    allow_ip_check = fields.allow_ip_check_field()
+
     def check_rdp_can_be_signed(self) -> None:
         if not self.sign_rdp_file.as_bool():
             return
@@ -414,7 +419,9 @@ class BaseRDPTransport(transports.Transport):
         # no sense. Block saving such a configuration.
         if self.mac_allow_msrdc.as_bool() and not self.mac_use_rdp_file.as_bool():
             raise exceptions.ui.ValidationError(
-                _('Mac OS X: "Allow Microsoft Rdp Client" requires "Use RDP file for connections" to be enabled.')
+                _(
+                    'Mac OS X: "Allow Microsoft Rdp Client" requires "Use RDP file for connections" to be enabled.'
+                )
             )
 
     @typing.override
@@ -426,20 +433,9 @@ class BaseRDPTransport(transports.Transport):
             self.credssp.value = False  # Credssp and SSO are mutually exclusive, use_sso has preference
 
     @typing.override
-    def is_ip_allowed(self, userservice: "models.UserService", ip: str) -> bool:
-        """
-        Checks if the transport is available for the requested destination ip
-        Override this in yours transports
-        """
-        logger.debug("Checking availability for %s", ip)
-        ready = self.cache.get(ip)
-        if ready is None:
-            # Check again for ready
-            if self.test_connectivity(userservice, ip, self.rdp_port.as_int()) is True:
-                self.cache.put(ip, "Y", READY_CACHE_TIMEOUT)
-                return True
-            self.cache.put(ip, "N", READY_CACHE_TIMEOUT)
-        return ready == "Y"
+    def is_ip_reachable(self, userservice: "models.UserService", ip: str) -> bool:
+        """Checks that the RDP port of the destination is reachable from the broker"""
+        return self.test_connectivity(userservice, ip, self.rdp_port.as_int())
 
     @typing.override
     def processed_username(self, userservice: "models.UserService", user: "models.User") -> str:

@@ -49,8 +49,6 @@ if typing.TYPE_CHECKING:
 
 logger: logging.Logger = logging.getLogger(__name__)
 
-READY_CACHE_TIMEOUT = 30
-
 
 class HTML5RDPTransport(transports.Transport):
     """
@@ -91,7 +89,9 @@ class HTML5RDPTransport(transports.Transport):
     force_no_domain = ui.gui.CheckBoxField(
         label=_("Without Domain"),
         order=6,
-        tooltip=_("If checked, the domain part will always be emptied (to connecto to xrdp for example is needed)"),
+        tooltip=_(
+            "If checked, the domain part will always be emptied (to connecto to xrdp for example is needed)"
+        ),
         tab=types.ui.Tab.CREDENTIALS,
     )
     forced_domain = ui.gui.TextField(
@@ -121,13 +121,17 @@ class HTML5RDPTransport(transports.Transport):
     enable_microphone = ui.gui.CheckBoxField(
         label=_("Enable Microphone"),
         order=22,
-        tooltip=_("If checked, the microphone will be redirected to remote session (if client browser supports it)"),
+        tooltip=_(
+            "If checked, the microphone will be redirected to remote session (if client browser supports it)"
+        ),
         tab=types.ui.Tab.PARAMETERS,
     )
     enable_printing = ui.gui.CheckBoxField(
         label=_("Enable Printing"),
         order=23,
-        tooltip=_("If checked, the printing will be redirected to remote session (if client browser supports it)"),
+        tooltip=_(
+            "If checked, the printing will be redirected to remote session (if client browser supports it)"
+        ),
         tab=types.ui.Tab.PARAMETERS,
     )
     enable_file_sharing = ui.gui.ChoiceField(
@@ -225,9 +229,13 @@ class HTML5RDPTransport(transports.Transport):
         choices=[
             ui.gui.choice_item(
                 "false",
-                _("Open the connection in a tab of its own for this transport, replacing the previous one. UDS stays open."),
+                _(
+                    "Open the connection in a tab of its own for this transport, replacing the previous one. UDS stays open."
+                ),
             ),
-            ui.gui.choice_item("true", _("Open the connection in a tab of its own for each service pool. UDS stays open.")),
+            ui.gui.choice_item(
+                "true", _("Open the connection in a tab of its own for each service pool. UDS stays open.")
+            ),
             ui.gui.choice_item(
                 "overwrite",
                 _("Replace the UDS page with the connection in the same tab."),
@@ -289,31 +297,23 @@ class HTML5RDPTransport(transports.Transport):
         length=6,
         default=100,
         min_value=1,
-        tooltip=_("Maximum total size, in MB, of the files a user can have in the shared folder at the same time"),
+        tooltip=_(
+            "Maximum total size, in MB, of the files a user can have in the shared folder at the same time"
+        ),
         tab=types.ui.Tab.ADVANCED,
     )
+
+    allow_ip_check = fields.allow_ip_check_field()
 
     @typing.override
     def initialize(self, values: "types.core.ValuesType") -> None:
         if not values:
             return
 
-    # Same check as normal RDP transport
     @typing.override
-    def is_ip_allowed(self, userservice: "models.UserService", ip: str) -> bool:
-        """
-        Checks if the transport is available for the requested destination ip
-        Override this in yours transports
-        """
-        logger.debug("Checking availability for %s", ip)
-        ready = self.cache.get(ip)
-        if not ready:
-            # Check again for readyness
-            if self.test_connectivity(userservice, ip, self.rdp_port.as_int()) is True:
-                self.cache.put(ip, "Y", READY_CACHE_TIMEOUT)
-                return True
-            self.cache.put(ip, "N", READY_CACHE_TIMEOUT)
-        return ready == "Y"
+    def is_ip_reachable(self, userservice: "models.UserService", ip: str) -> bool:
+        """Checks that the RDP port of the destination is reachable from the broker"""
+        return self.test_connectivity(userservice, ip, self.rdp_port.as_int())
 
     @typing.override
     def processed_username(self, userservice: "models.UserService", user: "models.User") -> str:

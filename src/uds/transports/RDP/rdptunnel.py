@@ -50,8 +50,6 @@ if typing.TYPE_CHECKING:
 
 logger: logging.Logger = logging.getLogger(__name__)
 
-READY_CACHE_TIMEOUT = 30
-
 
 class TRDPTransport(BaseRDPTransport):
     """
@@ -122,6 +120,8 @@ class TRDPTransport(BaseRDPTransport):
     mac_use_rdp_file = BaseRDPTransport.mac_use_rdp_file
     sign_rdp_file = BaseRDPTransport.sign_rdp_file
     # optimizeTeams = BaseRDPTransport.optimizeTeams
+
+    allow_ip_check = BaseRDPTransport.allow_ip_check
 
     @typing.override
     def initialize(self, values: "types.core.ValuesType") -> None:

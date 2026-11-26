@@ -43,8 +43,6 @@ from uds.core.util import fields
 
 logger: logging.Logger = logging.getLogger(__name__)
 
-READY_CACHE_TIMEOUT = 30
-
 DEFAULT_SERVER_PORT = 14433
 SCREEN_SIZES: typing.Final[tuple[tuple[int, int], ...]] = (
     (800, 600),
@@ -385,6 +383,13 @@ class BaseUdsRPTransport(transports.Transport):
     )
 
     ticket_validity = fields.tunnel_ticket_validity_field(order=99)
+
+    allow_ip_check = fields.allow_ip_check_field()
+
+    @typing.override
+    def is_ip_reachable(self, userservice: "models.UserService", ip: str) -> bool:
+        """Checks that the URP service is reachable on the destination ip"""
+        return self.test_connectivity(userservice, ip, self.server_port.as_int())
 
     @typing.override
     def get_connection_info(

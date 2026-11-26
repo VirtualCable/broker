@@ -82,9 +82,13 @@ class URLCustomTransport(transports.Transport):
         choices=[
             gui.choice_item(
                 "false",
-                _("Open the connection in a tab of its own for this transport, replacing the previous one. UDS stays open."),
+                _(
+                    "Open the connection in a tab of its own for this transport, replacing the previous one. UDS stays open."
+                ),
             ),
-            gui.choice_item("true", _("Open the connection in a tab of its own for each service pool. UDS stays open.")),
+            gui.choice_item(
+                "true", _("Open the connection in a tab of its own for each service pool. UDS stays open.")
+            ),
             gui.choice_item(
                 "overwrite",
                 _("Replace the UDS page with the connection in the same tab."),
@@ -103,11 +107,7 @@ class URLCustomTransport(transports.Transport):
         if not (self.url_pattern.value.startswith("http://") or self.url_pattern.value.startswith("https://")):
             raise exceptions.ui.ValidationError(_("The url must be http or https"))
 
-    # Same check as normal RDP transport
-    @typing.override
-    def is_ip_allowed(self, userservice: "models.UserService", ip: str) -> bool:
-        # No check is done for URL transport
-        return True
+    # No reachability check for URL transport: base is_ip_reachable defaults to True
 
     @typing.override
     def get_link(
