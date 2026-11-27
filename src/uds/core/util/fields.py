@@ -64,11 +64,14 @@ def allow_ip_check_field(
     off when the broker has no network visibility of the user service machines.
     """
     return ui.gui.CheckBoxField(
-        label=_("Connectivity check"),
+        label=_("Connectivity Check (degrade_mode)"),
         order=order,
         tooltip=_(
-            "If enabled, transport will check the connectivity with the user service before "
-            "allowing the user to connect, reducing possible user connection errors"
+            "Keep it enabled. Disabling it degrades the system: UDS hands out the connection without "
+            "testing that the transport endpoint is reachable from the broker, and the "
+            "pre-connect may not arrive. Without the pre-connect the user may not be able to connect "
+            "over RDP to the machine. Disable it only if the broker cannot reach the transport endpoints "
+            "of the machines."
         ),
         default=True,
         tab=tab,

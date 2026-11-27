@@ -46,6 +46,7 @@ from django.utils.translation import gettext_noop
 from uds import models
 from uds.core import consts, types
 from uds.core.checks import AutomaticCheck, CheckOutcome
+from uds.core.ui import gui
 
 if typing.TYPE_CHECKING:
     from uds.core import auths
@@ -447,4 +448,57 @@ class AuthenticatorSslVerificationDisabledCheck(AutomaticCheck):
             types.checks.CheckSeverity.MEDIUM,
             True,
             _("All authenticators using TLS verify the certificate of the other end."),
+        )
+
+
+_TRANSPORT_REACHABILITY_SWITCHES: typing.Final[tuple[str, ...]] = ("allow_ip_check",)
+
+
+def _reachability_switch_is_off(transport: models.Transport, switch_name: str) -> bool:
+    transport_type = transport.get_type()
+    if not isinstance(getattr(transport_type, switch_name), gui.CheckBoxField):
+        return False
+    # Not get_instance(): it saves legacy data back to the database, and a check must only read.
+    instance = transport_type(transport.get_environment(), None)
+    instance.deserialize(transport.data)
+    return not getattr(instance, switch_name).as_bool()
+
+
+class TransportConnectivityCheckDisabledCheck(AutomaticCheck):
+    """Transports that skip the pre-connection reachability check."""
+
+    id: typing.ClassVar[str] = "transport-connectivity-check-disabled"
+    category: typing.ClassVar[types.checks.CheckCategory] = types.checks.CheckCategory.HEALTH
+    description: typing.ClassVar[str] = gettext_noop(
+        "Looks for transports with the connectivity check disabled (degraded mode). UDS then hands out "
+        "the connection without testing that the transport endpoint is reachable from the "
+        "broker, and the pre-connect may not arrive. Enable it again unless the broker cannot reach the "
+        "transport endpoints of the machines."
+    )
+
+    @typing.override
+    def run(self) -> CheckOutcome:
+        disabled = [
+            transport
+            for transport in models.Transport.objects.all().order_by("name")
+            if any(
+                _reachability_switch_is_off(transport, switch) for switch in _TRANSPORT_REACHABILITY_SWITCHES
+            )
+        ]
+
+        if disabled:
+            return (
+                types.checks.CheckSeverity.MEDIUM,
+                False,
+                _(
+                    "Connectivity check is disabled on: {names}. Disabling it degrades the system: "
+                    "connections are handed out without testing that the transport endpoint "
+                    "is reachable from the broker, and the pre-connect may not arrive."
+                ).format(names=", ".join(transport.name for transport in disabled)),
+                [f"{transport.name} ({transport.uuid})" for transport in disabled],
+            )
+        return (
+            types.checks.CheckSeverity.MEDIUM,
+            True,
+            _("No transport has the connectivity check disabled."),
         )

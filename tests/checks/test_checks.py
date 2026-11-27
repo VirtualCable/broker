@@ -73,6 +73,7 @@ ALL_CHECK_IDS: typing.Final[frozenset[str]] = frozenset(
         "server-certificates-expiring",
         "restrained-service-pools",
         "ipauth-proxy-unrestricted",
+        "transport-connectivity-check-disabled",
         # C-family (logs.py)
         "failed-logins-24h",
         "brute-force-by-ip",
@@ -1027,6 +1028,7 @@ class ChecksTest(UDSTransactionTestCase):
                 "client-ip-is-proxy-address",
                 "actor-ips-blocked-24h",
                 "domain-join-failures-24h",
+                "transport-connectivity-check-disabled",
             },
         )
         self.assertEqual(health_ids | security_ids, ALL_CHECK_IDS)
