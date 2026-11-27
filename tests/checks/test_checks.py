@@ -1028,7 +1028,6 @@ class ChecksTest(UDSTransactionTestCase):
                 "client-ip-is-proxy-address",
                 "actor-ips-blocked-24h",
                 "domain-join-failures-24h",
-                "transport-connectivity-check-disabled",
             },
         )
         self.assertEqual(health_ids | security_ids, ALL_CHECK_IDS)

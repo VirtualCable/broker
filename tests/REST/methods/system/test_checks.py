@@ -93,7 +93,6 @@ EXPECTED_HEALTH_IDS: typing.Final[frozenset[str]] = frozenset(
         "client-ip-is-proxy-address",
         "actor-ips-blocked-24h",
         "domain-join-failures-24h",
-        "transport-connectivity-check-disabled",
     )
 )
 

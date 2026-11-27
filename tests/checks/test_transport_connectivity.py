@@ -96,7 +96,7 @@ class TransportConnectivityCheckDisabledTest(UDSTransactionTestCase):
         result = self._run_check()
         self.assertTrue(result.ok, result.message)
         self.assertEqual(result.severity, types.checks.CheckSeverity.MEDIUM)
-        self.assertEqual(result.category, types.checks.CheckCategory.HEALTH)
+        self.assertEqual(result.category, types.checks.CheckCategory.SECURITY)
 
     def test_passes_when_the_check_is_enabled(self) -> None:
         self._create("Checked RDP", RDPTransport, check_disabled=False)

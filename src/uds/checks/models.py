@@ -468,7 +468,7 @@ class TransportConnectivityCheckDisabledCheck(AutomaticCheck):
     """Transports that skip the pre-connection reachability check."""
 
     id: typing.ClassVar[str] = "transport-connectivity-check-disabled"
-    category: typing.ClassVar[types.checks.CheckCategory] = types.checks.CheckCategory.HEALTH
+    category: typing.ClassVar[types.checks.CheckCategory] = types.checks.CheckCategory.SECURITY
     description: typing.ClassVar[str] = gettext_noop(
         "Looks for transports with the connectivity check disabled (degraded mode). UDS then hands out "
         "the connection without testing that the transport endpoint is reachable from the "
